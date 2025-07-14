@@ -1,26 +1,26 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-import { homedir } from "os";
-import { join } from "path";
 import { html, Html } from "@elysiajs/html";
 import Directory from "./components/directory";
+import FilesRepository from "./utils/files_repository";
+
+const fileRepository = new FilesRepository();
 
 const app = new Elysia();
-app.use(html())
+app.use(html());
 
 
 // serve the folder called "public" at the root URL
-const home = homedir();
-const downloadPath = join(home, 'Downloads');
 
-const assetsRouter = new Elysia({ prefix: '/assets' }).get('/:file',  async (req) => {
+const assetsRouter = new Elysia({ prefix: '/files' }).get('*',  async (req) => {
     console.log(`Request path: ${req.path}`);
-    if (req.params.file.includes('%20')) {
-        req.params.file = decodeURIComponent(req.params.file)
+    if (req.path.includes('%20')) {
+        req.path = decodeURIComponent(req.path)
     }
 
-    const filePath = join(downloadPath, req.params.file);
+    const filePath = req.path.replace("/files", "");
     const file = Bun.file(filePath);
+    
     console.log(`Serving file: ${filePath}`);
 
     // Check if the file exists before serving it
@@ -32,16 +32,16 @@ const assetsRouter = new Elysia({ prefix: '/assets' }).get('/:file',  async (req
 });
 
 app.use(assetsRouter);
-app.use(staticPlugin({ assets: "public", prefix: "/" }));
+app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
-app.get("/", async(req) => {
-    const result = await Bun.$`ls ${downloadPath}`.text()
-    const files = result.split('\n').filter(file => file); // Filter out empty strings
+const pageRouter = new Elysia({ prefix: '/' }).get("/", async(req) => {
+    const directory = await fileRepository.get(req.path)
 
     return (
-        <Directory name="Downloads" files={files} />
+        <Directory details={directory} />
     );
 });
+app.use(pageRouter);
 
 
 app.listen(3000);

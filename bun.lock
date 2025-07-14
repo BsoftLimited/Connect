@@ -1,8 +1,7 @@
 {
-  "lockfileVersion": 1,
+  "lockfileVersion": 0,
   "workspaces": {
     "": {
-      "name": "connect",
       "dependencies": {
         "@elysiajs/html": "^1.3.0",
         "@elysiajs/static": "^1.3.0",
