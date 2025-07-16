@@ -33,20 +33,27 @@ class FilesRepository{
     }
 
     get = async (path: string): Promise<DirectoryDetails> => {
+        console.log(`Fetching directory details for path: ${join(this.homePath, path)}`);
+
         const result = await Bun.$`ls ${join(this.homePath, path)}`.text();
 
         const files: DirectoryFile[] = [];
         for(const name of result.split('\n').filter(file => file)){
-            const absolutePath = join(path, name);
+            try {
+                const absolutePath = join(path, name);
+                console.log(`Processing file: ${absolutePath}`);
 
-            const stats = statSync(join(this.homePath, absolutePath));
+                const stats = statSync(join(this.homePath, absolutePath));
 
-            if(stats.isDirectory()){
-                const size = (await Bun.$`ls ${join(this.homePath, absolutePath)}`.text()).split('\n').filter(init => init).length;
+                if(stats.isDirectory()){
+                    const size = (await Bun.$`ls ${join(this.homePath, absolutePath)}`.text()).split('\n').filter(init => init).length;
 
-                files.push({ name, path: absolutePath, size, isDir: true });
-            }else{
-                files.push({ name, path: join("/files", absolutePath), size: stats.size, isDir: false });
+                    files.push({ name, path: absolutePath, size, isDir: true });
+                }else{
+                    files.push({ name, path: join("/files", absolutePath), size: stats.size, isDir: false });
+                }
+            }catch (error) {
+                console.error(`Error processing file ${name} in path ${path}:`, error);
             }
         }
 
@@ -57,6 +64,26 @@ class FilesRepository{
 
     home = async (): Promise<DirectoryDetails> => {
         return this.get("/");
+    }
+
+    seve = (path: string) => {
+        const absolutePath = join(this.homePath, path);
+        console.log(`Saving file at: ${absolutePath}`);
+
+        return Bun.file(absolutePath);
+    }
+
+    fileExists = async (path: string): Promise<boolean> => {
+        const absolutePath = join(this.homePath, path); 
+        console.log(`Checking if file exists at: ${absolutePath}`);
+
+        try {
+            const stats = statSync(absolutePath);
+            return stats.isFile();
+        } catch (error) {
+            console.error(`Error checking file existence at ${absolutePath}:`, error);
+            return false;
+        }
     }
 
     libraries = async(): Promise<DirectoryFile[]> => {

@@ -9,43 +9,53 @@ const fileRepository = new FilesRepository();
 const app = new Elysia();
 app.use(html());
 
-
 // serve the folder called "public" at the root URL
-
-const assetsRouter = new Elysia({ prefix: '/files' }).get('*',  async (req) => {
+app.get('/files/*',  async (req) => {
     console.log(`Request path: ${req.path}`);
     if (req.path.includes('%20')) {
         req.path = decodeURIComponent(req.path)
     }
 
     const filePath = req.path.replace("/files", "");
-    const file = Bun.file(filePath);
-    
-    console.log(`Serving file: ${filePath}`);
 
     // Check if the file exists before serving it
-    if (await file.exists()) {
-            return new Response(file)
+    if (await fileRepository.fileExists(filePath)) {
+        return new Response(fileRepository.seve(filePath));
     }
-        
     return new Response('Not found', { status: 404 })
 });
 
-app.use(assetsRouter);
+app.get('/download/*',  async (req) => {
+    console.log(`Request path: ${req.path}`);
+    if (req.path.includes('%20')) {
+        req.path = decodeURIComponent(req.path)
+    }
+
+    const filePath = req.path.replace("/download", "");
+
+    // Check if the file exists before serving it
+    if (await fileRepository.fileExists(filePath)) {
+        return new Response(fileRepository.seve(filePath), {
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'Content-Disposition': `attachment; filename="${filePath.split('/').pop()}"`,
+            },
+        });
+    }
+    return new Response('Not found', { status: 404 })
+});
+
+
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
-const pageRouter = new Elysia({ prefix: '/' }).get("/", async(req) => {
+app.get("/*", async(req) => {
     const directory = await fileRepository.get(req.path)
 
     return (
         <Directory details={directory} />
     );
 });
-app.use(pageRouter);
 
-
-app.listen(3000);
-
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+app.listen(3000, () => {
+    console.log("Server is running on http://localhost:3000");
+});
