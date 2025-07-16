@@ -37,6 +37,7 @@ class FilesRepository{
 
         const result = await Bun.$`ls ${join(this.homePath, path)}`.text();
 
+        const folders: DirectoryFile[] = [];
         const files: DirectoryFile[] = [];
         for(const name of result.split('\n').filter(file => file)){
             try {
@@ -48,7 +49,7 @@ class FilesRepository{
                 if(stats.isDirectory()){
                     const size = (await Bun.$`ls ${join(this.homePath, absolutePath)}`.text()).split('\n').filter(init => init).length;
 
-                    files.push({ name, path: absolutePath, size, isDir: true });
+                    folders.push({ name, path: absolutePath, size, isDir: true });
                 }else{
                     files.push({ name, path: join("/files", absolutePath), size: stats.size, isDir: false });
                 }
@@ -59,7 +60,7 @@ class FilesRepository{
 
         const name = path === "/" ? "Home" : getName(path);
 
-        return { name, path, files };
+        return { name, path, files: [...folders, ...files] };
     }
 
     home = async (): Promise<DirectoryDetails> => {
@@ -100,7 +101,7 @@ class FilesRepository{
         return files;
     }
 
-    static Libraries = [ "Desktop", "Documents", "Downloads", "Musics", "Pictures"]
+    static Libraries = [ "Home", "Desktop", "Documents", "Downloads", "Music", "Pictures"]
 }
 
 export default FilesRepository;

@@ -1,8 +1,8 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { html, Html } from "@elysiajs/html";
-import Directory from "./components/directory";
 import FilesRepository from "./utils/files_repository";
+import Home from "./pages/home";
 
 const fileRepository = new FilesRepository();
 
@@ -52,10 +52,13 @@ app.get("/*", async(req) => {
     const directory = await fileRepository.get(req.path)
 
     return (
-        <Directory details={directory} />
+        <Home details={directory} />
     );
 });
 
-app.listen(3000, () => {
-    console.log("Server is running on http://localhost:3000");
+app.listen(3000, (err)=>{
+    console.log(err);
+    console.log(
+        `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+      );
 });

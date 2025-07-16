@@ -1,27 +1,24 @@
 import { Html } from "@elysiajs/html";
+import TopBar from "../components/topbar";
+import SideBar from "../components/sidebar";
+import Directory, { DirectoryProps } from "../components/directory";
 
-interface DirectoryProps {
-    path: string;
-}
-
-const Connect = (path: string) => {
-    Bun.$`ls ${path}`.text().then(result => {
-        const files = result.split('\n').filter(file => file); // Filter out empty strings
-    });
-
+const Home = (props: DirectoryProps) => {
     return (
         <html lang="en">
             <head>
                 <title>Connect</title>
-                <link rel="stylesheet" href="/styles/home.css" />
+                <link rel="stylesheet" href="/assets/styles/home.css" />
             </head>
-            <body>
-                <h1>Downloads</h1>
-                <p>Files in your Downloads folder:</p>
-                <ul>
-                    {/* This will be populated with file names from the server */}
-                </ul>
+            <body style={{ display: "flex", width: "100vw", height: "100vh", flexDirection: "column", overflow: "hidden" }}>
+                <TopBar />
+                <div style={{ display: "flex", width: "100%", flex: 1, flexDirection: "row" }}>
+                    <SideBar />
+                    <Directory details={props.details}/>
+                </div>
             </body>
         </html>
     );
 }
+
+export default Home;
