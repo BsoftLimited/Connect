@@ -49,6 +49,9 @@ app.get('/download/*',  async (req) => {
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
 app.get("/*", async(req) => {
+    if (req.path.includes('%20')) {
+        req.path = decodeURIComponent(req.path)
+    }
     const directory = await fileRepository.get(req.path)
 
     return (
@@ -56,9 +59,9 @@ app.get("/*", async(req) => {
     );
 });
 
-app.listen(3000, (err)=>{
-    console.log(err);
+app.listen(3000, (details)=>{
+    console.log(details);
     console.log(
-        `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+        `🦊 Elysia is running at ${details?.hostname}:${details?.port}`
       );
 });
