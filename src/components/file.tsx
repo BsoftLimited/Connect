@@ -1,5 +1,14 @@
 import { Html } from "@elysiajs/html";
 import { DirectoryFile } from "../utils/files_repository";
+import FolderFill from "../vectors/folder_fill";
+import FolderEmpty from "../vectors/foolder_empty";
+import ArchiveIcon from "../vectors/archive";
+import TextIcon from "../vectors/text";
+import VideoIcon from "../vectors/video";
+import DocumentIcon from "../vectors/document";
+import ImageIcon from "../vectors/image";
+import MusicIcon from "../vectors/music";
+import GenericFileIcon from "../vectors/file";
 
 interface FileProps {
    file : DirectoryFile;
@@ -15,25 +24,31 @@ const formatBytes = (bytes: number, decimals = 2) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-const FileView  = (props: FileProps) => {
-    let imageSrc = "/assets/vectors/streamline-freehand--notes-paper.svg";
+const FileIcon = (props: { file: DirectoryFile }) => {
+    const size = 64;
 
-    if(props.file.isDir){
-        imageSrc = "/assets/vectors/streamline-freehand--office-folder.svg";
+    if(props.file.isDir && props.file.size === 0){
+        return <FolderEmpty size={size} />;
+    }else if (props.file.isDir && props.file.size > 0) {
+        return <FolderFill size={size} />;
     }else if (props.file.name.endsWith('.pdf') || props.file.name.endsWith('.docx') || props.file.name.endsWith('.xlsx')) {
-        imageSrc = "/assets/vectors/streamline-freehand--office-file-sheet.svg";
+        return <DocumentIcon size={size} />;
     } else if (props.file.name.endsWith('.txt')) {
-        imageSrc = "/assets/vectors/streamline-freehand--office-file-text.svg";
+        return <TextIcon size={size} />;
     } else if (props.file.name.endsWith('.jpg') || props.file.name.endsWith('.png') || props.file.name.endsWith('.webp')) {
-        imageSrc = "/assets/vectors/streamline-freehand--photo-frame-hang.svg";
+        return <ImageIcon size={size} />;
     }else if (props.file.name.endsWith('.mp3') || props.file.name.endsWith('.wav')) {
-        imageSrc = "/assets/vectors/streamline-freehand--paginate-filter-music.svg";
+        return <MusicIcon size={size} />;
     } else if (props.file.name.endsWith('.mp4') || props.file.name.endsWith('.avi') || props.file.name.endsWith('.mkv')) {
-        imageSrc = "/assets/vectors/streamline-freehand--video-player-smartphone-horizontal.svg";
+        return <VideoIcon size={size} />;
     }else if (props.file.name.endsWith('.zip') || props.file.name.endsWith('.rar')) {
-        imageSrc = "/assets/vectors/streamline-freehand--layers-stacked-1.svg";
+        return <ArchiveIcon size={size} />;
     }
 
+    return <GenericFileIcon size={size} />; // Default icon for unknown file types
+}
+
+const FileView  = (props: FileProps) => {
     let nameWraps: string[] = [];
     if (props.file.name.length > 24) {
         nameWraps = props.file.name.match(/.{1,20}/g) || [];
@@ -44,7 +59,7 @@ const FileView  = (props: FileProps) => {
     return (
         <a href={props.file.path}>
             <div class="file" style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "10px", borderRadius: '5px', padding: '10px', border: '1px solid #ccc', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
-                <image src={imageSrc} alt="File Icon" style={{ width: '60px', height: '60px', color: "grey" }} />
+                <FileIcon file={props.file} />
                 <p style={{ textAlign: "center", fontSize: "12px", fontWeight: "bold", width: "150px", fontFamily: "sans-serif" }}>{nameWraps.map((line, index) => (
                     <span>{line}<br/></span>
                 ))}</p>
