@@ -37,8 +37,8 @@ class FilesRepository{
 
         const result = await Bun.$`ls ${join(this.homePath, path)}`.text();
 
-        const folders: DirectoryFile[] = [];
-        const files: DirectoryFile[] = [];
+        let folders: DirectoryFile[] = [];
+        let files: DirectoryFile[] = [];
         for(const name of result.split('\n').filter(file => file)){
             try {
                 const absolutePath = join(path, name);
@@ -59,6 +59,9 @@ class FilesRepository{
         }
 
         const name = path === "/" ? "Home" : getName(path);
+
+        folders = folders.sort((a, b)=> a.name.localeCompare(b.name));
+        files = files.sort((a, b)=> a.name.localeCompare(b.name));
 
         return { name, path, files: [...folders, ...files] };
     }
@@ -101,7 +104,7 @@ class FilesRepository{
         return files;
     }
 
-    static Libraries = [ "Home", "Desktop", "Documents", "Downloads", "Music", "Pictures"]
+    static Libraries = [ "Home", "Desktop", "Documents", "Downloads", "Music", "Pictures", "Videos"]
 }
 
 export default FilesRepository;

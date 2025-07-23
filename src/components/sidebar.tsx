@@ -26,6 +26,9 @@ const SideBar = () =>{
                         case "Desktop":
                             imageSrc = "/assets/vectors/streamline-freehand--desktop-monitor.svg";
                             break;
+                        case "Videos":
+                            imageSrc = "/assets/vectors/streamline-freehand--video-file-camera.svg";
+                            break;
                     }
 
                     return (

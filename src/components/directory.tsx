@@ -21,8 +21,10 @@ const Directory = (props: DirectoryProps) => {
                 </div>
                 <PathBar path={props.details.path} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', padding: "10px", flexWrap: 'wrap', justifyContent: 'center', overflow: "auto", width: "100%", flex: 1 }}>
-                { props.details.files.map(file => (<FileView file={file} />))}
+            <div style={{ height: "100%", overflow: "auto", padding: "10px" }}>
+                <div style={{ display: 'grid', gridTemplateColumns: "repeat(7, auto)", width: "100%", gap: "30px" }}>
+                    { props.details.files.map(file => (<FileView file={file} />))}
+                </div>
             </div>
         </div>
     );

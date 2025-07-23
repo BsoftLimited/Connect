@@ -25,7 +25,7 @@ const formatBytes = (bytes: number, decimals = 2) => {
 }
 
 const FileIcon = (props: { file: DirectoryFile }) => {
-    const size = 64;
+    const size = 90;
 
     if(props.file.isDir && props.file.size === 0){
         return <FolderEmpty size={size} />;
@@ -51,20 +51,20 @@ const FileIcon = (props: { file: DirectoryFile }) => {
 const FileView  = (props: FileProps) => {
     let nameWraps: string[] = [];
     if (props.file.name.length > 24) {
-        nameWraps = props.file.name.match(/.{1,20}/g) || [];
+        nameWraps = props.file.name.match(/.{1,24}/g) || [];
     }else {
         nameWraps = [props.file.name]; 
     }
     
     return (
         <a href={props.file.path}>
-            <div class="file" style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "10px", borderRadius: '5px', padding: '10px', border: '1px solid #ccc', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
+            <div class="file" style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "10px", borderRadius: '5px', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
-                <p style={{ textAlign: "center", fontSize: "12px", fontWeight: "bold", width: "150px", fontFamily: "sans-serif" }}>{nameWraps.map((line, index) => (
+                <p style={{ textAlign: "center", fontSize: "12px", fontWeight: 300, letterSpacing: 1.5, width: "150px", fontFamily: "sans-serif" }}>{nameWraps.map((line, index) => (
                     <span>{line}<br/></span>
                 ))}</p>
-                { !props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "12px" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
-                { props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "12px" }}>{`${props.file.size} files`}</p>) }
+                { !props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "12px", fontWeight: "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
+                { props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "12px", fontWeight: "bold" }}>{`${props.file.size} files`}</p>) }
             </div>
         </a>   
     );
