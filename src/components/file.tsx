@@ -34,7 +34,7 @@ const FileIcon = (props: { file: DirectoryFile }) => {
     }else if (props.file.name.endsWith('.pdf') || props.file.name.endsWith('.docx') || props.file.name.endsWith('.xlsx')) {
         return <DocumentIcon size={size} />;
     } else if (props.file.name.endsWith('.txt')) {
-        return <TextIcon size={size} />;
+        return <TextIcon size={size - 8} />;
     } else if (props.file.name.endsWith('.jpg') || props.file.name.endsWith('.png') || props.file.name.endsWith('.webp')) {
         return <ImageIcon size={size} />;
     }else if (props.file.name.endsWith('.mp3') || props.file.name.endsWith('.wav')) {
@@ -45,7 +45,7 @@ const FileIcon = (props: { file: DirectoryFile }) => {
         return <ArchiveIcon size={size} />;
     }
 
-    return <GenericFileIcon size={size} />; // Default icon for unknown file types
+    return <GenericFileIcon size={size - 8 } />; // Default icon for unknown file types
 }
 
 const FileView  = (props: FileProps) => {
@@ -60,7 +60,7 @@ const FileView  = (props: FileProps) => {
         <a href={props.file.path}>
             <div class="file" style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "10px", borderRadius: '5px', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
-                <p style={{ textAlign: "center", fontSize: "12px", fontWeight: 300, letterSpacing: 1.5, width: "150px", fontFamily: "sans-serif" }}>{nameWraps.map((line, index) => (
+                <p style={{ textAlign: "center", fontSize: "12px", fontWeight: 300, letterSpacing: "1.5", width: "150px", fontFamily: "sans-serif" }}>{nameWraps.map((line, index) => (
                     <span>{line}<br/></span>
                 ))}</p>
                 { !props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "12px", fontWeight: "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
