@@ -2,10 +2,12 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    color: gray;
 }
 
 a{
     text-decoration: none;
+    color: #3767ff;
     :visited{
         text-decoration: none;
     }
