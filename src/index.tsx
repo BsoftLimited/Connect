@@ -59,6 +59,20 @@ app.get("/*", async(req) => {
     );
 });
 
+app.get('/favicon.ico', async (context) => {
+    const filePath = `./public/favicon.ico`;
+    
+    try {
+        const file = Bun.file(filePath)
+        if (await file.exists()) {
+            return new Response(file)
+        }
+        return new Response('Not found', { status: 404 })
+    } catch (error) {
+        return new Response('Invalid request', { status: 400 })
+    }
+})
+
 app.listen(3000, (details)=>{
     console.log(details);
     console.log(

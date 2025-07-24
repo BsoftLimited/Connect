@@ -7,7 +7,7 @@ const Home = (props: DirectoryProps) => {
     return (
         <html lang="en">
             <head>
-                <title>Connect</title>
+                <title>Connect | { props.details.path === "/" ? "Home" : props.details.name }</title>
                 <link rel="stylesheet" href="/assets/styles/home.css" />
             </head>
             <body style={{ display: "flex", width: "100vw", height: "100vh", flexDirection: "column", overflow: "hidden" }}>
