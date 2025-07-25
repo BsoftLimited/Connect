@@ -71,10 +71,16 @@ class FilesRepository{
     }
 
     seve = (path: string) => {
+        const absolutePath = this.filePath(path);
+        
+        return Bun.file(absolutePath);
+    }
+
+    filePath = (path: string): string =>{
         const absolutePath = join(this.homePath, path);
         console.log(`Saving file at: ${absolutePath}`);
 
-        return Bun.file(absolutePath);
+        return absolutePath;
     }
 
     fileExists = async (path: string): Promise<boolean> => {

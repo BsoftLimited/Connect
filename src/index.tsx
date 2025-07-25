@@ -2,6 +2,10 @@ import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { html, Html } from "@elysiajs/html";
 import FilesRepository from "./utils/files_repository";
+import { Writable } from 'stream';
+
+import ffmpeg from 'fluent-ffmpeg';
+
 import Home from "./pages/home";
 
 const fileRepository = new FilesRepository();
@@ -43,6 +47,71 @@ app.get('/download/*',  async (req) => {
         });
     }
     return new Response('Not found', { status: 404 })
+});
+
+app.get('/stream/*', async ({ request, path, set }) => {
+    const filePath = path.replace("/stream", "");
+    const inputPath = fileRepository.filePath(filePath);
+    
+    /*set.headers = {
+        'Content-Type': 'video/mp4',
+        'Transfer-Encoding': 'chunked'
+    }*/
+
+    // Validate file type (basic check for video extension)
+    const validExtensions = ['.mp4', '.mkv', '.avi', '.mov'];
+    const extention = path.toLowerCase().substring(path.length - 4);
+    if (!validExtensions.includes(extention)) {
+        return new Response('Invalid file type', { status: 400 });
+    }
+    
+    try{
+        // Create transform stream
+        const transformer = new TransformStream()
+        const writer = transformer.writable.getWriter();
+
+        // Create a Node.js Writable stream to bridge with FFmpeg
+        const nodeWritable = new Writable({
+            write(chunk, encoding, callback) {
+                // Write chunk to TransformStream writer
+                writer.write(chunk).then(() => callback()).catch(callback);
+            },
+            final(callback) {
+                // Close the TransformStream writer when done
+                writer.close().then(() => callback()).catch(callback);
+            },
+            destroy(err, callback) {
+                // Handle errors and abort the writer
+                writer.abort(err).then(() => callback(err)).catch(callback);
+            }
+        });
+
+        // Handle client disconnection
+        request.signal.addEventListener('abort', () => {
+            writer.close();
+            nodeWritable.destroy();
+            ffmpegProcess.kill('SIGTERM'); // Terminate FFmpeg
+        });
+        
+        const ffmpegProcess = ffmpeg(inputPath)
+            .format('mp4').videoCodec('libx264').audioCodec('aac')
+            .outputOptions([
+                '-movflags frag_keyframe+empty_moov', // For streaming
+                '-f mp4'
+            ]).on('error', (err) => {
+                console.error('FFmpeg error:', err)
+                nodeWritable.destroy(err);
+                set.status = 500;
+            }).on('end', () => nodeWritable.end());
+            
+        ffmpegProcess.pipe(nodeWritable, { end: true });
+        
+        return new Response(transformer.readable);
+    } catch (err) {
+        console.error('Server error:', err);
+        set.status = 500;
+        return new Response('Internal server error', { status: 500 });
+    }
 });
 
 
