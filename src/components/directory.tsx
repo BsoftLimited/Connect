@@ -30,14 +30,14 @@ const Directory = (props: DirectoryProps) => {
             </div>
             <div id="file-context-menu">
                 <ul>
-                    <li id="menu-open">Open</li>
-                    <li id="menu-download">Download</li>
-                    <li id="menu-separator" style={{ borderTop: "1px solid #eee", height: "1px" }}></li>
-                    <li id="menu-copy">Copy</li>
-                    <li id="menu-cut">Cut</li>
-                    <li id="menu-paste">Paste</li>
-                    <li id="menu-separator" style={{ borderTop: "1px solid #eee", height: "1px" }}></li>
-                    <li id="menu-delete">Delete</li>
+                    <li class="menu-item" id="menu-open">Open</li>
+                    <li class="menu-item" id="menu-download">Download</li>
+                    <li class="menu-item" id="menu-separator" style={{ borderTop: "1px solid #eee", height: "1px" }}></li>
+                    <li class="menu-item" id="menu-copy">Copy</li>
+                    <li class="menu-item" id="menu-cut">Cut</li>
+                    <li class="menu-item" id="menu-paste">Paste</li>
+                    <li class="menu-item" id="menu-separator" style={{ borderTop: "1px solid #eee", height: "1px" }}></li>
+                    <li class="menu-item" id="menu-delete">Delete</li>
                 </ul>
             </div>
         </div>

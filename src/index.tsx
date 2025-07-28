@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { html, Html } from "@elysiajs/html";
 import FilesRepository from "./utils/files_repository";
-import { Writable, Stream } from 'stream';
+import { Writable } from 'stream';
 
 import ffmpeg from 'fluent-ffmpeg';
 

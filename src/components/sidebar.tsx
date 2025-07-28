@@ -1,5 +1,21 @@
 import { Html } from "@elysiajs/html";
 import FilesRepository from "../utils/files_repository";
+import HomeIcon from "../vectors/home";
+import DeskTopIcon from "../vectors/desktop";
+import DocumentSidebarIcon from "../vectors/document_sidebar";
+import DownloadIcon from "../vectors/download";
+import MusicSidebarIcon from "../vectors/music_sidebar";
+
+const SideBarItem = (props:{ name: string, icon: JSX.Element }) =>{
+    return (
+        <a href={`/${props.name === "Home" ? "" : props.name}`}>
+            <div class="library-item">
+                {props.icon}
+                <p class="library-item-label" style={{ fontSize: "1.1rem" }}>{props.name}</p>
+            </div>
+        </a>
+    );
+}
 
 const SideBar = () =>{
     return (
@@ -7,6 +23,11 @@ const SideBar = () =>{
             <div class="siderbar-header">
                 <h2>Library</h2>
             </div>
+            <SideBarItem name={"Home"} icon={<HomeIcon />} />
+            <SideBarItem name={"Desktop"} icon={<DeskTopIcon />} />
+            <SideBarItem name={"Documents"} icon={<DocumentSidebarIcon />} />
+            <SideBarItem name={"Downloads"} icon={<DownloadIcon />} />
+            <SideBarItem name={"Music"} icon={<MusicSidebarIcon />} />
             {
                 FilesRepository.Libraries.map((library)=>{
                     let imageSrc = "/assets/vectors/streamline-freehand--home-chimney-2.svg";
@@ -32,12 +53,7 @@ const SideBar = () =>{
                     }
 
                     return (
-                        <a href={`/${library === "Home" ? "" : library}`}>
-                            <div class="library-item">
-                                <image src={imageSrc} alt="File Icon" style={{ width: '1.8rem', height: '1.8rem', color: "inherit" }} />
-                                <p class="library-item-label" style={{ fontSize: "1.1rem" }}>{library}</p>
-                            </div>
-                        </a>
+                        
                     );
                 })
             }
