@@ -12,3 +12,148 @@ a{
         text-decoration: none;
     }
 }
+
+.topbar{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    padding: 1rem 2.2rem;
+}
+
+.topbar-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+}
+
+.topbar-title {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.files-container {
+    display: grid;
+    grid-template-columns: repeat(7, auto);
+    width: 100%;
+    gap: 1.5rem;
+}
+
+.side-bar {
+    display: flex;
+    height: 100%;
+    min-width: 200px;
+    flex-direction: column;
+    gap: 24px;
+    border-right: 1px solid #ccc;
+    padding: 1rem;
+}
+
+.library-item {
+    display: flex;
+    flex-direction: row;
+    gap: 0.6rem;
+    align-items: center;
+    :hover{
+        color: #3767ff;
+    }
+}
+
+.directory-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 1.4rem ;
+    align-items: center;
+    :hover{
+        color: #3767ff;
+    }
+}
+
+.search-input{
+     &:focus{
+        outline: none;
+    }
+}
+
+#file-context-menu {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+    
+#file-context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+    
+#file-context-menu li {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+    
+#file-context-menu li:hover {
+    background: #f0f0f0;
+}
+
+@media (max-width: 1500px) {
+    html{ font-size: 90%; }
+
+    .files-container {
+        grid-template-columns: repeat(5, auto);
+    }
+}
+
+@media(max-width: 1050px) {
+    html{ font-size: 80%; }
+
+    .files-container {
+        grid-template-columns: repeat(4, auto);
+    }
+
+    .side-bar {
+        min-width: auto;
+    }
+
+    .library-item {
+        flex-direction: column;
+    }
+}
+
+@media(max-width: 720px) {
+    html{ font-size: 60%; }
+
+    .topbar-title{
+        display: none;
+    }
+
+    .files-container {
+        grid-template-columns: repeat(3, auto);
+    }
+
+    .side-bar {
+        min-width: auto;
+    }
+
+    .library-item-label {
+        display: none;
+    }
+
+    .siderbar-header {
+        display: none;
+    }
+
+    .directory-name{
+        display: none;
+    }
+
+    .directory-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

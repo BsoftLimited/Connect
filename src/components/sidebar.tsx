@@ -3,8 +3,8 @@ import FilesRepository from "../utils/files_repository";
 
 const SideBar = () =>{
     return (
-        <div style={{ display: "flex", height: "100%", minWidth: "200px", flexDirection: "column", gap: "20px", borderRight: '1px solid #ccc', padding: "20px" }}>
-            <div>
+        <div class="side-bar">
+            <div class="siderbar-header">
                 <h2>Library</h2>
             </div>
             {
@@ -33,9 +33,9 @@ const SideBar = () =>{
 
                     return (
                         <a href={`/${library === "Home" ? "" : library}`}>
-                            <div style={{ display: "flex", flexDirection: "row", gap: "12px", alignItems: "center" }}>
-                                <image src={imageSrc} alt="File Icon" style={{ width: '32px', height: '32px' }} />
-                                <p style={{ fontSize: "18px" }}>{library}</p>
+                            <div class="library-item">
+                                <image src={imageSrc} alt="File Icon" style={{ width: '1.8rem', height: '1.8rem', color: "inherit" }} />
+                                <p class="library-item-label" style={{ fontSize: "1.1rem" }}>{library}</p>
                             </div>
                         </a>
                     );

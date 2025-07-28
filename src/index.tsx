@@ -2,11 +2,12 @@ import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { html, Html } from "@elysiajs/html";
 import FilesRepository from "./utils/files_repository";
-import { Writable } from 'stream';
+import { Writable, Stream } from 'stream';
 
 import ffmpeg from 'fluent-ffmpeg';
 
 import Home from "./pages/home";
+import { log } from "console";
 
 const fileRepository = new FilesRepository();
 
@@ -49,18 +50,16 @@ app.get('/download/*',  async (req) => {
     return new Response('Not found', { status: 404 })
 });
 
-app.get('/stream/*', async ({ request, path, set }) => {
-    const filePath = path.replace("/stream", "");
+app.get('/stream/*', function* (req){
+    if (req.path.includes('%20')) {
+        req.path = decodeURIComponent(req.path);
+    }
+    const filePath = req.path.replace("/stream", "");
     const inputPath = fileRepository.filePath(filePath);
-    
-    /*set.headers = {
-        'Content-Type': 'video/mp4',
-        'Transfer-Encoding': 'chunked'
-    }*/
 
     // Validate file type (basic check for video extension)
     const validExtensions = ['.mp4', '.mkv', '.avi', '.mov'];
-    const extention = path.toLowerCase().substring(path.length - 4);
+    const extention = req.path.toLowerCase().substring(req.path.length - 4);
     if (!validExtensions.includes(extention)) {
         return new Response('Invalid file type', { status: 400 });
     }
@@ -75,6 +74,7 @@ app.get('/stream/*', async ({ request, path, set }) => {
             write(chunk, encoding, callback) {
                 // Write chunk to TransformStream writer
                 writer.write(chunk).then(() => callback()).catch(callback);
+                log(`Writing chunk of size: ${chunk.length}`);
             },
             final(callback) {
                 // Close the TransformStream writer when done
@@ -87,7 +87,7 @@ app.get('/stream/*', async ({ request, path, set }) => {
         });
 
         // Handle client disconnection
-        request.signal.addEventListener('abort', () => {
+        req.request.signal.addEventListener('abort', () => {
             writer.close();
             nodeWritable.destroy();
             ffmpegProcess.kill('SIGTERM'); // Terminate FFmpeg
@@ -101,15 +101,19 @@ app.get('/stream/*', async ({ request, path, set }) => {
             ]).on('error', (err) => {
                 console.error('FFmpeg error:', err)
                 nodeWritable.destroy(err);
-                set.status = 500;
+                req.set.status = 500;
             }).on('end', () => nodeWritable.end());
             
         ffmpegProcess.pipe(nodeWritable, { end: true });
-        
+
+        req.set.headers = {
+            'Content-Type': 'video/mp4',
+            'Transfer-Encoding': 'chunked'
+        };
         return new Response(transformer.readable);
     } catch (err) {
         console.error('Server error:', err);
-        set.status = 500;
+        req.set.status = 500;
         return new Response('Internal server error', { status: 500 });
     }
 });
@@ -140,11 +144,9 @@ app.get('/favicon.ico', async (context) => {
     } catch (error) {
         return new Response('Invalid request', { status: 400 })
     }
-})
+});
 
 app.listen(3000, (details)=>{
     console.log(details);
-    console.log(
-        `🦊 Elysia is running at ${details?.hostname}:${details?.port}`
-      );
+    console.log(`🦊 Elysia is running at ${details?.hostname}:${details?.port}`);
 });
