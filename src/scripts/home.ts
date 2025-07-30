@@ -60,3 +60,22 @@ document.querySelectorAll('.folder').forEach(folderElement => {
         }
     }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("search-input");
+    searchInput?.addEventListener("input", (event) => {
+        const filter = (event.target as HTMLInputElement).value.toLowerCase();
+        const filesContainer = document.querySelector(".files-container");
+        if (filesContainer) {
+            filesContainer.querySelectorAll(".folder").forEach(folderItem => {
+                const folderName = folderItem.id.toLowerCase();
+                (folderItem as HTMLElement).style.display = folderName.includes(filter) ? "block" : "none";
+            });
+
+            filesContainer.querySelectorAll(".file").forEach(fileItem => {
+                const fileName = fileItem.id.toLowerCase();
+                (fileItem as HTMLElement).style.display = fileName.includes(filter) ? "block" : "none";
+            });
+        }
+    });
+});

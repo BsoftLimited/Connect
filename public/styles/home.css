@@ -1,16 +1,29 @@
+:root {
+    --light-text-color: gray;
+    --dark-text-color: #ccc;
+    --primary-color: #3767ff;
+    --background-color: #f0f0f0;
+    --hover-background-color: #e0e0e0;
+    --border-color: #ddd;
+    --sidebar-width: 200px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    color: gray;
 }
 
 a{
     text-decoration: none;
-    color: #3767ff;
+    color: var(--primary-color);
     :visited{
         text-decoration: none;
     }
+}
+
+.file > div > *, .folder> div > *, h1, h2, h3, h4, h5, h6 {
+    color: gray;
 }
 
 .topbar{
@@ -38,6 +51,7 @@ a{
     grid-template-columns: repeat(7, auto);
     width: 100%;
     gap: 1.5rem;
+    color: var(--light-text-color);
 }
 
 .side-bar {
@@ -45,19 +59,32 @@ a{
     height: 100%;
     min-width: 200px;
     flex-direction: column;
-    gap: 24px;
     border-right: 1px solid #ccc;
-    padding: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.siderbar-header{
+    margin-bottom: 1rem;
+    margin-left: 1rem;
 }
 
 .library-item {
+    color: var(--light-text-color);
+    width: 100%;
+    :hover{
+        color: #3767ff;
+        background: #f0f0f0;
+    }
+}
+
+.library-item-content {
     display: flex;
     flex-direction: row;
     gap: 0.6rem;
     align-items: center;
-    :hover{
-        color: #3767ff;
-    }
+    padding: 0.8rem;
+    width: 100%;
 }
 
 .directory-actions {
@@ -65,8 +92,9 @@ a{
     flex-direction: row;
     gap: 1.4rem ;
     align-items: center;
+    color: var(--light-text-color);
     :hover{
-        color: #3767ff;
+        color: var(--primary-color);
     }
 }
 
@@ -125,7 +153,7 @@ a{
     }
 }
 
-@media(max-width: 720px) {
+@media(max-width: 786px) {
     html{ font-size: 60%; }
 
     .topbar-title{

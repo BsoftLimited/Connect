@@ -3,11 +3,13 @@ import { staticPlugin } from "@elysiajs/static";
 import { html, Html } from "@elysiajs/html";
 import FilesRepository from "./utils/files_repository";
 import { Writable } from 'stream';
+import { stat } from 'fs/promises';
 
 import ffmpeg from 'fluent-ffmpeg';
 
 import Home from "./pages/home";
 import { log } from "console";
+import Streaming from "./pages/streaming";
 
 const fileRepository = new FilesRepository();
 
@@ -16,7 +18,6 @@ app.use(html());
 
 // serve the folder called "public" at the root URL
 app.get('/files/*',  async (req) => {
-    console.log(`Request path: ${req.path}`);
     if (req.path.includes('%20')) {
         req.path = decodeURIComponent(req.path)
     }
@@ -25,7 +26,33 @@ app.get('/files/*',  async (req) => {
 
     // Check if the file exists before serving it
     if (await fileRepository.fileExists(filePath)) {
-        return new Response(fileRepository.seve(filePath));
+        const stats = await stat(fileRepository.filePath(filePath));
+
+        const ext = filePath.split('.').pop()?.toLowerCase() ?? "unknown";
+        const headers: Record<string, string> = {
+            'Content-Length': stats.size.toString(),
+            'Content-Disposition': `inline; filename="${filePath.split('/').pop() || 'file'}"`,
+        };
+
+        if (["pdf", "docx", "xlsx"].includes(ext)) {
+            headers['Content-Type'] = 'application/pdf';
+        } else if (ext === 'txt') {
+            headers['Content-Type'] = 'text/plain';
+        } else if (["zip", "rar", "gz"].includes(ext)) {
+            headers['Content-Type'] = 'application/zip';
+            headers['Accept-Ranges'] = 'bytes';
+        }else if(["mp4", "mkv", "avi"].includes(ext)) {
+            headers['Content-Type'] = 'video/mp4';
+            headers['Accept-Ranges'] = 'bytes';
+        }else if (["jpg", "png", "gif", "webp"].includes(ext)) {
+            headers['Content-Type'] = `image/${ext}`;
+        }else if (["mp3", "wav"].includes(ext)) {
+            headers['Content-Type'] = 'audio/mpeg';
+        }else {
+            headers['Content-Type'] = 'application/octet-stream';
+        }
+
+        return new Response(fileRepository.seve(filePath), { headers });
     }
     return new Response('Not found', { status: 404 })
 });
@@ -37,6 +64,8 @@ app.get('/download/*',  async (req) => {
     }
 
     const filePath = req.path.replace("/download", "");
+    const absolutePath = fileRepository.filePath(filePath);
+    const stats = await stat(absolutePath);
 
     // Check if the file exists before serving it
     if (await fileRepository.fileExists(filePath)) {
@@ -44,6 +73,8 @@ app.get('/download/*',  async (req) => {
             headers: {
                 'Content-Type': 'application/octet-stream',
                 'Content-Disposition': `attachment; filename="${filePath.split('/').pop()}"`,
+                'Content-Length': stats.size.toString(),
+                'Accept-Ranges': 'bytes',
             },
         });
     }
@@ -129,6 +160,12 @@ app.get("/*", async(req) => {
 
     return (
         <Home details={directory} />
+    );
+});
+
+app.get("/streaming", async(req) => {
+    return (
+        <Streaming />
     );
 });
 
