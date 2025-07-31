@@ -18,15 +18,8 @@ app.use(html());
 
 // serve the folder called "public" at the root URL
 app.get('/files/*',  async (req) => {
-    if (req.path.includes('%20')) {
-        req.path = decodeURIComponent(req.path)
-    }
-
-    const filePath = req.path.replace("/files", "");
-
-    // Check if the file exists before serving it
-    if (await fileRepository.fileExists(filePath)) {
-        const stats = await stat(fileRepository.filePath(filePath));
+    try{
+        const { filePath, stats } = await fileRepository.process(req.path, "/files");
 
         const ext = filePath.split('.').pop()?.toLowerCase() ?? "unknown";
         const headers: Record<string, string> = {
@@ -48,27 +41,22 @@ app.get('/files/*',  async (req) => {
             headers['Content-Type'] = `image/${ext}`;
         }else if (["mp3", "wav"].includes(ext)) {
             headers['Content-Type'] = 'audio/mpeg';
+            headers['Accept-Ranges'] = 'bytes';
         }else {
             headers['Content-Type'] = 'application/octet-stream';
         }
 
         return new Response(fileRepository.seve(filePath), { headers });
-    }
-    return new Response('Not found', { status: 404 })
+    }catch(error){
+        console.error(error);
+        return new Response('Not found', { status: 404 });
+    }    
 });
 
 app.get('/download/*',  async (req) => {
-    console.log(`Request path: ${req.path}`);
-    if (req.path.includes('%20')) {
-        req.path = decodeURIComponent(req.path)
-    }
+    try{
+        const { filePath, stats } = await fileRepository.process(req.path, "/download");
 
-    const filePath = req.path.replace("/download", "");
-    const absolutePath = fileRepository.filePath(filePath);
-    const stats = await stat(absolutePath);
-
-    // Check if the file exists before serving it
-    if (await fileRepository.fileExists(filePath)) {
         return new Response(fileRepository.seve(filePath), {
             headers: {
                 'Content-Type': 'application/octet-stream',
@@ -77,8 +65,10 @@ app.get('/download/*',  async (req) => {
                 'Accept-Ranges': 'bytes',
             },
         });
+    }catch(error){
+        console.error(error);
+        return new Response('Not found', { status: 404 });
     }
-    return new Response('Not found', { status: 404 })
 });
 
 app.get('/stream/*', function* (req){
@@ -154,18 +144,27 @@ app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
 app.get("/*", async(req) => {
     if (req.path.includes('%20')) {
-        req.path = decodeURIComponent(req.path)
+        req.path = decodeURIComponent(req.path);
     }
-    const directory = await fileRepository.get(req.path)
+    const directory = await fileRepository.get(req.path);
 
     return (
         <Home details={directory} />
     );
 });
 
-app.get("/streaming", async(req) => {
+app.get("/streaming/*", async(req) => {
+    if (req.path.includes('%20')) {
+        req.path = decodeURIComponent(req.path);
+    }
+    const filePath = req.path.replace("/streaming", "");
+    const fileName = filePath.split('/').pop()!;
+    const directoryPath = filePath.substring(0, filePath.lastIndexOf("/"));
+
+    const directory = await fileRepository.get(directoryPath);
+
     return (
-        <Streaming />
+        <Streaming path={filePath} fileName={fileName} directory={directory}/>
     );
 });
 

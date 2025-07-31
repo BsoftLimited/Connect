@@ -1,6 +1,7 @@
 import { homedir } from "os";
 import { join } from "path";
 import { statSync } from "fs";
+import { stat } from 'fs/promises';
 
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
@@ -108,6 +109,27 @@ class FilesRepository{
         }
 
         return files;
+    }
+
+    process = async(path: string, endpoint: string = "/files") =>{
+        console.log(`Request path: ${path}`);
+        if (path.includes('%20')) {
+            path = decodeURIComponent(path)
+        }
+        
+        try{
+            const filePath = path.replace(endpoint, "");
+            if(await this.fileExists(filePath)){
+                const absolutePath = this.filePath(filePath);
+                const stats = await stat(absolutePath);
+
+                return { filePath, stats };
+            }else{
+                return Promise.reject(`${filePath} not found`);
+            }
+        }catch(error){
+            return Promise.reject(error);
+        }
     }
 
     static Libraries = [ "Home", "Desktop", "Documents", "Downloads", "Music", "Pictures", "Videos"]

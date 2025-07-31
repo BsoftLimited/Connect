@@ -129,6 +129,15 @@ a{
     background: #f0f0f0;
 }
 
+.file, .folder{
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    :hover{
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+}
+
 @media (max-width: 1500px) {
     html{ font-size: 90%; }
 

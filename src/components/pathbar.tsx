@@ -1,4 +1,5 @@
 import { Html } from "@elysiajs/html";
+import HomeIcon from "../vectors/home";
 
 const PathPart = (props: { part: string }) => {
     return (
@@ -17,9 +18,17 @@ const PathBar = (props: { path: string }) => {
             {pathParts.map((part, index) => {
                 if(part === "") {
                     if(index < pathParts.length - 1){
-                        return <a href="/" style={{ }}>Home</a>;
+                        return (
+                            <a href="/">
+                                <HomeIcon size={"1.5rem"}/>
+                            </a>
+                        );
                     }
-                    return <span style={{ }}>Home</span>;
+                    return (
+                        <span style={"1.5rem"}>
+                            <HomeIcon />
+                        </span>
+                    );
                 }
 
                 if(index < pathParts.length - 1){

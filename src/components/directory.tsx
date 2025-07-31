@@ -26,7 +26,7 @@ const Directory = (props: DirectoryProps) => {
                 <PathBar path={props.details.path} />
             </div>
             <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }}>
-                <div class="files-container">
+                <div id="files-container" class="files-container">
                     { props.details.files.map(file => (<FileView file={file} />))}
                 </div>
             </div>
