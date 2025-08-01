@@ -2,7 +2,7 @@
     "name": "connect",
     "version": "1.0.50",
     "scripts": {
-        "compile": "bun build ./src/scripts/home.ts --outdir ./public/js --watch --splitting --minify",
+        "compile": "bun build ./src/scripts/home.ts ./src/scripts/streaming.ts --outdir ./public/js --watch --splitting --minify",
         "dev": "bun run --watch src/index.tsx"
     },
     "dependencies": {

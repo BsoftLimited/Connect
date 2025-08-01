@@ -1,0 +1,30 @@
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+}
+
+.custom-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+}
+
+video {
+  width: 100%;
+  display: block;
+}
+
+.seek-bar {
+  flex-grow: 1;
+}
+
+button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
