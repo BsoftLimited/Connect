@@ -9,7 +9,7 @@ const Home = (props: DirectoryProps) => {
             <head>
                 <title>Connect | { props.details.path === "/" ? "Home" : props.details.name }</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <link rel="stylesheet" href="/assets/styles/home.css" />
+                <link rel="stylesheet" href="/assets/css/home.css" />
             </head>
             <body style={{ display: "flex", width: "100vw", height: "100vh", flexDirection: "column", overflow: "hidden" }}>
                 <TopBar />
@@ -17,6 +17,7 @@ const Home = (props: DirectoryProps) => {
                     <SideBar />
                     <Directory details={props.details}/>
                 </div>
+                <script src="/assets/js/theme.js"></script>
                 <script src="/assets/js/home.js"></script>
             </body>
         </html>

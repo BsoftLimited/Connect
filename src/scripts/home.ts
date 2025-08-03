@@ -1,3 +1,5 @@
+import { isVideoOrAudio } from "../utils/util";
+
 const queryLocal = <T>(name: string, init: T) =>{
     const response = localStorage.getItem(name);
     if(response){
@@ -8,13 +10,13 @@ const queryLocal = <T>(name: string, init: T) =>{
     return init;
 }
 
-const initContext = ( contextMenu: HTMLElement, className: string, init: ()=> void, clicked: (fileName: string, menuID: string)=> void) =>{
+const initContext = ( contextMenu: HTMLElement, className: string, init: (fileName: string)=> void, clicked: (fileName: string, menuID: string)=> void) =>{
     document.querySelectorAll(`.${className}`).forEach(element => {
         (element as HTMLElement).oncontextmenu = (e) => {
             e.preventDefault();
 
             if (contextMenu) {
-                init();
+                init(element.id);
                 contextMenu.style.display = 'block';
                 contextMenu.style.left = `${e.pageX}px`;
                 contextMenu.style.top = `${e.pageY}px`;
@@ -31,9 +33,7 @@ const initContext = ( contextMenu: HTMLElement, className: string, init: ()=> vo
     });
 }
 
-function handleScroll(){
-    console.log("idhfdidid");
-}
+const currentURL = window.location.pathname;
 
 document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("search-input");
@@ -62,27 +62,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if(contextMenu){
         document.addEventListener("click", ()=> contextMenu.style.display = 'none');
+        const download = document.getElementById("menu-download");
+            const open = document.getElementById("menu-open");
 
         const folderInit = () =>{
-            const download = document.getElementById("menu-download");
-            if(download){
+            if(download && open){
                 download.style.display = "none";
+                open.style.display = "block";
             }
         }
 
-        const fileInit = () =>{
-            const download = document.getElementById("menu-download");
-            if(download){
+        const fileInit = (fileName: string) =>{
+            if(download && open){
                 download.style.display = "block";
+                // check if the file is a video or audio file
+                if(isVideoOrAudio(fileName)){
+                    open.style.display = "block";
+                }else{
+                    open.style.display = "none";
+                }
+            }else{
+                console.error("Download or Open menu item not found");
             }
         }
 
         initContext(contextMenu, "folder", folderInit, (fileName, menuId)=>{
+            console.log(currentURL)
             console.log(`clicked on ${menuId} menu on ${fileName} folder`);
+            if(menuId === "menu-open"){
+                window.location.href = `${currentURL}/${fileName}`;
+            }
         });
 
         initContext(contextMenu, "file", fileInit, (fileName, menuId)=>{
+            console.log(currentURL)
+            console.log(`/download${currentURL}/${fileName}`);
             console.log(`clicked on ${menuId} menu on ${fileName} file`);
+            if(menuId === "menu-download"){
+                window.location.href = `/download${currentURL}/${fileName}`;
+            }else if(menuId === "menu-open"){
+                if(isVideoOrAudio(fileName)){
+                    window.location.href = `/streaming/${currentURL}/${fileName}`;
+                }else{
+                    window.location.href = `/files/${currentURL}/${fileName}`;
+                }
+            }
         });
     }
 });

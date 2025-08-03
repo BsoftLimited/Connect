@@ -9,8 +9,7 @@ const Streaming = (props: { fileName: string, path: string, directory: Directory
             <head>
                 <title>Connect | Streaming - {props.fileName}</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <link rel="stylesheet" href="/assets/styles/home.css" />
-                <link rel="stylesheet" href="/assets/styles/streaming.css" />
+                <link rel="stylesheet" href="/assets/css/streaming.css" />
             </head>
             <body style={{ display: "flex", width: "100vw", height: "100vh", flexDirection: "column", gap: "2rem", overflow: "hidden" }}>
                 <TopBar />
@@ -36,6 +35,7 @@ const Streaming = (props: { fileName: string, path: string, directory: Directory
                         { props.directory.files.filter((file)=> file.name.endsWith(".mp4") || file.name.endsWith(".mp3")).map((file)=>(<FileView file={file}/>)) }
                     </div>
                 </div>
+                <script src="/assets/js/theme.js"></script>
                 <script src="/assets/js/streaming.js"></script>
             </body>
         </html>

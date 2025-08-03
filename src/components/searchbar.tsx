@@ -2,9 +2,11 @@ import { Html } from "@elysiajs/html";
 
 const SearchBar = (props: {name: string}) => {
     return (
-        <div style={{ display: "flex", flexDirection: "row", gap: "10px", border: "solid 2px grey", borderRadius: "20px", padding: "8px" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width={"1.3rem"} height={"1.3rem"} viewBox="0 0 24 24"><path fill="currentColor" d="M15.793 15.793a1 1 0 0 1 1.414 0l4 4a1 1 0 0 1-1.414 1.414l-4-4a1 1 0 0 1 0-1.414" opacity={0.5}></path><path fill="currentColor" d="M2.75 10.5a7.75 7.75 0 1 1 15.5 0a7.75 7.75 0 0 1-15.5 0m7.75-6.25a6.25 6.25 0 1 0 0 12.5a6.25 6.25 0 0 0 0-12.5"></path></svg>
-            <input id="search-input" class="search-input" type="text" placeholder={`Filter ${props.name}...`} style={{ minWidth: "18rem", borderStyle: "none", fontSize: "0.8rem", padding: "0px" }}/>
+        <div class="searchbar">
+            <div class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" style={{ color: "inherit" }} width={"1.5rem"} height={"1.5rem"} viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}><path d="M20 12V5.749a.6.6 0 0 0-.176-.425l-3.148-3.148A.6.6 0 0 0 16.252 2H4.6a.6.6 0 0 0-.6.6v18.8a.6.6 0 0 0 .6.6H11M8 10h8M8 6h4m-4 8h3m9.5 6.5L22 22"></path><path d="M15 18a3 3 0 1 0 6 0a3 3 0 0 0-6 0m1-16v3.4a.6.6 0 0 0 .6.6H20"></path></g></svg>
+            </div>
+            <input id="search-input" class="search-input" type="text" placeholder={`Filter ${props.name}...`} />
         </div>
     );
 }

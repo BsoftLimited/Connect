@@ -1,5 +1,5 @@
 Bun.build({
-    entrypoints: ['./src/scripts/home.ts', './src/scripts/streaming.ts'],
+    entrypoints: ['./src/scripts/home.ts', './src/scripts/streaming.ts', './src/scripts/theme.ts'],
     outdir: './public/js',
     minify: true,
     sourcemap: 'linked',

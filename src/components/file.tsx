@@ -58,9 +58,9 @@ const FileView  = (props: FileProps) => {
     
     return (
         <a href={props.file.path} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "10px", borderRadius: '5px', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "0.5rem", borderRadius: '5px', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
-                <p style={{ textAlign: "center", fontSize: "0.8rem", fontWeight: 300, letterSpacing: "1.5", fontFamily: "sans-serif" }}>{nameWraps.map((line, index) => (
+                <p style={{ textAlign: "center", fontSize: "0.8rem", fontWeight: 300, letterSpacing: "1.5" }}>{nameWraps.map((line, index) => (
                     <span>{line}<br/></span>
                 ))}</p>
                 { !props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "0.8rem", fontWeight: "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }

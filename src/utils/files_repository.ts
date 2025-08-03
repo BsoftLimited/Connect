@@ -3,6 +3,8 @@ import { join } from "path";
 import { statSync } from "fs";
 import { stat } from 'fs/promises';
 
+import { isVideoOrAudio } from "../utils/util";
+
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
 }
@@ -52,7 +54,11 @@ class FilesRepository{
 
                     folders.push({ name, path: absolutePath, size, isDir: true });
                 }else{
-                    files.push({ name, path: join("/files", absolutePath), size: stats.size, isDir: false });
+                    if(isVideoOrAudio(name)){
+                        files.push({ name, path: join("/streaming", absolutePath), size: stats.size, isDir: false });
+                    }else{
+                        files.push({ name, path: join("/files", absolutePath), size: stats.size, isDir: false });
+                    }
                 }
             }catch (error) {
                 console.error(`Error processing file ${name} in path ${path}:`, error);

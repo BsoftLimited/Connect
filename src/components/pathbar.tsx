@@ -14,7 +14,7 @@ const PathBar = (props: { path: string }) => {
     const pathParts = props.path === "/" ? [""] : props.path.split('/');
 
     return (
-        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", padding: "0.6rem", gap: "0.6rem" }}>
+        <div class="pathbar">
             {pathParts.map((part, index) => {
                 if(part === "") {
                     if(index < pathParts.length - 1){
@@ -25,9 +25,7 @@ const PathBar = (props: { path: string }) => {
                         );
                     }
                     return (
-                        <span style={"1.5rem"}>
-                            <HomeIcon />
-                        </span>
+                        <HomeIcon size={"1.5rem"}/>
                     );
                 }
 

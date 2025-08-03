@@ -2,8 +2,10 @@
     "name": "connect",
     "version": "1.0.50",
     "scripts": {
-        "compile": "bun build ./src/scripts/home.ts ./src/scripts/streaming.ts --outdir ./public/js --watch --splitting --minify",
-        "dev": "bun run --watch src/index.tsx"
+        "compile": "bun build ./src/scripts/home.ts ./src/scripts/streaming.ts ./src/scripts/theme.ts --outdir ./public/js --watch --splitting --minify",
+        "dev": "bun run --watch src/index.tsx",
+        "compile-styles": "sass --watch src/sass:public/css",
+        "start": "bun run compile & bun run compile-styles & bun run dev"
     },
     "dependencies": {
         "@elysiajs/html": "^1.3.0",
