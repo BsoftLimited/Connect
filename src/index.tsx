@@ -1,20 +1,20 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-import { html, Html } from "@elysiajs/html";
+//import { html, Html } from "@elysiajs/html";
 import FilesRepository from "./utils/files_repository";
 import { Writable } from 'stream';
-import { stat } from 'fs/promises';
+
 
 import ffmpeg from 'fluent-ffmpeg';
 
-import Home from "./pages/home";
-import { log } from "console";
-import Streaming from "./pages/streaming";
+/*import Home from "./pages/home";
+import Streaming from "./pages/streaming";*/
+import renderApp from "./client";
 
 const fileRepository = new FilesRepository();
 
 const app = new Elysia();
-app.use(html());
+//app.use(html());
 
 // serve the folder called "public" at the root URL
 app.get('/files/*',  async (req) => {
@@ -95,7 +95,7 @@ app.get('/stream/*', function* (req){
             write(chunk, encoding, callback) {
                 // Write chunk to TransformStream writer
                 writer.write(chunk).then(() => callback()).catch(callback);
-                log(`Writing chunk of size: ${chunk.length}`);
+                console.log(`Writing chunk of size: ${chunk.length}`);
             },
             final(callback) {
                 // Close the TransformStream writer when done
@@ -142,15 +142,20 @@ app.get('/stream/*', function* (req){
 
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
-app.get("/*", async(req) => {
+app.get("/api/*", async(req) => {
     if (req.path.includes('%20')) {
         req.path = decodeURIComponent(req.path);
     }
     const directory = await fileRepository.get(req.path);
 
-    return (
-        <Home details={directory} />
-    );
+    return new Response(JSON.stringify(directory), {
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
 });
 
 app.get("/streaming/*", async(req) => {
@@ -166,7 +171,7 @@ app.get("/streaming/*", async(req) => {
     return (
         <Streaming path={filePath} fileName={fileName} directory={directory}/>
     );
-});
+});*/
 
 app.get('/favicon.ico', async (context) => {
     const filePath = `./public/favicon.ico`;
@@ -180,6 +185,19 @@ app.get('/favicon.ico', async (context) => {
     } catch (error) {
         return new Response('Invalid request', { status: 400 })
     }
+});
+
+app.get("/*", async (req) => {
+    const render = renderApp();
+    
+    return new Response(render, {
+        headers: {
+            'Content-Type': 'text/html',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
 });
 
 app.listen(3000, (details)=>{
