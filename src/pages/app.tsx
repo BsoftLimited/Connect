@@ -1,22 +1,19 @@
-import React from "react";
+import { render } from "solid-js/web";
+import { type Component } from "solid-js";
+import TopBar from "../components/topbar";
+import SideBar from "../components/sidebar";
+import Directory from "../components/directory";
 
-const App = () => {
-    const [count, setCount] = React.useState(0);
-
-    const increment = () => {
-        setCount(count + 1);
-    }
-    
+const App: Component = () =>{
     return (
-        <div>
-            <h1>Welcome to the App Page</h1>
-            <p onClick={increment}>This is the connect application page.</p>
-            <div>
-                <p>Count: {count}</p>
-                <button onClick={increment}>Increment</button>
+        <div style={{ display: "flex", width: "100vw", height: "100vh", "flex-direction": "column", overflow: "hidden" }}>
+            <TopBar />
+            <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden" }}>
+                <SideBar />
+                <Directory details={props.details}/>
             </div>
         </div>
     );
 }
 
-export default App;
+render(() => <App />, document.getElementById("root")!);
