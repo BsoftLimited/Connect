@@ -1,5 +1,3 @@
-import { Html } from "@elysiajs/html";
-
 const DownloadIcon = (props: { size?: string | number }) =>{
     const size = props.size || "1.8rem";
 

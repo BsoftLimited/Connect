@@ -1,3 +1,4 @@
+import { useAppContext } from "../providers/app";
 import HomeIcon from "../vectors/home";
 
 const PathPart = (props: { part: string }) => {
@@ -10,7 +11,15 @@ const PathPart = (props: { part: string }) => {
 }
 
 const PathBar = (props: { path: string }) => {
+    const { goto } = useAppContext();
+    
     const pathParts = props.path === "/" ? [""] : props.path.split('/');
+
+    const clicked = (index: number) =>{
+        goto(`${pathParts.slice(0, index + 1).reduce((prev, current)=> `${prev}/${current}`)}`);
+    }
+
+    const home = () => goto("/");
 
     return (
         <div class="pathbar">
@@ -18,27 +27,23 @@ const PathBar = (props: { path: string }) => {
                 if(part === "") {
                     if(index < pathParts.length - 1){
                         return (
-                            <a href="/">
+                            <div onClick={home}>
                                 <HomeIcon size={"1.5rem"}/>
-                            </a>
+                            </div>
                         );
                     }
-                    return (
-                        <HomeIcon size={"1.5rem"}/>
-                    );
+                    return (<HomeIcon size={"1.5rem"}/>);
                 }
 
                 if(index < pathParts.length - 1){
                     return ( 
-                        <a href={ `${pathParts.slice(0, index + 1).reduce((prev, current)=> `${prev}/${current}`)}` }>
+                        <div onclick={()=> clicked(index) }>
                             <PathPart part={part} />
-                        </a>
+                        </div>
                     );
                 }
                 
-                return ( 
-                    <PathPart part={part} />
-                );
+                return ( <PathPart part={part} />);
             })}
         </div>
     );

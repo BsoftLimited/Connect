@@ -5,16 +5,21 @@ import DownloadIcon from "../vectors/download";
 import MusicSidebarIcon from "../vectors/music_sidebar";
 import PicturesIcon from "../vectors/pictures";
 import VideosIcon from "../vectors/videos";
-import type { Component } from "solid-js";
+import type { JSX } from "solid-js";
+import { useAppContext } from "../providers/app";
 
-const SideBarItem: Component = (props:{ name: string, icon: JSX.Element }) =>{
+const SideBarItem = (props:{ name: string, icon: JSX.Element }) =>{
+    const { goto } = useAppContext();
+
+    const clicked = () => goto(`/${props.name === "Home" ? "" : props.name}`);
+    
     return (
-        <a class="library-item" href={`/${props.name === "Home" ? "" : props.name}`}>
+        <div class="library-item" onClick={clicked}>
             <div class="library-item-content">
                 {props.icon}
                 <p class="library-item-label" style={{ "font-size": "1.1rem" }}>{props.name}</p>
             </div>
-        </a>
+        </div>
     );
 }
 

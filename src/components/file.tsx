@@ -8,6 +8,7 @@ import DocumentIcon from "../vectors/document";
 import ImageIcon from "../vectors/image";
 import MusicIcon from "../vectors/music";
 import GenericFileIcon from "../vectors/file";
+import { useAppContext } from "../providers/app";
 
 interface FileProps {
    file : DirectoryFile;
@@ -48,15 +49,19 @@ const FileIcon = (props: { file: DirectoryFile }) => {
 }
 
 const FileView  = (props: FileProps) => {
+    const { goto } = useAppContext();
+    
     let nameWraps: string[] = [];
     if (props.file.name.length > 24) {
         nameWraps = props.file.name.match(/.{1,24}/g) || [];
     }else {
         nameWraps = [props.file.name]; 
     }
+
+    const clicked = () => goto(props.file.path);
     
     return (
-        <a href={props.file.path} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
+        <div onclick={clicked} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
             <div style={{ display:"flex", "flex-direction":"column", "align-items":"center", gap: "0.5rem", "border-radius": '5px', "text-align": 'center', "text-decoration": 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
                 <p style={{ "text-align": "center", "font-size": "0.8rem", "font-weight": 300, "letter-spacing": "1.5" }}>{nameWraps.map((line, index) => (
@@ -65,7 +70,7 @@ const FileView  = (props: FileProps) => {
                 { !props.file.isDir && (<p  style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
                 { props.file.isDir && (<p  style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`${props.file.size} files`}</p>) }
             </div>
-        </a>   
+        </div>   
     );
 }
 

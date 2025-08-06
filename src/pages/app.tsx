@@ -1,36 +1,38 @@
 import { render } from "solid-js/web";
-import { type Component } from "solid-js";
 import TopBar from "../components/topbar";
 import SideBar from "../components/sidebar";
 import Directory from "../components/directory";
-import AppContextProvider, { useAppContext } from "../providers/app";
+import { AppContextProvider } from "../providers/app";
+import { CounterProvider, useCounter } from "../providers/counter";
+import { ThemeProvider } from "../providers/theme";
 
-const App: Component = () =>{
-    const { isError, directory, loading, error } = useAppContext();
-
-    if(loading){
-        return (<div>Loading...</div>);
-    }
-
-    if(error){
-        return (
-            <div>{JSON.stringify(error)}</div>
-        );
-    }
-
+const App = () =>{
     return (
         <div style={{ display: "flex", width: "100vw", height: "100vh", "flex-direction": "column", overflow: "hidden" }}>
             <TopBar />
             <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden" }}>
                 <SideBar />
-                <Directory details={directory!}/>
+                <Directory />
             </div>
+        </div>
+    );
+}
+
+const Test = () =>{
+    const { count, increment } = useCounter();
+
+    return (
+        <div>
+        <p>Count: {count()}</p>
+        <button onClick={increment}>Increment</button>
         </div>
     );
 }
 
 render(() => (
     <AppContextProvider>
-        <App />
+        <ThemeProvider>
+            <App />
+        </ThemeProvider>
     </AppContextProvider>
 ), document.getElementById("root")!);

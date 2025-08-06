@@ -1,5 +1,3 @@
-import { Html } from "@elysiajs/html";
-
 const ArchiveIcon = (props: { size?: string }) => {
     const size = props.size || "3rem";
     return (

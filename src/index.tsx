@@ -7,9 +7,6 @@ import { Writable } from 'stream';
 
 import ffmpeg from 'fluent-ffmpeg';
 
-/*import Home from "./pages/home";
-import Streaming from "./pages/streaming";*/
-import renderApp from "./client";
 
 const fileRepository = new FilesRepository();
 
@@ -146,7 +143,8 @@ app.get("/api/*", async(req) => {
     if (req.path.includes('%20')) {
         req.path = decodeURIComponent(req.path);
     }
-    const directory = await fileRepository.get(req.path);
+    const filePath = req.path.replace("/api", "");
+    const directory = await fileRepository.get(filePath);
 
     return new Response(JSON.stringify(directory), {
         headers: {
@@ -173,7 +171,7 @@ app.get("/api/*", async(req) => {
     );
 });*/
 
-app.get('/favicon.ico', async (context) => {
+app.get('/favicon.ico', async () => {
     const filePath = `./public/favicon.ico`;
     
     try {
@@ -187,10 +185,21 @@ app.get('/favicon.ico', async (context) => {
     }
 });
 
-app.get("/*", async (req) => {
-    const render = renderApp();
-    
-    return new Response(render, {
+app.get("/*", async () => {
+    const html = `<html lang="en">
+        <head>
+            <title>Connect | App</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <link rel="stylesheet" href="/assets/css/app.css" />
+            <link rel="icon" href="/favicon.ico" />
+        </head>
+        <body>
+            <main id="root"></main>
+            <script src="/assets/js/app.js"></script>
+        </body>
+    </html>`;
+
+    return new Response(html, {
         headers: {
             'Content-Type': 'text/html',
             'Cache-Control': 'no-cache, no-store, must-revalidate',

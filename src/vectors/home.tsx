@@ -1,5 +1,3 @@
-import { Html } from "@elysiajs/html";
-
 const HomeIcon = (props: { size?: string | number }) =>{
     const size = props.size || "1.8rem";
     

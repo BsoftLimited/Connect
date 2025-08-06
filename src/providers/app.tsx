@@ -1,4 +1,4 @@
-import { createContext, createSignal, on, onMount, useContext, type Component, type JSXElement, type ParentComponent } from "solid-js";
+import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
 import type { DirectoryDetails } from "../utils/files_repository";
 
 type AppContextType = {
@@ -7,16 +7,57 @@ type AppContextType = {
     error?: string;
 }
 
-export interface AppContextProviderType extends AppContextType {
-    isError: boolean;
-
-    goto(path: string): void;
-    reload(): void;
+interface AppContextProviderType {
+    goto: (path: string)=> void;
+    reload: ()=> void;
+    state: ()=> AppContextType
 }
 
 const AppContext = createContext<AppContextProviderType>();
 
-export const useAppContext = () => {
+const AppContextProvider: ParentComponent = (props) =>{
+    const [state, setState] = createSignal<AppContextType>({ loading: false });
+
+    // fetching initial directory details from api based on the url path on load
+    const fetchDirectory = async (path?: string) => {
+        const currentPath = path ?? localStorage.getItem('path') ?? "/";
+        setState(init => { return { ...init, loading: true, directory: undefined, error: undefined } });
+
+        try{
+            const response = await fetch(`/api${currentPath}`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch directory details");
+            }
+            
+            const directory = await response.json() as DirectoryDetails;
+            setState(init => {
+                return { ...init, loading: false, directory, error: undefined } });
+        }catch(error){
+            console.error("Error fetching initial directory:", error);
+            setState(init => { return { ...init, loading: false, directory: undefined, error: "Failed to load directory details" } });
+        }
+    }
+
+    onMount(()=> fetchDirectory());
+
+    const providerValue: AppContextProviderType = {
+        state,
+        goto: (path: string) => {
+            fetchDirectory(path).finally(()=>{
+                localStorage.setItem('path', path);
+            });
+        },
+        reload: () => setState(init => { return { ...init, loading: true, error: undefined } })
+    };
+
+    return (
+        <AppContext.Provider value={providerValue}>
+            {props.children}
+        </AppContext.Provider>
+    );
+}
+
+const useAppContext = () => {
     const context = useContext(AppContext);
     if (!context) {
         console.log(JSON.stringify(context));
@@ -25,44 +66,4 @@ export const useAppContext = () => {
     return context;
 }
 
-const AppContextProvider: ParentComponent = ({ children }) =>{
-    const [state, setState] = createSignal<AppContextType>({ loading: true });
-
-    // fetching initial directory details from api based on the url path on load
-    const fetchInitialDirectory = async (path?: string) => {
-        setState({ loading: true });
-        const currentPath = path ?? window.location.pathname.replace("/files", "").replace("/streaming", "");
-
-        try {
-            const response = await fetch(`/api${currentPath}`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch directory details");
-            }
-            const directory = await response.json();
-            setState({ loading: false, directory });
-        } catch (error) {
-            console.error("Error fetching initial directory:", error);
-            setState({ loading: false, error: "Failed to load directory details" });
-        }
-    }
-
-    onMount(() => {
-        fetchInitialDirectory(); 
-    });
-
-    const goto = (path: string) => {
-        fetchInitialDirectory(path).finally(()=>{
-            window.location.pathname = path;
-        });
-    }
-
-    const reload = () => fetchInitialDirectory();
-
-    return (
-        <AppContext.Provider value={{ ...state(), goto, reload, isError: !!state().error }}>
-            {children}
-        </AppContext.Provider>
-    );
-}
-
-export default AppContextProvider;
+export { AppContextProvider, useAppContext }

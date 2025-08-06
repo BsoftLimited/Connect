@@ -1,5 +1,3 @@
-import { Html } from "@elysiajs/html";
-
 const SearchBar = (props: {name: string}) => {
     return (
         <div class="searchbar">
