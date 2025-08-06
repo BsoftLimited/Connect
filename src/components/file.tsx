@@ -1,5 +1,4 @@
-import { Html } from "@elysiajs/html";
-import { DirectoryFile } from "../utils/files_repository";
+import type { DirectoryFile } from "../utils/files_repository";
 import FolderFill from "../vectors/folder_fill";
 import FolderEmpty from "../vectors/foolder_empty";
 import ArchiveIcon from "../vectors/archive";
@@ -58,13 +57,13 @@ const FileView  = (props: FileProps) => {
     
     return (
         <a href={props.file.path} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap: "0.5rem", borderRadius: '5px', textAlign: 'center', textDecoration: 'none', color: 'black' }}>
+            <div style={{ display:"flex", "flex-direction":"column", "align-items":"center", gap: "0.5rem", "border-radius": '5px', "text-align": 'center', "text-decoration": 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
-                <p style={{ textAlign: "center", fontSize: "0.8rem", fontWeight: 300, letterSpacing: "1.5" }}>{nameWraps.map((line, index) => (
+                <p style={{ "text-align": "center", "font-size": "0.8rem", "font-weight": 300, "letter-spacing": "1.5" }}>{nameWraps.map((line, index) => (
                     <span>{line}<br/></span>
                 ))}</p>
-                { !props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "0.8rem", fontWeight: "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
-                { props.file.isDir && (<p  style={{ textWrap: "wrap", fontSize: "0.8rem", fontWeight: "bold" }}>{`${props.file.size} files`}</p>) }
+                { !props.file.isDir && (<p  style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
+                { props.file.isDir && (<p  style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`${props.file.size} files`}</p>) }
             </div>
         </a>   
     );

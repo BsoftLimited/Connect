@@ -1,5 +1,3 @@
-import { Html } from "@elysiajs/html";
-import FilesRepository from "../utils/files_repository";
 import HomeIcon from "../vectors/home";
 import DeskTopIcon from "../vectors/desktop";
 import DocumentSidebarIcon from "../vectors/document_sidebar";
@@ -7,13 +5,14 @@ import DownloadIcon from "../vectors/download";
 import MusicSidebarIcon from "../vectors/music_sidebar";
 import PicturesIcon from "../vectors/pictures";
 import VideosIcon from "../vectors/videos";
+import type { Component } from "solid-js";
 
-const SideBarItem = (props:{ name: string, icon: JSX.Element }) =>{
+const SideBarItem: Component = (props:{ name: string, icon: JSX.Element }) =>{
     return (
         <a class="library-item" href={`/${props.name === "Home" ? "" : props.name}`}>
             <div class="library-item-content">
                 {props.icon}
-                <p class="library-item-label" style={{ fontSize: "1.1rem" }}>{props.name}</p>
+                <p class="library-item-label" style={{ "font-size": "1.1rem" }}>{props.name}</p>
             </div>
         </a>
     );

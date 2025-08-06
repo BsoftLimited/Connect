@@ -25,7 +25,7 @@ const getName = (path: string) =>{
         init = path.split("\\");
     }
 
-    return init[init.length - 1];
+    return init[init.length - 1]!;
 }
 
 class FilesRepository{
