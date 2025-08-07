@@ -21,7 +21,7 @@ const AppContextProvider: ParentComponent = (props) =>{
     // fetching initial directory details from api based on the url path on load
     const fetchDirectory = async (path?: string) => {
         const currentPath = path ?? localStorage.getItem('path') ?? "/";
-        setState(init => { return { ...init, loading: true, directory: undefined, error: undefined } });
+        setState(init => { return { ...init, loading: true, error: undefined } });
 
         try{
             const response = await fetch(`/api${currentPath}`);
@@ -43,6 +43,8 @@ const AppContextProvider: ParentComponent = (props) =>{
     const providerValue: AppContextProviderType = {
         state,
         goto: (path: string) => {
+            path = path.replaceAll("\\", "/");
+            console.log(path);
             fetchDirectory(path).finally(()=>{
                 localStorage.setItem('path', path);
             });

@@ -386,6 +386,15 @@ a{
     color: var(--md-sys-color-primary);
 }
 
+.loading{
+    background-color: var(--md-sys-color-surface-container-lowest);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 @media (max-width: 1500px) {
     html{ font-size: 90%; }
 }

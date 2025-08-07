@@ -155,6 +155,11 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     color: var(--md-sys-color-on-surface-variant);
 }
 
+canvas {
+    width: 400px;
+    height: 400px;
+}
+
 @media (max-width: 1500px) {
     .files-container {
         grid-template-columns: repeat(5, auto);

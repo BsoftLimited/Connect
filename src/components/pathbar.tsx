@@ -1,3 +1,4 @@
+import { For, Match, Show, Switch } from "solid-js";
 import { useAppContext } from "../providers/app";
 import HomeIcon from "../vectors/home";
 
@@ -13,38 +14,36 @@ const PathPart = (props: { part: string }) => {
 const PathBar = (props: { path: string }) => {
     const { goto } = useAppContext();
     
-    const pathParts = props.path === "/" ? [""] : props.path.split('/');
+    const pathParts = () => props.path === "/" ? [""] : props.path.split('/');
 
     const clicked = (index: number) =>{
-        goto(`${pathParts.slice(0, index + 1).reduce((prev, current)=> `${prev}/${current}`)}`);
+        const init = pathParts();
+
+        goto(`${init.slice(0, index + 1).reduce((prev, current)=> `${prev}/${current}`)}`);
     }
 
     const home = () => goto("/");
 
     return (
         <div class="pathbar">
-            {pathParts.map((part, index) => {
-                if(part === "") {
-                    if(index < pathParts.length - 1){
-                        return (
-                            <div class="pathLink" onClick={home}>
-                                <HomeIcon size={"1.5rem"}/>
+            <For each={pathParts()}>
+                {(part, index)=>{
+                    return <Switch fallback={ <PathPart part={part} /> }>
+                        <Match when={ part === ""}>
+                            <Show when={index() < pathParts().length - 1} fallback={ <HomeIcon size={"1.5rem"}/> }>
+                                <div class="pathLink" onClick={home}>
+                                    <HomeIcon size={"1.5rem"}/>
+                                </div>
+                            </Show>
+                        </Match>
+                        <Match when={index() < pathParts().length - 1}>
+                            <div class="pathLink" onclick={()=> clicked(index()) }>
+                                <PathPart part={part} />
                             </div>
-                        );
-                    }
-                    return (<HomeIcon size={"1.5rem"}/>);
-                }
-
-                if(index < pathParts.length - 1){
-                    return ( 
-                        <div class="pathLink" onclick={()=> clicked(index) }>
-                            <PathPart part={part} />
-                        </div>
-                    );
-                }
-                
-                return ( <PathPart part={part} />);
-            })}
+                        </Match>
+                    </Switch>
+                }}
+            </For>
         </div>
     );
 }

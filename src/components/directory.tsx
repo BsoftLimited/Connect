@@ -5,6 +5,7 @@ import PathBar from "./pathbar";
 import SearchBar from "./searchbar";
 import FileContextMenu from "./file-contextmenu";
 import type { DirectoryFile } from "../utils/files_repository";
+import Loading from "./loading";
 
 interface ContextStatus{
     x?: string, y?: string,
@@ -28,7 +29,7 @@ const Directory = () => {
     }
     
     return (
-        <Switch fallback={<div>loading...</div>}>
+        <Switch fallback={<Loading />}>
             <Match when={state().error}>
                 <div>{JSON.stringify(state().error)}</div>
             </Match>
