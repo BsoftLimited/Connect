@@ -5,6 +5,8 @@ import Directory from "../components/directory";
 import { AppContextProvider } from "../providers/app";
 import { CounterProvider, useCounter } from "../providers/counter";
 import { ThemeProvider } from "../providers/theme";
+import { Route, Router } from "@solidjs/router";
+import Streaming from "../components/streaming";
 
 const App = () =>{
     return (
@@ -12,7 +14,10 @@ const App = () =>{
             <TopBar />
             <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden" }}>
                 <SideBar />
-                <Directory />
+                <Router>
+                    <Route path="/" component={Directory} />
+                    <Route path="/streaming/*" component={Streaming} />
+                </Router>
             </div>
         </div>
     );

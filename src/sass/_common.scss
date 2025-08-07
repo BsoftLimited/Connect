@@ -381,6 +381,11 @@ a{
     @include hover-color;
 }
 
+.pathLink{
+    cursor: pointer;
+    color: var(--md-sys-color-primary);
+}
+
 @media (max-width: 1500px) {
     html{ font-size: 90%; }
 }

@@ -27,7 +27,7 @@ const PathBar = (props: { path: string }) => {
                 if(part === "") {
                     if(index < pathParts.length - 1){
                         return (
-                            <div onClick={home}>
+                            <div class="pathLink" onClick={home}>
                                 <HomeIcon size={"1.5rem"}/>
                             </div>
                         );
@@ -37,7 +37,7 @@ const PathBar = (props: { path: string }) => {
 
                 if(index < pathParts.length - 1){
                     return ( 
-                        <div onclick={()=> clicked(index) }>
+                        <div class="pathLink" onclick={()=> clicked(index) }>
                             <PathPart part={part} />
                         </div>
                     );

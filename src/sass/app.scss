@@ -27,6 +27,7 @@
     @include common.hover-color;
     @include common.hover-bg-color;
     width: 100%;
+    cursor: pointer;
 }
 
 .library-item-content {
@@ -97,7 +98,6 @@
 
 $context-menu-border-color: var(--md-sys-color-on-surface-variant);
 #file-context-menu {
-    display: none;
     position: absolute;
     background: var(--md-sys-color-surface-container-low);
     overflow: hidden;
@@ -143,6 +143,7 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     @include common.hover-bg-color;
     font-family: 'Roboto', sans-serif;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .pathbar {
