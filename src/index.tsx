@@ -6,6 +6,8 @@ import { Writable } from 'stream';
 
 
 import ffmpeg from 'fluent-ffmpeg';
+import { renderToString } from "solid-js/web";
+import { App } from "./pages/app";
 
 
 const fileRepository = new FilesRepository();
@@ -186,6 +188,7 @@ app.get('/favicon.ico', async () => {
 });
 
 app.get("/*", async () => {
+    //const render = renderToString(()=> <App />);
     const html = `<html lang="en">
         <head>
             <title>Connect | App</title>

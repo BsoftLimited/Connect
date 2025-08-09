@@ -9,6 +9,7 @@ import ImageIcon from "../vectors/image";
 import MusicIcon from "../vectors/music";
 import GenericFileIcon from "../vectors/file";
 import { useAppContext } from "../providers/app";
+import { For, Show } from "solid-js";
 
 interface FileProps {
    file : DirectoryFile;
@@ -52,30 +53,41 @@ const FileIcon = (props: { file: DirectoryFile }) => {
 
 const FileView  = (props: FileProps) => {
     const { goto } = useAppContext();
-    
-    let nameWraps: string[] = [];
-    if (props.file.name.length > 24) {
-        nameWraps = props.file.name.match(/.{1,24}/g) || [];
-    }else {
-        nameWraps = [props.file.name]; 
-    }
 
     const clicked = () => goto(props.file.path);
     const context = (event: PointerEvent) =>{
         event.preventDefault();
+        event.stopPropagation();
 
         props.onContext(event.pageX, event.pageY);
+        console.log("context clicked from file");
+    }
+
+    const names = () =>{
+        let nameWraps: string[] = [];
+        if (props.file.name.length > 24) {
+            nameWraps = props.file.name.match(/.{1,24}/g) || [];
+        }else {
+            nameWraps = [props.file.name]; 
+        }
+        return nameWraps;
     }
     
     return (
         <div onclick={clicked} onContextMenu={context} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
             <div style={{ display:"flex", "flex-direction":"column", "align-items":"center", gap: "0.5rem", "border-radius": '5px', "text-align": 'center', "text-decoration": 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
-                <p style={{ "text-align": "center", "font-size": "0.8rem", "font-weight": 300, "letter-spacing": "1.5" }}>{nameWraps.map((line, index) => (
-                    <span>{line}<br/></span>
-                ))}</p>
-                { !props.file.isDir && (<p  style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>) }
-                { props.file.isDir && (<p  style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`${props.file.size} files`}</p>) }
+                <p style={{ "text-align": "center", "font-size": "0.8rem", "font-weight": 300, "letter-spacing": "1.5" }}>
+                    <For each={names()}>
+                        {((line, index) => (<span>{line}<br/></span>))}
+                    </For>
+                </p>
+                <Show when={!props.file.isDir}>
+                    <p style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`File size: ${formatBytes(props.file.size)}`}</p>
+                </Show>
+                <Show when={props.file.isDir}>
+                    <p style={{ "text-wrap": "wrap", "font-size": "0.8rem", "font-weight": "bold" }}>{`${props.file.size} files`}</p>
+                </Show>
             </div>
         </div>   
     );
