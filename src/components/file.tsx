@@ -14,7 +14,7 @@ import { For, Show } from "solid-js";
 interface FileProps {
    file : DirectoryFile;
 
-   onContext: (x: number, y: number)=>void
+   onContext: (event: PointerEvent)=>void
 }
 
 // funtion to convert bytes to human-readable format
@@ -55,13 +55,6 @@ const FileView  = (props: FileProps) => {
     const { goto } = useAppContext();
 
     const clicked = () => goto(props.file.path);
-    const context = (event: PointerEvent) =>{
-        event.preventDefault();
-        event.stopPropagation();
-
-        props.onContext(event.pageX, event.pageY);
-        console.log("context clicked from file");
-    }
 
     const names = () =>{
         let nameWraps: string[] = [];
@@ -74,7 +67,7 @@ const FileView  = (props: FileProps) => {
     }
     
     return (
-        <div onclick={clicked} onContextMenu={context} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
+        <div onclick={clicked} onContextMenu={props.onContext} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
             <div style={{ display:"flex", "flex-direction":"column", "align-items":"center", gap: "0.5rem", "border-radius": '5px', "text-align": 'center', "text-decoration": 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
                 <p style={{ "text-align": "center", "font-size": "0.8rem", "font-weight": 300, "letter-spacing": "1.5" }}>

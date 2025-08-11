@@ -18,7 +18,7 @@ interface ContextStatus{
 
 interface FilesProps{
     filter: ()=> string,
-    context: (file: DirectoryFile, x: number, y: number) => void
+    context: (event: PointerEvent, file: DirectoryFile) => void
 }
 
 const Flies: Component<FilesProps> = ({ filter, context }) =>{
@@ -27,7 +27,7 @@ const Flies: Component<FilesProps> = ({ filter, context }) =>{
     return (
         <div id="files-container" class="files-container">
             <For each={state().directory!.files.filter((file)=> file.name.includes(filter()))} fallback={<div>No items</div>}>
-                {(item) => <FileView  file={item} onContext={(x, y)=>context(item, x, y) } />}
+                {(item) => <FileView  file={item} onContext={(event)=>context(event, item) } />}
             </For>
         </div>
     );

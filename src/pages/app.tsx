@@ -8,7 +8,7 @@ import { Route, Router } from "@solidjs/router";
 import Streaming from "../components/streaming";
 
 import { UploadContextProvider } from "../providers/upload";
-import { MultiProvider } from "../providers";
+import { ContextMenuProvider } from "../providers/context-menu";
 
 export const App = () =>{
     return (
@@ -26,11 +26,13 @@ export const App = () =>{
 }
 
 render(() => (
-    <AppContextProvider>
-        <ThemeProvider>
-            <UploadContextProvider>
-                <App />
-            </UploadContextProvider>
-        </ThemeProvider>
-    </AppContextProvider>
+    <ContextMenuProvider>
+        <AppContextProvider>
+            <ThemeProvider>
+                <UploadContextProvider>
+                    <App />
+                </UploadContextProvider>
+            </ThemeProvider>
+        </AppContextProvider>
+    </ContextMenuProvider>
 ), document.getElementById("root")!);
