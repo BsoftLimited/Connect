@@ -393,6 +393,19 @@ a{
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
+    gap: 2rem;
+
+    canvas {
+        width: 20rem;
+        height: 20rem;
+    }
+
+    div{
+        font-size: medium;
+        color: var(--md-sys-color-on-surface-variant);
+        font-weight: bold;
+    }
 }
 
 @media (max-width: 1500px) {

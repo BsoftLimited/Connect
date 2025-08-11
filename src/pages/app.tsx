@@ -7,6 +7,9 @@ import { ThemeProvider } from "../providers/theme";
 import { Route, Router } from "@solidjs/router";
 import Streaming from "../components/streaming";
 
+import { UploadContextProvider } from "../providers/upload";
+import { MultiProvider } from "../providers";
+
 export const App = () =>{
     return (
         <div style={{ display: "flex", width: "100vw", height: "100vh", "flex-direction": "column", overflow: "hidden" }}>
@@ -25,7 +28,9 @@ export const App = () =>{
 render(() => (
     <AppContextProvider>
         <ThemeProvider>
-            <App />
+            <UploadContextProvider>
+                <App />
+            </UploadContextProvider>
         </ThemeProvider>
     </AppContextProvider>
 ), document.getElementById("root")!);
