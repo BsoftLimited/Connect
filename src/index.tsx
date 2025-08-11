@@ -1,21 +1,13 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-//import { html, Html } from "@elysiajs/html";
 import FilesRepository from "./utils/files_repository";
-import { Writable } from 'stream';
-
-
-import ffmpeg from 'fluent-ffmpeg';
-import { renderToString } from "solid-js/web";
-import { App } from "./pages/app";
 
 
 const fileRepository = new FilesRepository();
 
 const app = new Elysia();
-//app.use(html());
+app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
-// serve the folder called "public" at the root URL
 app.get('/files/*',  async (req) => {
     try{
         const { filePath, stats } = await fileRepository.process(req.path, "/files");
@@ -70,77 +62,6 @@ app.get('/download/*',  async (req) => {
     }
 });
 
-app.get('/stream/*', function* (req){
-    if (req.path.includes('%20')) {
-        req.path = decodeURIComponent(req.path);
-    }
-    const filePath = req.path.replace("/stream", "");
-    const inputPath = fileRepository.filePath(filePath);
-
-    // Validate file type (basic check for video extension)
-    const validExtensions = ['.mp4', '.mkv', '.avi', '.mov'];
-    const extention = req.path.toLowerCase().substring(req.path.length - 4);
-    if (!validExtensions.includes(extention)) {
-        return new Response('Invalid file type', { status: 400 });
-    }
-    
-    try{
-        // Create transform stream
-        const transformer = new TransformStream()
-        const writer = transformer.writable.getWriter();
-
-        // Create a Node.js Writable stream to bridge with FFmpeg
-        const nodeWritable = new Writable({
-            write(chunk, encoding, callback) {
-                // Write chunk to TransformStream writer
-                writer.write(chunk).then(() => callback()).catch(callback);
-                console.log(`Writing chunk of size: ${chunk.length}`);
-            },
-            final(callback) {
-                // Close the TransformStream writer when done
-                writer.close().then(() => callback()).catch(callback);
-            },
-            destroy(err, callback) {
-                // Handle errors and abort the writer
-                writer.abort(err).then(() => callback(err)).catch(callback);
-            }
-        });
-
-        // Handle client disconnection
-        req.request.signal.addEventListener('abort', () => {
-            writer.close();
-            nodeWritable.destroy();
-            ffmpegProcess.kill('SIGTERM'); // Terminate FFmpeg
-        });
-        
-        const ffmpegProcess = ffmpeg(inputPath)
-            .format('mp4').videoCodec('libx264').audioCodec('aac')
-            .outputOptions([
-                '-movflags frag_keyframe+empty_moov', // For streaming
-                '-f mp4'
-            ]).on('error', (err) => {
-                console.error('FFmpeg error:', err)
-                nodeWritable.destroy(err);
-                req.set.status = 500;
-            }).on('end', () => nodeWritable.end());
-            
-        ffmpegProcess.pipe(nodeWritable, { end: true });
-
-        req.set.headers = {
-            'Content-Type': 'video/mp4',
-            'Transfer-Encoding': 'chunked'
-        };
-        return new Response(transformer.readable);
-    } catch (err) {
-        console.error('Server error:', err);
-        req.set.status = 500;
-        return new Response('Internal server error', { status: 500 });
-    }
-});
-
-
-app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
-
 app.get("/api/*", async(req) => {
     if (req.path.includes('%20')) {
         req.path = decodeURIComponent(req.path);
@@ -152,26 +73,10 @@ app.get("/api/*", async(req) => {
         headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
+            'Pragma': 'no-cache'
         }
     });
 });
-
-/*app.get("/streaming/*", async(req) => {
-    if (req.path.includes('%20')) {
-        req.path = decodeURIComponent(req.path);
-    }
-    const filePath = req.path.replace("/streaming", "");
-    const fileName = filePath.split('/').pop()!;
-    const directoryPath = filePath.substring(0, filePath.lastIndexOf("/"));
-
-    const directory = await fileRepository.get(directoryPath);
-
-    return (
-        <Streaming path={filePath} fileName={fileName} directory={directory}/>
-    );
-});*/
 
 app.get('/favicon.ico', async () => {
     const filePath = `./public/favicon.ico`;
@@ -184,6 +89,37 @@ app.get('/favicon.ico', async () => {
         return new Response('Not found', { status: 404 })
     } catch (error) {
         return new Response('Invalid request', { status: 400 })
+    }
+});
+
+app.post('/upload', async ({ request }) => {
+    const formData = await request.formData();
+    const file = formData.get('file') as File | undefined;
+    const dest = formData.get("dest")?.toString();
+
+    if (!file) {
+        return new Response('No file uploaded', { status: 400 });
+    }
+
+    if(!dest){
+        return new Response("destination folder not specified", { status: 400 });
+    }
+
+    // Save file
+    try{
+        fileRepository.save(dest, file);
+
+        return new Response(JSON.stringify({ message: 'File uploaded successfully', filename: file.name, size: file.size }),{
+            status: 201,
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+            }
+        });
+    }catch(error){
+        console.error(error);
+        return new Response("internal server error", { status: 500 });
     }
 });
 
@@ -206,8 +142,7 @@ app.get("/*", async () => {
         headers: {
             'Content-Type': 'text/html',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
+            'Pragma': 'no-cache'
         }
     });
 });

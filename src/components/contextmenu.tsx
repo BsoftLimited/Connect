@@ -1,8 +1,8 @@
-import type { Component } from "solid-js";
+import type { Component, JSX } from "solid-js";
 
 interface ContextMenuProps{
     x?: string, y?: string,
-    upload?: ()=>void
+    upload?: JSX.EventHandler<HTMLElement, MouseEvent>
 }
 
 const ContextMenu: Component<ContextMenuProps> = ({ x, y, upload }) =>{

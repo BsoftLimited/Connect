@@ -103,6 +103,19 @@ class FilesRepository{
         }
     }
 
+    save = async (path: string, file: File) =>{
+        const absolutePath = join(this.homePath, path);
+
+        let finalPath = join(absolutePath, file.name);
+        let prefix = 1;
+        while(await this.fileExists(finalPath)){
+            finalPath = join(absolutePath, `${file.name}-${prefix}`);
+            prefix += 1;
+        }
+        
+        await Bun.write(path, finalPath);
+    }
+
     libraries = async(): Promise<DirectoryFile[]> => {
         const files: DirectoryFile[] = [];
 

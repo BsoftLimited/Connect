@@ -1,4 +1,4 @@
-import { createSignal, Match, onMount, Show, Switch, For, type Component } from "solid-js";
+import { createSignal, Match, onMount, Show, Switch, JSX, For, type Component } from "solid-js";
 import { useAppContext } from "../providers/app";
 import FileView from "./file";
 import PathBar from "./pathbar";
@@ -11,7 +11,7 @@ import Upload from "./upload";
 
 interface ContextStatus{
     x?: string, y?: string,
-    show: "file" | "directory" | "upload" | "none",
+    show: "file" | "directory" | "none",
 
     file?: DirectoryFile
 }
@@ -36,17 +36,27 @@ const Flies: Component<FilesProps> = ({ filter, context }) =>{
 const Directory = () => {
     const { state } = useAppContext();
     const [contextStatus, setContextStatus] = createSignal<ContextStatus>({ show: "none" });
+    const [showUpload, setShowUpload] = createSignal(false);
 
     const [filter, setFilter] = createSignal("");
 
     const clear = () => setContextStatus({ show: "none" });
 
     onMount(()=> {
-        document.addEventListener("click", clear);
+        document.addEventListener("click", ()=>{
+            console.log("I was called");
+            if(contextStatus().show !== "none"){
+                clear();
+            }
+
+            if(showUpload()){
+                setShowUpload(false);
+            }
+        });
     });
 
     const fileContext = (file: DirectoryFile, x: number, y: number) =>{
-        setContextStatus({ show: "none" });
+        clear();
         setContextStatus({ show: "file", x: `${x}px`, y: `${y}px`, file });
     }
 
@@ -54,15 +64,15 @@ const Directory = () => {
         event.preventDefault();
         event.stopPropagation();
 
-        setContextStatus({ show: "none" });
+        clear();
         setContextStatus({ show: "directory", x: `${event.pageX}px`, y: `${event.pageY}px` });
-
-        console.log("context clicked from directory");
     }
 
-    const openUpload = () => {
-        setContextStatus({ show: "upload"});
-        console.log("upload was clicked");
+    const openUpload = (event: MouseEvent) => {
+        event.stopImmediatePropagation();
+
+        setShowUpload(true);
+        clear();
     }
     
     return (
@@ -91,7 +101,7 @@ const Directory = () => {
                         <PathBar path={state().directory!.path} />
                     </div>
                     <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }} onContextMenu={directoryContext}>
-                        <Show when={contextStatus().show === "upload"} fallback={ <Flies filter={filter} context={fileContext} /> }>
+                        <Show when={showUpload()} fallback={ <Flies filter={filter} context={fileContext} /> }>
                             <Upload /> 
                         </Show>
                     </div>
