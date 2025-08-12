@@ -12,6 +12,7 @@
         "@elysiajs/stream": "^1.1.0",
         "@ffmpeg/ffmpeg": "^0.12.15",
         "@lottiefiles/dotlottie-web": "^0.49.0",
+        "@motionone/solid": "^10.16.4",
         "@solidjs/router": "^0.15.3",
         "elysia": "latest",
         "fluent-ffmpeg": "^2.1.3",

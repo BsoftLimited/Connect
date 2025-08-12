@@ -1,12 +1,21 @@
+import { Motion } from "@motionone/solid";
+
 import { useAppContext } from "../providers/app";
 import { useUploadContext } from "../providers/upload";
+import { type Component } from "solid-js";
 
-const Upload = () =>{
+interface UploadProps{
+    open: boolean
+}
+
+const Upload: Component<UploadProps> = (props) =>{
     const appContext = useAppContext();
     const uploadContext = useUploadContext();
 
     return (
-        <div style={{ display: "flex", "justify-content": "center", "align-items": "center", "flex-direction": "column", width: "100%", height: "100%" }}>
+        <Motion.div initial={{ x: "100%" }} animate={{ x: props.open ? 0 : "100%" }} transition={{ duration: 0.3, easing: "ease-out" }}
+            class="panel"
+            style={{ display: "flex", "justify-content": "center", "align-items": "center", "flex-direction": "column" }}>
             <h1 class="text-2xl font-bold mb-4">File Upload with Progress</h1>
             <form onSubmit={uploadContext.upload} class="space-y-4">
                 <div>
@@ -33,7 +42,7 @@ const Upload = () =>{
                     </p>
                 </div>
             )}
-        </div>
+        </Motion.div>
     );
 }
 

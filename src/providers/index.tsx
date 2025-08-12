@@ -1,7 +1,7 @@
-import { type Component, type ParentComponent, JSX, mergeProps } from "solid-js";
+import { type Component, JSX } from "solid-js";
 
 export interface MultiProviderProps {
-    providers: ParentComponent[];
+    providers: Component<{ children: JSX.Element }>[];
     children: JSX.Element;
 }
 

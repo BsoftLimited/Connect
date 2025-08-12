@@ -67,9 +67,8 @@ const Directory = () => {
                         <PathBar path={state().directory!.path} />
                     </div>
                     <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }} onContextMenu={showDirectoryContext}>
-                        <Show when={showUpload()} fallback={ <Flies filter={filter} context={showFileContext} /> }>
-                            <Upload /> 
-                        </Show>
+                        <Flies filter={filter} context={showFileContext} />
+                        <Upload open={showUpload()}/> 
                     </div>
                     <Show when={status().show === "file"}>
                         <FileContextMenu x={status().x} y={status().y} file={status().file}/>
