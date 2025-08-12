@@ -21,8 +21,7 @@ interface UploadContextType{
 
 const UploadContext = createContext<UploadContextType>();
 
-const UploadContextProvider: ParentComponent = ({ children }) =>{
-    const appContext = useAppContext();
+const UploadContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<UploadContextState>({ loading: false, progress: 0, status: "" });
 
     const upload: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
@@ -30,13 +29,9 @@ const UploadContextProvider: ParentComponent = ({ children }) =>{
         
         const form = event.currentTarget as HTMLFormElement;
         const formData = new FormData(form);
-        const file = formData.get('file') as File;
-    
-        if (!file){
+        if (!formData.has("file") || !formData.has("dest")){
             return;
         }
-
-        formData.set("dest", appContext.state().directory!.path);
     
         setState({ status: 'Uploading...', loading: true, progress: 0 });
     
@@ -51,7 +46,8 @@ const UploadContextProvider: ParentComponent = ({ children }) =>{
         });
     
         xhr.addEventListener('load', () => {
-            if (xhr.status === 200) {
+            console.log(xhr.response);
+            if (xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText);
                 setState(init => { return { ...init, status: 'Upload complete!',  file: response } });
             } else {
@@ -66,7 +62,7 @@ const UploadContextProvider: ParentComponent = ({ children }) =>{
 
     return (
         <UploadContext.Provider value={{ uploadState: state, upload  }}>
-            { children }
+            { props.children }
         </UploadContext.Provider>
     );
 }

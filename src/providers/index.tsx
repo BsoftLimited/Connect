@@ -5,10 +5,10 @@ export interface MultiProviderProps {
     children: JSX.Element;
 }
 
-const MultiProvider: Component<MultiProviderProps> = ({ children, providers }) => {
-    return providers.reduceRight(
+const MultiProvider: Component<MultiProviderProps> = (props) => {
+    return props.providers.reduceRight(
         (child, Provider) => <Provider>{child}</Provider>,
-        children
+        props.children
     );
 };
 

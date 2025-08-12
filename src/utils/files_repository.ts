@@ -4,6 +4,7 @@ import { statSync } from "fs";
 import { stat } from 'fs/promises';
 
 import { isVideoOrAudio } from "../utils/util";
+import { error } from "console";
 
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
@@ -91,14 +92,12 @@ class FilesRepository{
     }
 
     fileExists = async (path: string): Promise<boolean> => {
-        const absolutePath = join(this.homePath, path); 
-        console.log(`Checking if file exists at: ${absolutePath}`);
+        console.log(`Checking if file exists at: ${path}`);
 
         try {
-            const stats = statSync(absolutePath);
+            const stats = statSync(path);
             return stats.isFile();
         } catch (error) {
-            console.error(`Error checking file existence at ${absolutePath}:`, error);
             return false;
         }
     }
@@ -113,7 +112,12 @@ class FilesRepository{
             prefix += 1;
         }
         
-        await Bun.write(path, finalPath);
+        console.write(`final name is: ${finalPath}`);
+        await Bun.write(finalPath, file, { createPath: true }).catch((error)=>{
+            console.error(error);
+        }).then((value)=>{
+            console.log(`finished saving file: ${file.name} to path: ${absolutePath}`);
+        });
     }
 
     libraries = async(): Promise<DirectoryFile[]> => {

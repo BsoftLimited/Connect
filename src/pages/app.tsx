@@ -9,6 +9,7 @@ import Streaming from "../components/streaming";
 
 import { UploadContextProvider } from "../providers/upload";
 import { ContextMenuProvider } from "../providers/context-menu";
+import { MultiProvider } from "../providers";
 
 export const App = () =>{
     return (
@@ -16,23 +17,23 @@ export const App = () =>{
             <TopBar />
             <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden" }}>
                 <SideBar />
-                <Router>
-                    <Route path="/" component={Directory} />
-                    <Route path="/streaming/*" component={Streaming} />
-                </Router>
+                <ContextMenuProvider>
+                    <Router>
+                        <Route path="/" component={Directory} />
+                        <Route path="/streaming/*" component={Streaming} />
+                    </Router>
+                </ContextMenuProvider>
             </div>
         </div>
     );
 }
 
 render(() => (
-    <ContextMenuProvider>
-        <AppContextProvider>
-            <ThemeProvider>
-                <UploadContextProvider>
-                    <App />
-                </UploadContextProvider>
-            </ThemeProvider>
-        </AppContextProvider>
-    </ContextMenuProvider>
+    <AppContextProvider>
+        <ThemeProvider>
+            <UploadContextProvider>
+                <App />
+            </UploadContextProvider>
+        </ThemeProvider>
+    </AppContextProvider>
 ), document.getElementById("root")!);

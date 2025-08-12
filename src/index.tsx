@@ -103,13 +103,15 @@ app.post('/upload', async ({ request }) => {
 
     if(!dest){
         return new Response("destination folder not specified", { status: 400 });
+    }else{
+        console.log(`saving file: ${file.name} to path: ${dest}`);
     }
 
     // Save file
     try{
-        fileRepository.save(dest, file);
+        await fileRepository.save(dest, file);
 
-        return new Response(JSON.stringify({ message: 'File uploaded successfully', filename: file.name, size: file.size }),{
+        return new Response(JSON.stringify({ message: 'File uploaded successfully', dest, filename: file.name, size: file.size }),{
             status: 201,
             headers: {
                 'Content-Type': 'application/json',

@@ -8,13 +8,7 @@ import type { DirectoryFile } from "../utils/files_repository";
 import Loading from "./loading";
 import ContextMenu from "./contextmenu";
 import Upload from "./upload";
-
-interface ContextStatus{
-    x?: string, y?: string,
-    show: "file" | "directory" | "none",
-
-    file?: DirectoryFile
-}
+import { useContextMenuContext } from "../providers/context-menu";
 
 interface FilesProps{
     filter: ()=> string,
@@ -35,38 +29,10 @@ const Flies: Component<FilesProps> = ({ filter, context }) =>{
 
 const Directory = () => {
     const { state } = useAppContext();
-    const [contextStatus, setContextStatus] = createSignal<ContextStatus>({ show: "none" });
+    const { showDirectoryContext, showFileContext, status, clear } = useContextMenuContext();
     const [showUpload, setShowUpload] = createSignal(false);
 
     const [filter, setFilter] = createSignal("");
-
-    const clear = () => setContextStatus({ show: "none" });
-
-    onMount(()=> {
-        document.addEventListener("click", ()=>{
-            console.log("I was called");
-            if(contextStatus().show !== "none"){
-                clear();
-            }
-
-            if(showUpload()){
-                setShowUpload(false);
-            }
-        });
-    });
-
-    const fileContext = (file: DirectoryFile, x: number, y: number) =>{
-        clear();
-        setContextStatus({ show: "file", x: `${x}px`, y: `${y}px`, file });
-    }
-
-    const directoryContext = (event: PointerEvent) =>{
-        event.preventDefault();
-        event.stopPropagation();
-
-        clear();
-        setContextStatus({ show: "directory", x: `${event.pageX}px`, y: `${event.pageY}px` });
-    }
 
     const openUpload = (event: MouseEvent) => {
         event.stopImmediatePropagation();
@@ -100,16 +66,16 @@ const Directory = () => {
                         </div>
                         <PathBar path={state().directory!.path} />
                     </div>
-                    <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }} onContextMenu={directoryContext}>
-                        <Show when={showUpload()} fallback={ <Flies filter={filter} context={fileContext} /> }>
+                    <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }} onContextMenu={showDirectoryContext}>
+                        <Show when={showUpload()} fallback={ <Flies filter={filter} context={showFileContext} /> }>
                             <Upload /> 
                         </Show>
                     </div>
-                    <Show when={contextStatus().show === "file"}>
-                        <FileContextMenu x={contextStatus().x} y={contextStatus().y} file={contextStatus().file}/>
+                    <Show when={status().show === "file"}>
+                        <FileContextMenu x={status().x} y={status().y} file={status().file}/>
                     </Show>
-                    <Show when={contextStatus().show === "directory"}>
-                        <ContextMenu x={contextStatus().x} y={contextStatus().y} upload={openUpload} />
+                    <Show when={status().show === "directory"}>
+                        <ContextMenu x={status().x} y={status().y} upload={openUpload} />
                     </Show>
                 </div>
             </Match>

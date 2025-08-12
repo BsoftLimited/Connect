@@ -1,6 +1,8 @@
+import { useAppContext } from "../providers/app";
 import { useUploadContext } from "../providers/upload";
 
 const Upload = () =>{
+    const appContext = useAppContext();
     const uploadContext = useUploadContext();
 
     return (
@@ -11,6 +13,7 @@ const Upload = () =>{
                     <label class="block text-sm font-medium text-gray-700 mb-1">Choose a file</label>
                     <input type="file" name="file" required class="block w-full text-sm text-gray-500
                         file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    <input type="text" name="dest" value={appContext.state().directory!.path} style={{ display: "none" }}/>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">Upload</button>
             </form>
