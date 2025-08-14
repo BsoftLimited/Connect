@@ -4,14 +4,15 @@ import { useAppContext } from "./app";
 interface FileInfo{
     filename: string,
     size: number,
-    path: string
+    dest: string
 }
 
 interface UploadContextState{
     loading: boolean,
     progress: number,
     status: string,
-    file?: FileInfo
+    error?: string,
+    uploads: FileInfo[]
 }
 
 interface UploadContextType{
@@ -22,7 +23,7 @@ interface UploadContextType{
 const UploadContext = createContext<UploadContextType>();
 
 const UploadContextProvider: ParentComponent = (props) =>{
-    const [state, setState] = createSignal<UploadContextState>({ loading: false, progress: 0, status: "" });
+    const [state, setState] = createSignal<UploadContextState>({ loading: false, progress: 0, status: "", uploads: [] });
     const appContext = useAppContext();
 
     const upload: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
@@ -34,7 +35,7 @@ const UploadContextProvider: ParentComponent = (props) =>{
             return;
         }
     
-        setState({ status: 'Uploading...', loading: true, progress: 0 });
+        setState(init => { return { ...init, status: 'Uploading...', error: undefined, loading: true, progress: 0 } });
     
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/upload', true);
@@ -50,15 +51,18 @@ const UploadContextProvider: ParentComponent = (props) =>{
             console.log(xhr.response);
             if (xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText);
-                setState(init => { return { ...init, status: 'Upload complete!',  file: response } });
+                console.log(response);
+                
+                const uploads = [...state().uploads];
+                uploads.push(response);
+                setState(init => { return { ...init, status: 'Upload complete!', uploads, loading: false } });
                 appContext.reload();
             } else {
-                setState(init => { return { ...init, status: `Error: ${xhr.responseText}`, progress: 0 } });
+                setState(init => { return { ...init, status: 'Upload failed', error: `Error: ${xhr.responseText}`, progress: 0 } });
             }
         });
     
-        xhr.addEventListener('error', () => setState(init => { return { ...init, status: 'Upload failed', progress: 0 } }));
-    
+        xhr.addEventListener('error', (error) => setState(init => { return { ...init, status: 'Upload failed', error: `Upload failed: ${error}`, progress: 0 } }));
         xhr.send(formData);
     };
 

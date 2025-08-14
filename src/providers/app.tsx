@@ -3,25 +3,29 @@ import type { DirectoryDetails } from "../utils/files_repository";
 
 type AppContextType = {
     loading: boolean;
-    directory?: DirectoryDetails
+    directory?: DirectoryDetails;
+    file?: string; 
     error?: string;
+    target: "directory" | "stream"
 }
 
 interface AppContextProviderType {
     goto: (path: string)=> void;
+    stream: (file: string) => void;
     reload: ()=> void;
     state: ()=> AppContextType
+
 }
 
 const AppContext = createContext<AppContextProviderType>();
 
 const AppContextProvider: ParentComponent = (props) =>{
-    const [state, setState] = createSignal<AppContextType>({ loading: false });
+    const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
 
     // fetching initial directory details from api based on the url path on load
     const fetchDirectory = async (path?: string) => {
         const currentPath = path ?? localStorage.getItem('path') ?? "/";
-        setState(init => { return { ...init, loading: true, error: undefined } });
+        setState(init => { return { ...init, loading: true, error: undefined, target: "directory" } });
 
         try{
             const response = await fetch(`/api${currentPath}`);
@@ -49,7 +53,8 @@ const AppContextProvider: ParentComponent = (props) =>{
                 localStorage.setItem('path', path);
             });
         },
-        reload: () => fetchDirectory()
+        reload: () => fetchDirectory(),
+        stream: (file: string)=> setState(init => { return { ...init, file, target: "stream" } })
     };
 
     return (

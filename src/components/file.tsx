@@ -10,21 +10,12 @@ import MusicIcon from "../vectors/music";
 import GenericFileIcon from "../vectors/file";
 import { useAppContext } from "../providers/app";
 import { For, Show } from "solid-js";
+import { formatBytes, isVideoOrAudio } from "../utils/util";
 
 interface FileProps {
    file : DirectoryFile;
 
    onContext: (event: PointerEvent)=>void
-}
-
-// funtion to convert bytes to human-readable format
-const formatBytes = (bytes: number, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
 const FileIcon = (props: { file: DirectoryFile }) => {
@@ -52,9 +43,17 @@ const FileIcon = (props: { file: DirectoryFile }) => {
 }
 
 const FileView  = (props: FileProps) => {
-    const { goto } = useAppContext();
+    const { goto, stream } = useAppContext();
 
-    const clicked = () => goto(props.file.path);
+    const clicked = () => {
+        if(props.file.isDir){
+            goto(props.file.path);
+        }else if(isVideoOrAudio(props.file.name)){
+            stream(props.file.name);
+        }else{
+            window.location.href = `${props.file.path.replaceAll("\\", "/").replace("/files", "download")}`;
+        }
+    }
 
     const names = () =>{
         let nameWraps: string[] = [];
@@ -70,7 +69,7 @@ const FileView  = (props: FileProps) => {
         <div onclick={clicked} onContextMenu={props.onContext} class={props.file.isDir ? "folder" : "file" } id={props.file.name}>
             <div style={{ display:"flex", "flex-direction":"column", "align-items":"center", gap: "0.5rem", "border-radius": '5px', "text-align": 'center', "text-decoration": 'none', color: 'black' }}>
                 <FileIcon file={props.file} />
-                <p style={{ "text-align": "center", "font-size": "0.8rem", "font-weight": 300, "letter-spacing": "1.5" }}>
+                <p style={{ "text-align": "center", "font-size": "1rem", "font-weight": 300, "letter-spacing": "1.4" }}>
                     <For each={names()}>
                         {((line, index) => (<span>{line}<br/></span>))}
                     </For>

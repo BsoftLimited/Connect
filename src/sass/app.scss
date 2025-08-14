@@ -164,14 +164,22 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     background: var(--md-sys-color-surface-container-lowest);
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 20;
-    padding: 1.8rem;
+}
+
+.panel-title{
+    padding-left: 1.8rem;
+    padding-right: 1.8rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    background-color: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface-variant);
 }
 
 .upload-icon-container{
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 280px;
+    width: 240px;
     aspect-ratio: 1;
     border-style: dashed;
     border-radius: 20px;
@@ -180,13 +188,23 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     color: var(--md-sys-color-primary);
 }
 
-.upload-button{
-    width: 150px;
-    height: 40px;
+@mixin upload-button{
+    width: 120px;
+    height: 30px;
     border-radius: 20px;
     border-style: none;
     color: var(--md-sys-color-on-primary);
+}
+.upload-button{
+    @include upload-button();
+    cursor: pointer;
     background-color: var(--md-sys-color-primary);
+}
+
+.upload-button-disabled{
+    @include upload-button();
+    background-color: var(--md-sys-color-secondary);
+    opacity: 0.3;
 }
 
 .upload-label{
@@ -194,24 +212,50 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     font-size: small;
 }
 
+.file-info{
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+
+    span{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.6rem;
+        background-color: var(--md-sys-color-surface-container-high);
+        color: var(--md-sys-color-on-surface-variant);
+        border-radius: 8px;
+    }
+
+    div{
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        color: var(--md-sys-color-on-surface-variant);
+    }
+}
+
 .progress-container {
     width: 100%;
     background-color: var(--md-sys-color-on-primary);
     border-color: var(--md-sys-color-surface-container);
-    margin-top: 10px;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .progress-bar {
-    height: 30px;
+    height: 100%;
     background-color: var(--md-sys-color-primary);
     text-align: center;
-    line-height: 30px;
     color: var(--md-sys-color-on-primary);
     width: 0%;
 }
 
 .progress-text {
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 @media (max-width: 1500px) {

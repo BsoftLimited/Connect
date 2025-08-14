@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-
     // Play/Pause toggle
     playPauseBtn?.addEventListener('click', () => {
         if (video!.paused) {

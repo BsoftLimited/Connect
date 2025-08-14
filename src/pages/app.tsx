@@ -1,27 +1,26 @@
-import { render } from "solid-js/web";
+import { render, Show } from "solid-js/web";
 import TopBar from "../components/topbar";
 import SideBar from "../components/sidebar";
 import Directory from "../components/directory";
-import { AppContextProvider } from "../providers/app";
+import { AppContextProvider, useAppContext } from "../providers/app";
 import { ThemeProvider } from "../providers/theme";
-import { Route, Router } from "@solidjs/router";
 import Streaming from "../components/streaming";
 
 import { UploadContextProvider } from "../providers/upload";
 import { ContextMenuProvider } from "../providers/context-menu";
-import { MultiProvider } from "../providers";
 
 export const App = () =>{
+    const { state } = useAppContext();
+
     return (
         <div style={{ display: "flex", width: "100vw", height: "100vh", "flex-direction": "column", overflow: "hidden" }}>
             <TopBar />
             <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden" }}>
                 <SideBar />
                 <ContextMenuProvider>
-                    <Router>
-                        <Route path="/" component={Directory} />
-                        <Route path="/streaming/*" component={Streaming} />
-                    </Router>
+                    <Show when={state().target === "stream"} fallback={<Directory />}>
+                        <Streaming />
+                    </Show>
                 </ContextMenuProvider>
             </div>
         </div>

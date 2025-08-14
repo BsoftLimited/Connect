@@ -9,7 +9,7 @@ interface FileContextMenuProps{
 }
 
 const FileContextMenu: Component<FileContextMenuProps> = ({ x, y, file }) =>{
-    const { goto } = useAppContext();
+    const { goto, stream } = useAppContext();
     
     const download = () =>{
         console.log(file?.path);
@@ -20,7 +20,7 @@ const FileContextMenu: Component<FileContextMenuProps> = ({ x, y, file }) =>{
         if(file?.isDir){
             goto(file!.path);
         }else{
-            window.location.href = `${file?.path.replaceAll("\\", "/")}`;
+            stream(file!.name);
         }
     }
 
