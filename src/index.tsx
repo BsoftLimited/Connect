@@ -127,7 +127,8 @@ app.post('/upload', async ({ request }) => {
 
 app.get("/*", async () => {
     //const render = renderToString(()=> <App />);
-    const html = `<html lang="en">
+    const html = `<!DOCTYPE html>
+    <html lang="en">
         <head>
             <title>Connect | App</title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />

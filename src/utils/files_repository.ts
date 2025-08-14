@@ -91,11 +91,12 @@ class FilesRepository{
         return absolutePath;
     }
 
-    fileExists = async (path: string): Promise<boolean> => {
+    fileExists = async (path: string, relative: boolean = true): Promise<boolean> => {
         console.log(`Checking if file exists at: ${path}`);
+        const absolutePath = relative ? join(this.homePath, path) : path;
 
         try {
-            const stats = statSync(path);
+            const stats = statSync(absolutePath);
             return stats.isFile();
         } catch (error) {
             return false;
@@ -107,8 +108,10 @@ class FilesRepository{
 
         let finalPath = join(absolutePath, file.name);
         let prefix = 1;
-        while(await this.fileExists(finalPath)){
-            finalPath = join(absolutePath, `${file.name}-${prefix}`);
+        while(await this.fileExists(finalPath, false)){
+            const ext = file.name.split('.').pop()?.toLowerCase() ?? "unknown";
+            const name = file.name.replace(`.${ext}`, "");
+            finalPath = join(absolutePath, `${name}-${prefix}.${ext}`);
             prefix += 1;
         }
         

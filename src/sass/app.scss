@@ -159,13 +159,59 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     position: fixed;
     top: 0;
     right: 0;
-    height: 100%;
-    background: var(--md-sys-color-surface-container-high);
+    height: 100vh;
+    width: 500px;
+    background: var(--md-sys-color-surface-container-lowest);
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 20;
-    transition: transform 0.3s ease-out;
-    overflow-y: auto;
-    padding: 20px;
+    padding: 1.8rem;
+}
+
+.upload-icon-container{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 280px;
+    aspect-ratio: 1;
+    border-style: dashed;
+    border-radius: 20px;
+    border-width: 1px;
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-primary);
+}
+
+.upload-button{
+    width: 150px;
+    height: 40px;
+    border-radius: 20px;
+    border-style: none;
+    color: var(--md-sys-color-on-primary);
+    background-color: var(--md-sys-color-primary);
+}
+
+.upload-label{
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: small;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: var(--md-sys-color-on-primary);
+    border-color: var(--md-sys-color-surface-container);
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 30px;
+    background-color: var(--md-sys-color-primary);
+    text-align: center;
+    line-height: 30px;
+    color: var(--md-sys-color-on-primary);
+    width: 0%;
+}
+
+.progress-text {
+    margin-top: 5px;
 }
 
 @media (max-width: 1500px) {

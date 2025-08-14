@@ -23,6 +23,7 @@ const UploadContext = createContext<UploadContextType>();
 
 const UploadContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<UploadContextState>({ loading: false, progress: 0, status: "" });
+    const appContext = useAppContext();
 
     const upload: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
         event.preventDefault();
@@ -50,6 +51,7 @@ const UploadContextProvider: ParentComponent = (props) =>{
             if (xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText);
                 setState(init => { return { ...init, status: 'Upload complete!',  file: response } });
+                appContext.reload();
             } else {
                 setState(init => { return { ...init, status: `Error: ${xhr.responseText}`, progress: 0 } });
             }

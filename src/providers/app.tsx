@@ -49,7 +49,7 @@ const AppContextProvider: ParentComponent = (props) =>{
                 localStorage.setItem('path', path);
             });
         },
-        reload: () => setState(init => { return { ...init, loading: true, error: undefined } })
+        reload: () => fetchDirectory()
     };
 
     return (
