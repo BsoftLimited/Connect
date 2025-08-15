@@ -325,6 +325,7 @@
 
 $side-bar-width: 12rem;
 $side-bar-width-min: 5rem;
+$topbar-height: 4.5rem;
 
 * {
     box-sizing: border-box;
@@ -352,6 +353,7 @@ a{
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    height: $topbar-height;
     color: var(--md-sys-color-on-surface-variant);
     background: var(--md-sys-color-surface-container-low);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -362,6 +364,7 @@ a{
         align-items: center;
         padding: 1rem;
         width: $side-bar-width;
+        height: $topbar-height;
         gap: 1rem;
         background: var(--md-sys-color-surface-container-highest);
 

@@ -160,7 +160,7 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     top: 0;
     right: 0;
     height: 100vh;
-    width: 500px;
+    width: 480px;
     background: var(--md-sys-color-surface-container-lowest);
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 20;
@@ -233,7 +233,10 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
         display: flex;
         flex-direction: column;
         gap: 4px;
-        color: var(--md-sys-color-on-surface-variant);
+        
+        p{
+            color: var(--md-sys-color-on-surface-variant);
+        }
     }
 }
 

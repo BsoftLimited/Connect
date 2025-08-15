@@ -13,7 +13,8 @@ interface AppContextProviderType {
     goto: (path: string)=> void;
     stream: (file: string) => void;
     reload: ()=> void;
-    state: ()=> AppContextType
+    state: ()=> AppContextType;
+    closeStream: () => void;
 
 }
 
@@ -54,7 +55,8 @@ const AppContextProvider: ParentComponent = (props) =>{
             });
         },
         reload: () => fetchDirectory(),
-        stream: (file: string)=> setState(init => { return { ...init, file, target: "stream" } })
+        stream: (file: string)=> setState(init => { return { ...init, file, target: "stream" } }),
+        closeStream: () => setState(init => { return { ...init, target: "directory" } })
     };
 
     return (
