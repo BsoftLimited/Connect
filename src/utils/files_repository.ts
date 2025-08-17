@@ -78,7 +78,7 @@ class FilesRepository{
         return this.get("/");
     }
 
-    seve = (path: string) => {
+    serve = (path: string) => {
         const absolutePath = this.filePath(path);
         
         return Bun.file(absolutePath);
@@ -121,6 +121,17 @@ class FilesRepository{
         }).then((value)=>{
             console.log(`finished saving file: ${file.name} to path: ${absolutePath}`);
         });
+    }
+
+    delete = async (path: string, fileName: string) =>{
+        const absolutePath = join(this.homePath, path);
+
+        let finalPath = join(absolutePath, fileName);
+        if(await this.fileExists(finalPath, false)){
+            // Delete a file
+            const file = Bun.file(finalPath);
+            await file.delete();
+        }
     }
 
     libraries = async(): Promise<DirectoryFile[]> => {

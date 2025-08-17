@@ -1,11 +1,11 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-import FilesRepository from "./utils/files_repository";
+import { api, fileRepository } from "./api";
 
-
-const fileRepository = new FilesRepository();
 
 const app = new Elysia();
+
+app.use(api);
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
 app.get('/files/*',  async (req) => {
@@ -37,7 +37,7 @@ app.get('/files/*',  async (req) => {
             headers['Content-Type'] = 'application/octet-stream';
         }
 
-        return new Response(fileRepository.seve(filePath), { headers });
+        return new Response(fileRepository.serve(filePath), { headers });
     }catch(error){
         console.error(error);
         return new Response('Not found', { status: 404 });
@@ -48,7 +48,7 @@ app.get('/download/*',  async (req) => {
     try{
         const { filePath, stats } = await fileRepository.process(req.path, "/download");
 
-        return new Response(fileRepository.seve(filePath), {
+        return new Response(fileRepository.serve(filePath), {
             headers: {
                 'Content-Type': 'application/octet-stream',
                 'Content-Disposition': `attachment; filename="${filePath.split('/').pop()}"`,
@@ -62,16 +62,25 @@ app.get('/download/*',  async (req) => {
     }
 });
 
-app.get("/api/*", async(req) => {
-    if (req.path.includes('%20')) {
-        req.path = decodeURIComponent(req.path);
-    }
-    const filePath = req.path.replace("/api", "");
-    const directory = await fileRepository.get(filePath);
+app.get("/*", async () => {
+    const html = `<!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <title>Connect | App</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <link rel="stylesheet" href="/assets/css/app.css" />
+                <link rel="stylesheet" href="/assets/css/streaming.css" />
+                <link rel="icon" href="/favicon.ico" />
+            </head>
+            <body>
+                <main id="root"></main>
+                <script src="/assets/js/app.js"></script>
+            </body>
+        </html>`;
 
-    return new Response(JSON.stringify(directory), {
+    return new Response(html, {
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'text/html',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
         }
@@ -90,65 +99,6 @@ app.get('/favicon.ico', async () => {
     } catch (error) {
         return new Response('Invalid request', { status: 400 })
     }
-});
-
-app.post('/upload', async ({ request }) => {
-    const formData = await request.formData();
-    const file = formData.get('file') as File | undefined;
-    const dest = formData.get("dest")?.toString();
-
-    if (!file) {
-        return new Response('No file uploaded', { status: 400 });
-    }
-
-    if(!dest){
-        return new Response("destination folder not specified", { status: 400 });
-    }else{
-        console.log(`saving file: ${file.name} to path: ${dest}`);
-    }
-
-    // Save file
-    try{
-        await fileRepository.save(dest, file);
-
-        return new Response(JSON.stringify({ message: 'File uploaded successfully', dest, filename: file.name, size: file.size }),{
-            status: 201,
-            headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-            }
-        });
-    }catch(error){
-        console.error(error);
-        return new Response("internal server error", { status: 500 });
-    }
-});
-
-app.get("/*", async () => {
-    //const render = renderToString(()=> <App />);
-    const html = `<!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <title>Connect | App</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <link rel="stylesheet" href="/assets/css/app.css" />
-            <link rel="stylesheet" href="/assets/css/streaming.css" />
-            <link rel="icon" href="/favicon.ico" />
-        </head>
-        <body>
-            <main id="root"></main>
-            <script src="/assets/js/app.js"></script>
-        </body>
-    </html>`;
-
-    return new Response(html, {
-        headers: {
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-        }
-    });
 });
 
 app.listen(3000, (details)=>{

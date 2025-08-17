@@ -38,7 +38,7 @@ const UploadContextProvider: ParentComponent = (props) =>{
         setState(init => { return { ...init, status: 'Uploading...', error: undefined, loading: true, progress: 0 } });
     
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload', true);
+        xhr.open('POST', '/api/upload', true);
     
         xhr.upload.addEventListener('progress', (event) => {
             if (event.lengthComputable) {
