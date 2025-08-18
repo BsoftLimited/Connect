@@ -9,7 +9,7 @@ interface FileContextMenuProps{
 }
 
 const FileContextMenu: Component<FileContextMenuProps> = ({ x, y, file }) =>{
-    const { goto, stream } = useAppContext();
+    const { goto, stream, deleteFile } = useAppContext();
     
     const download = () =>{
         console.log(file?.path);
@@ -23,6 +23,8 @@ const FileContextMenu: Component<FileContextMenuProps> = ({ x, y, file }) =>{
             stream(file!.name);
         }
     }
+
+    const deleteSelf = () => deleteFile(file!.name);
 
     return (
         <div id="file-context-menu" style={{ left: x, top: y }}>
@@ -38,7 +40,9 @@ const FileContextMenu: Component<FileContextMenuProps> = ({ x, y, file }) =>{
                 <li class="menu-item" id="menu-cut">Cut</li>
                 <li class="menu-item" id="menu-paste">Paste</li>
                 <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
-                <li class="menu-item" id="menu-delete">Delete</li>
+                <Show when={!file?.isDir}>
+                    <li class="menu-item" id="menu-delete" onClick={deleteSelf}>Delete</li>
+                </Show>
             </ul>
         </div>
     );

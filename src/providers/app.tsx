@@ -6,16 +6,19 @@ type AppContextType = {
     directory?: DirectoryDetails;
     file?: string; 
     error?: string;
-    target: "directory" | "stream"
+    target: "directory" | "stream";
+    clipboard?: { path:string, fileType: "dir" | "file" }
 }
 
 interface AppContextProviderType {
     goto: (path: string)=> void;
     stream: (file: string) => void;
+    deleteFile: (file: string) => void;
     reload: ()=> void;
     state: ()=> AppContextType;
     closeStream: () => void;
-
+    saveToClipboard: (path:string, fileType: "dir" | "file") => void;
+    paste : () => void
 }
 
 const AppContext = createContext<AppContextProviderType>();
@@ -43,6 +46,38 @@ const AppContextProvider: ParentComponent = (props) =>{
         }
     }
 
+    const deleteFile = async (file: string) => {
+        const currentPath = state().directory?.path;
+
+        try{
+            const request = new Request(`/api`, {
+                method: "DELETE",
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify({ file, directory: currentPath })
+            });
+
+            const response = await fetch(request);
+            if (!response.ok) {
+                throw new Error("Failed to delete file");
+            }
+            
+            fetchDirectory();
+        }catch(error){
+            console.error(`Error deleting file ${file}:`, error);
+            alert(`File: ${file} deletion fialed`);
+        }
+    }
+
+    const parseFile = async () => {
+
+    }
+
+    const parseFolder = async () => {
+
+    }
+
     onMount(()=> fetchDirectory());
 
     const providerValue: AppContextProviderType = {
@@ -55,8 +90,19 @@ const AppContextProvider: ParentComponent = (props) =>{
             });
         },
         reload: () => fetchDirectory(),
+        deleteFile: (file) => {
+            deleteFile(file);
+        },
         stream: (file: string)=> setState(init => { return { ...init, file, target: "stream" } }),
-        closeStream: () => setState(init => { return { ...init, target: "directory" } })
+        closeStream: () => setState(init => { return { ...init, target: "directory" } }),
+        saveToClipboard: (path, fileType) => setState(init => { return { ...init, clipboard: { path, fileType } } }),
+        paste: () => {
+            if(state().clipboard?.fileType === "dir"){
+                parseFolder();
+            }else{
+                parseFile();
+            }
+        }
     };
 
     return (

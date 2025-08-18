@@ -73,6 +73,8 @@ api.post('/upload', async ({ request }) => {
         console.error(error);
         return new Response("internal server error", { status: 500 });
     }
-}, {  });
+});
+
+
 
 export { api, fileRepository };

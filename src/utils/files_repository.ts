@@ -1,10 +1,9 @@
 import { homedir } from "os";
 import { join } from "path";
 import { statSync } from "fs";
-import { stat } from 'fs/promises';
+import { stat, rm, cp, copyFile, rename as fsRename } from 'fs/promises';
 
 import { isVideoOrAudio } from "../utils/util";
-import { error } from "console";
 
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
@@ -95,12 +94,7 @@ class FilesRepository{
         console.log(`Checking if file exists at: ${path}`);
         const absolutePath = relative ? join(this.homePath, path) : path;
 
-        try {
-            const stats = statSync(absolutePath);
-            return stats.isFile();
-        } catch (error) {
-            return false;
-        }
+        return await Bun.file(absolutePath).exists();
     }
 
     save = async (path: string, file: File) =>{
@@ -123,14 +117,74 @@ class FilesRepository{
         });
     }
 
+    initMovement = async (filePath: string, dest: string, process: (path: string, dest: string, isDir: boolean) => Promise<void>) =>{
+        const absoluteFilePath = join(this.homePath, filePath);
+        const absoluteDest = join(this.homePath, dest);
+        const fileName = filePath.replaceAll('\\', '/').split('/').pop()!;
+        
+        let destFilePath = join(absoluteDest, fileName);
+        let prefix = 1;
+        
+        const stats = statSync(absoluteFilePath);
+        if(stats.isFile()){
+            while(await Bun.file(destFilePath).exists()){
+                const ext = fileName.split('.').pop()?.toLowerCase() ?? "";
+                const name = fileName.replace(`.${ext}`, "");
+                destFilePath = join(absoluteDest, `${name}-${prefix}.${ext}`);
+        
+                prefix += 1;
+            }
+            await process(absoluteFilePath, destFilePath, false);
+        }else{
+            while(await Bun.file(destFilePath).exists()){
+                destFilePath = join(absoluteDest, `${fileName}-${prefix}`);
+                prefix += 1;
+            }
+            await process( absoluteFilePath, destFilePath , true);
+        }
+    }
+
+    copy = async (filePath: string, dest: string) =>{
+        await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest, isDir) =>{
+            if(isDir){
+                await cp( absoluteFilePath, absoluteDest , { recursive: true });
+            }else{
+                await copyFile(absoluteFilePath, absoluteDest);
+            }
+        });
+    }
+
+    move = async (filePath: string, dest: string) =>{
+        await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest, isDir) =>{
+            await fsRename(absoluteFilePath, absoluteDest);
+        });
+    }
+
+    rename = async(directory: string, fileName: string, newName: string) =>{
+        const absoluteFilePath = join(this.homePath, directory, fileName);
+        const absoluteDest = join(this.homePath, directory, newName);
+
+        await fsRename(absoluteFilePath, absoluteDest);
+    }
+
     delete = async (path: string, fileName: string) =>{
         const absolutePath = join(this.homePath, path);
 
         let finalPath = join(absolutePath, fileName);
+        console.log(`trying to delete: ${finalPath}`);
         if(await this.fileExists(finalPath, false)){
             // Delete a file
-            const file = Bun.file(finalPath);
-            await file.delete();
+            const stats = statSync(finalPath);
+            if(stats.isFile()){
+                const file = Bun.file(finalPath);
+                console.log(file.name);
+                await file.delete().catch((error)=>{
+                    console.error(error);
+                });
+            }else{
+                // Delete a directory and all its contents
+                await rm(finalPath, { recursive: true, force: true });
+            }
         }
     }
 
