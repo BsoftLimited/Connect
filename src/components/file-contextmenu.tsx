@@ -8,39 +8,44 @@ interface FileContextMenuProps{
     file?: DirectoryFile
 }
 
-const FileContextMenu: Component<FileContextMenuProps> = ({ x, y, file }) =>{
-    const { goto, stream, deleteFile } = useAppContext();
+const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
+    const { goto, stream, deleteFile, state, saveClipboard, paste } = useAppContext();
     
     const download = () =>{
-        console.log(file?.path);
-        window.location.href = `${file?.path.replaceAll("\\", "/").replace("/files", "download")}`;
+        console.log(props.file?.path);
+        window.location.href = `${props.file?.path.replaceAll("\\", "/").replace("/files", "download")}`;
     }
 
     const open = () => {
-        if(file?.isDir){
-            goto(file!.path);
+        if(props.file?.isDir){
+            goto(props.file!.path);
         }else{
-            stream(file!.name);
+            stream(props.file!.name);
         }
     }
 
-    const deleteSelf = () => deleteFile(file!.name);
+    const deleteSelf = () => deleteFile(props.file!.name);
+    const copy = () => saveClipboard({ file: props.file!, command: "copy" });
+    const move = () => saveClipboard({ file: props.file!, command: "move" });
+    const pasteInto = () => paste(props.file);
 
     return (
-        <div id="file-context-menu" style={{ left: x, top: y }}>
+        <div id="file-context-menu" style={{ left: props.x, top: props.y }}>
             <ul>
-                <Show when={file?.isDir || isVideoOrAudio(file?.name ?? "")}>
+                <Show when={props.file?.isDir || isVideoOrAudio(props.file?.name ?? "")}>
                     <li class="menu-item" id="menu-open" onClick={open}>Open</li>
                 </Show>
-                <Show when={!file?.isDir}>
+                <Show when={!props.file?.isDir}>
                     <li class="menu-item" id="menu-download" onClick={download}>Download</li>
                 </Show>
                 <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
-                <li class="menu-item" id="menu-copy">Copy</li>
-                <li class="menu-item" id="menu-cut">Cut</li>
-                <li class="menu-item" id="menu-paste">Paste</li>
+                <li class="menu-item" id="menu-copy" onClick={copy}>Copy</li>
+                <li class="menu-item" id="menu-cut" onClick={move}>Move</li>
+                <Show when={state().clipboard && props.file?.isDir}>
+                    <li class="menu-item" id="menu-paste" onClick={pasteInto}>Paste</li>
+                </Show>
                 <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
-                <Show when={!file?.isDir}>
+                <Show when={!props.file?.isDir}>
                     <li class="menu-item" id="menu-delete" onClick={deleteSelf}>Delete</li>
                 </Show>
             </ul>

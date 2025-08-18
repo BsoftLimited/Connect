@@ -1,7 +1,7 @@
 import { homedir } from "os";
 import { join } from "path";
 import { statSync } from "fs";
-import { stat, rm, cp, copyFile, rename as fsRename } from 'fs/promises';
+import { stat, rm, cp, copyFile, rename as fsRename, mkdir } from 'fs/promises';
 
 import { isVideoOrAudio } from "../utils/util";
 
@@ -155,7 +155,7 @@ class FilesRepository{
     }
 
     move = async (filePath: string, dest: string) =>{
-        await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest, isDir) =>{
+        return await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest, isDir) =>{
             await fsRename(absoluteFilePath, absoluteDest);
         });
     }
@@ -164,7 +164,13 @@ class FilesRepository{
         const absoluteFilePath = join(this.homePath, directory, fileName);
         const absoluteDest = join(this.homePath, directory, newName);
 
-        await fsRename(absoluteFilePath, absoluteDest);
+        return await fsRename(absoluteFilePath, absoluteDest);
+    }
+
+    createDir = async(directory: string, name: string) =>{
+        const absoluteDest = join(this.homePath, directory);
+
+        return await mkdir(join(absoluteDest, name));
     }
 
     delete = async (path: string, fileName: string) =>{

@@ -1,5 +1,12 @@
 import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
-import type { DirectoryDetails } from "../utils/files_repository";
+import type { DirectoryDetails, DirectoryFile } from "../utils/files_repository";
+
+type ClipbordCommand = "copy" | "move";
+
+type Clipboard = {
+    file: DirectoryFile;
+    command: ClipbordCommand
+}
 
 type AppContextType = {
     loading: boolean;
@@ -7,7 +14,7 @@ type AppContextType = {
     file?: string; 
     error?: string;
     target: "directory" | "stream";
-    clipboard?: { path:string, fileType: "dir" | "file" }
+    clipboard?: Clipboard;
 }
 
 interface AppContextProviderType {
@@ -17,8 +24,8 @@ interface AppContextProviderType {
     reload: ()=> void;
     state: ()=> AppContextType;
     closeStream: () => void;
-    saveToClipboard: (path:string, fileType: "dir" | "file") => void;
-    paste : () => void
+    saveClipboard: (clipboard: Clipboard) => void;
+    paste : (file?: DirectoryFile) => void
 }
 
 const AppContext = createContext<AppContextProviderType>();
@@ -95,9 +102,9 @@ const AppContextProvider: ParentComponent = (props) =>{
         },
         stream: (file: string)=> setState(init => { return { ...init, file, target: "stream" } }),
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
-        saveToClipboard: (path, fileType) => setState(init => { return { ...init, clipboard: { path, fileType } } }),
-        paste: () => {
-            if(state().clipboard?.fileType === "dir"){
+        saveClipboard: (clipboard: Clipboard) => setState(init => { return { ...init, clipboard } }),
+        paste: (file) => {
+            if(state().clipboard?.file.isDir){
                 parseFolder();
             }else{
                 parseFile();
