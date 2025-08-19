@@ -12,7 +12,7 @@ type AppContextType = {
     loading: boolean;
     directory?: DirectoryDetails;
     file?: string; 
-    error?: string;
+    error?: any;
     target: "directory" | "stream";
     clipboard?: Clipboard;
 }
@@ -55,6 +55,7 @@ const AppContextProvider: ParentComponent = (props) =>{
 
     const deleteFile = async (file: string) => {
         const currentPath = state().directory?.path;
+        setState(init => { return { ...init, loading: true, error: undefined } });
 
         try{
             const request = new Request(`/api`, {
@@ -72,24 +73,49 @@ const AppContextProvider: ParentComponent = (props) =>{
             
             fetchDirectory();
         }catch(error){
+            setState(init => { return { ...init, loading: false, error } });
             console.error(`Error deleting file ${file}:`, error);
             alert(`File: ${file} deletion fialed`);
         }
     }
 
-    const parseFile = async () => {
+    const parseFile = async (destFile?: DirectoryFile) => {
+        setState(init => { return { ...init, loading: true, error: undefined } });
 
-    }
+        const dest = destFile?.path ?? state().directory!.path;
+        const file = state().clipboard!.file;
 
-    const parseFolder = async () => {
+        try{
+            const request = new Request(`/api/${ state().clipboard?.command}`, {
+                method: "PATCH",
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify({ filePath: file.path, dest })
+            });
 
+            const response = await fetch(request);
+            if (!response.ok) {
+                throw new Error(`Failed to ${ state().clipboard?.command } ${file.name}`);
+            }
+
+            if(state().clipboard?.command === 'move'){
+                setState(init => { return { ...init, clipboard: undefined } });
+            }
+            
+            fetchDirectory();
+        }catch(error){
+            setState(init => { return { ...init, loading: false, error } });
+            console.error(`Error deleting file ${file}:`, error);
+            alert(`File: ${file} deletion fialed`);
+        }
     }
 
     onMount(()=> fetchDirectory());
 
     const providerValue: AppContextProviderType = {
         state,
-        goto: (path: string) => {
+        goto: (path) => {
             path = path.replaceAll("\\", "/");
             console.log(path);
             fetchDirectory(path).finally(()=>{
@@ -100,15 +126,11 @@ const AppContextProvider: ParentComponent = (props) =>{
         deleteFile: (file) => {
             deleteFile(file);
         },
-        stream: (file: string)=> setState(init => { return { ...init, file, target: "stream" } }),
+        stream: (file)=> setState(init => { return { ...init, file, target: "stream" } }),
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
-        saveClipboard: (clipboard: Clipboard) => setState(init => { return { ...init, clipboard } }),
+        saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
         paste: (file) => {
-            if(state().clipboard?.file.isDir){
-                parseFolder();
-            }else{
-                parseFile();
-            }
+            parseFile(file);
         }
     };
 

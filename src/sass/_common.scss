@@ -413,6 +413,32 @@ a{
     }
 }
 
+.horizontal-loader-container {
+  width: 100%; /* Or a specific width */
+  height: 8px; /* Height of the loading bar */
+  background-color: #f3f3f3; /* Background color of the container */
+  overflow: hidden; /* Hide overflowing parts of the bar */
+  position: relative;
+}
+
+.horizontal-loader-bar {
+  height: 100%;
+  width: 30%; /* Initial width of the moving bar */
+  background-color: #3498db; /* Color of the loading bar */
+  position: absolute;
+  left: -30%; /* Start off-screen to the left */
+  animation: horizontal-loader-slide-in-out 1.5s linear infinite; /* Animation properties */
+}
+
+@keyframes horizontal-loader-slide-in-out {
+  0% {
+    left: -30%; /* Start position */
+  }
+  100% {
+    left: 100%; /* End position, moving off-screen to the right */
+  }
+}
+
 @media (max-width: 1500px) {
     html{ font-size: 90%; }
 }
