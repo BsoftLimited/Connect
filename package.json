@@ -8,6 +8,8 @@
         "dev:sass": "sass --watch src/sass:public/css"
     },
     "dependencies": {
+        "@elysiajs/cookie": "^0.8.0",
+        "@elysiajs/jwt": "^1.3.2",
         "@elysiajs/static": "^1.3.0",
         "@elysiajs/stream": "^1.1.0",
         "@ffmpeg/ffmpeg": "^0.12.15",

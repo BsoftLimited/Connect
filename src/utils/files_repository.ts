@@ -54,11 +54,7 @@ class FilesRepository{
 
                     folders.push({ name, path: absolutePath, size, isDir: true });
                 }else{
-                    if(isVideoOrAudio(name)){
-                        files.push({ name, path: join("/streaming", absolutePath), size: stats.size, isDir: false });
-                    }else{
-                        files.push({ name, path: join("/files", absolutePath), size: stats.size, isDir: false });
-                    }
+                    files.push({ name, path: absolutePath, size: stats.size, isDir: false });
                 }
             }catch (error) {
                 console.error(`Error processing file ${name} in path ${path}:`, error);

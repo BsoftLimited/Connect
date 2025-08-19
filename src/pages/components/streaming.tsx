@@ -1,7 +1,7 @@
 import { createSignal, Match, onCleanup, onMount, Show, Switch, type Component, type JSX } from "solid-js";
 import { useAppContext } from "../providers/app";
-import type { DirectoryFile } from "../utils/files_repository";
-import { isAudio, isVideo, isVideoOrAudio } from "../utils/util";
+import type { DirectoryFile } from "../../utils/files_repository";
+import { isAudio, isVideo, isVideoOrAudio } from "../../utils/util";
 import PlayButton from "./play-button";
 import MuteButton from "./mute-button";
 import { Motion } from "@motionone/solid";
@@ -50,7 +50,7 @@ interface StreamingState{
 }
 
 const Streaming = () =>{
-    const { state, closeStream } = useAppContext();
+    const { appState, closeStream } = useAppContext();
 
     const [showControls, setShowControls] = createSignal(true);
     const [showList, setShowList] = createSignal(false);
@@ -78,7 +78,7 @@ const Streaming = () =>{
 
     // Set up event listeners
     onMount(() => {
-        if(isVideo(state().file!)){
+        if(isVideo(appState().file!)){
             window.addEventListener("mousemove", handleUserActivity);
             window.addEventListener("keydown", handleUserActivity);
             window.addEventListener("scroll", handleUserActivity);
@@ -88,7 +88,7 @@ const Streaming = () =>{
     
     // Clean up
     onCleanup(() => {
-        if(isVideo(state().file!)){
+        if(isVideo(appState().file!)){
             clearTimeout(timeoutId);
             window.removeEventListener("mousemove", handleUserActivity);
             window.removeEventListener("keydown", handleUserActivity);
@@ -106,7 +106,7 @@ const Streaming = () =>{
     }
 
     const download = () =>{
-        window.location.href = `/download/${state().directory!.path.replaceAll("\\", "/")}/${state().file!}`;
+        window.location.href = `/download/${appState().directory!.path.replaceAll("\\", "/")}/${appState().file!}`;
     }
 
     const togglePlay = () =>{
@@ -143,7 +143,7 @@ const Streaming = () =>{
 
     return (
         <div style={{  flex: 1, width: "100%", overflow: "hidden", background: "black" }}>
-            <video class="video" autoplay poster="/assets/images/music-poster.png" ref={videoElement} onPlaying={onVideoChange} onVolumeChange={onVideoChange} onPause={onVideoChange} onTimeUpdate={onVideoChange} muted={streamingState().mute} src={`/files/${state().directory!.path}/${state().file}`}></video>
+            <video class="video" autoplay poster="/assets/images/music-poster.png" controls={false} ref={videoElement} onPlaying={onVideoChange} onVolumeChange={onVideoChange} onPause={onVideoChange} onTimeUpdate={onVideoChange} muted={streamingState().mute} src={`/files/${appState().directory!.path}/${appState().file}`}></video>
             <Show when={showControls()}>
                 <div class="controls">
                     <div style={{ padding: "1rem", display: "flex", "flex-direction": "row", width: "100%", gap: "2rem" }}>
@@ -151,7 +151,7 @@ const Streaming = () =>{
                             <span onClick={closeStream} style={{ color: "white", cursor: "pointer" }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.6rem" height="1.6rem" viewBox="0 0 1024 1024"><path fill="currentColor" d="M512 0C229.232 0 0 229.232 0 512c0 282.784 229.232 512 512 512c282.784 0 512-229.216 512-512C1024 229.232 794.784 0 512 0m0 961.008c-247.024 0-448-201.984-448-449.01c0-247.024 200.976-448 448-448s448 200.977 448 448s-200.976 449.01-448 449.01m181.008-630.016c-12.496-12.496-32.752-12.496-45.248 0L512 466.752l-135.76-135.76c-12.496-12.496-32.752-12.496-45.264 0c-12.496 12.496-12.496 32.752 0 45.248L466.736 512l-135.76 135.76c-12.496 12.48-12.496 32.769 0 45.249c12.496 12.496 32.752 12.496 45.264 0L512 557.249l135.76 135.76c12.496 12.496 32.752 12.496 45.248 0c12.496-12.48 12.496-32.769 0-45.249L557.248 512l135.76-135.76c12.512-12.512 12.512-32.768 0-45.248"/></svg>
                             </span>
-                            <h3 style={{ color: "whitesmoke", "font-weight": "lighter" }}>Playing : {state().file}</h3>
+                            <h3 style={{ color: "whitesmoke", "font-weight": "lighter" }}>Playing : {appState().file}</h3>
                         </div>
                         <div style={{ display: "flex", "flex-direction": "row", "align-items": "center", gap: "2rem" }}>
                             <span onClick={download} style={{ color: "white", cursor: "pointer" }}>
@@ -183,7 +183,7 @@ const Streaming = () =>{
                                 <h3 style={{ flex: 1, "text-align": "center" }}>Media List</h3>
                             </div>
                             <div style={{ display: "flex", "flex-direction": "column", gap: "1rem", padding: "1rem", flex: 1, "overflow-y": "auto" }}>
-                                { state().directory!.files.filter((file)=> isVideoOrAudio(file.name)).map((file)=>(<FileInfoView file={file}/>)) }
+                                { appState().directory!.files.filter((file)=> isVideoOrAudio(file.name)).map((file)=>(<FileInfoView file={file}/>)) }
                             </div>
                         </div>
                     </Motion.div>

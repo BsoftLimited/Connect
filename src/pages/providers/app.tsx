@@ -1,5 +1,5 @@
 import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
-import type { DirectoryDetails, DirectoryFile } from "../utils/files_repository";
+import type { DirectoryDetails, DirectoryFile } from "../../utils/files_repository";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -22,7 +22,7 @@ interface AppContextProviderType {
     stream: (file: string) => void;
     deleteFile: (file: string) => void;
     reload: ()=> void;
-    state: ()=> AppContextType;
+    appState: ()=> AppContextType;
     closeStream: () => void;
     saveClipboard: (clipboard: Clipboard) => void;
     paste : (file?: DirectoryFile) => void
@@ -114,7 +114,7 @@ const AppContextProvider: ParentComponent = (props) =>{
     onMount(()=> fetchDirectory());
 
     const providerValue: AppContextProviderType = {
-        state,
+        appState: state,
         goto: (path) => {
             path = path.replaceAll("\\", "/");
             console.log(path);

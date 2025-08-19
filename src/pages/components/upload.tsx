@@ -70,7 +70,7 @@ const Upload: Component<UploadProps> = (props) =>{
                     </div>
                     <div style={{ display: "none" }}>
                         <input type="file" name="file" ref={onInputRef} onChange={handleFileChange} required />
-                        <input type="text" name="dest" value={appContext.state().directory!.path} style={{ display: "none" }}/>
+                        <input type="text" name="dest" value={appContext.appState().directory!.path} style={{ display: "none" }}/>
                     </div>
                     <div class="upload-label">{fileName() ?? "Drag and Drop or click below to choose" }</div>
                     <Show when={uploadContext.uploadState().loading} fallback={<button type="submit" class={ fileName() ? "upload-button" : "upload-button-disabled" } disabled={fileName()=== undefined}>Upload</button>}>

@@ -1,6 +1,6 @@
 import { Show, type Component } from "solid-js";
-import type { DirectoryFile } from "../utils/files_repository";
-import { isVideoOrAudio } from "../utils/util";
+import type { DirectoryFile } from "../../utils/files_repository";
+import { isVideoOrAudio } from "../../utils/util";
 import { useAppContext } from "../providers/app";
 
 interface FileContextMenuProps{
@@ -9,11 +9,11 @@ interface FileContextMenuProps{
 }
 
 const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
-    const { goto, stream, deleteFile, state, saveClipboard, paste } = useAppContext();
+    const { goto, stream, deleteFile, appState, saveClipboard, paste } = useAppContext();
     
     const download = () =>{
         console.log(props.file?.path);
-        window.location.href = `${props.file?.path.replaceAll("\\", "/").replace("/files", "download")}`;
+        window.location.href = `/download${props.file?.path.replaceAll("\\", "/")}`;
     }
 
     const open = () => {
@@ -41,7 +41,7 @@ const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
                 <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
                 <li class="menu-item" id="menu-copy" onClick={copy}>Copy</li>
                 <li class="menu-item" id="menu-cut" onClick={move}>Move</li>
-                <Show when={state().clipboard && props.file?.isDir}>
+                <Show when={appState().clipboard && props.file?.isDir}>
                     <li class="menu-item" id="menu-paste" onClick={pasteInto}>Paste</li>
                 </Show>
                 <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>

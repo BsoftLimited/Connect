@@ -1,5 +1,5 @@
 import { createContext, createSignal, useContext, type ParentComponent } from "solid-js";
-import type { DirectoryFile } from "../utils/files_repository";
+import type { DirectoryFile } from "../../utils/files_repository";
 
 type ContextMenuStatus = {
     x?: string, y?: string,

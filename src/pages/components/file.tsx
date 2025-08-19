@@ -1,4 +1,4 @@
-import type { DirectoryFile } from "../utils/files_repository";
+import type { DirectoryFile } from "../../utils/files_repository";
 import FolderFill from "../vectors/folder_fill";
 import FolderEmpty from "../vectors/foolder_empty";
 import ArchiveIcon from "../vectors/archive";
@@ -10,7 +10,7 @@ import MusicIcon from "../vectors/music";
 import GenericFileIcon from "../vectors/file";
 import { useAppContext } from "../providers/app";
 import { For, Show } from "solid-js";
-import { formatBytes, isVideoOrAudio } from "../utils/util";
+import { formatBytes, isVideoOrAudio } from "../../utils/util";
 
 interface FileProps {
    file : DirectoryFile;
@@ -51,7 +51,7 @@ const FileView  = (props: FileProps) => {
         }else if(isVideoOrAudio(props.file.name)){
             stream(props.file.name);
         }else{
-            window.location.href = `${props.file.path.replaceAll("\\", "/").replace("/files", "download")}`;
+            window.location.href = `files${props.file.path.replaceAll("\\", "/")}`;
         }
     }
 
