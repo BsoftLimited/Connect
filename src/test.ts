@@ -1,31 +1,51 @@
-import { Elysia } from 'elysia'
-import { jwt } from '@elysiajs/jwt'
+import { Elysia, t } from 'elysia';
+import { jwt } from '@elysiajs/jwt';
 
-const app = new Elysia()
-    .use(
-        jwt({
-            name: 'jwt',
-            secret: 'Fischl von Luftschloss Narfidort'
-        })
-    )
-    .get('/sign/:name', async ({ jwt, params: { name }, cookie: { auth } }) => {
+interface User {
+    id: string
+    email: string
+    username: string
+    role: "admin" | "user"
+}
+
+async function validateUser(email: string, password: string): Promise<User | null> {
+    if (email === 'admin@gmail.com' && password === 'admin') {
+        return { id: '1', email, username: 'admin', role: "admin" }
+    }
+
+    if (email === 'okelekelenobel@gmail.com' && password === 'Ruthless247@') {
+        return { id: '1', email, username: 'nobel44', role: "user" }
+    }
+    return null
+}
+
+const authPlugin = new Elysia().use( jwt({ name: 'jwt', secret: 'test'}));
+
+const api = new Elysia({ prefix: "/api" }).use(authPlugin);
+api.get('/login', async ({ jwt, body: { email, password }, cookie: { auth } }) => {
+     const user = await validateUser(body.email, body.password)
     	const value = await jwt.sign({ name })
 
         auth?.set({
             value,
             httpOnly: true,
             maxAge: 7 * 86400,
-            path: '/profile',
         })
 
         return `Sign in as ${value}`
-    })
-    .get('/profile', async ({ jwt, status, cookie: { auth } }) => {
+}, { body: t.Object({ email: t.String(), password: t.String() }) });
+
+const app = new Elysia().use(authPlugin);
+
+
+
+app.get('/profile', async ({ jwt, status, cookie: { auth } }) => {
         const profile = await jwt.verify(auth?.value)
 
         if (!profile)
             return status(401, 'Unauthorized')
 
         return `Hello ${profile.name}`
-    })
-    .listen(3000)
+});
+
+app.listen(3000)
