@@ -103,9 +103,6 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     overflow: hidden;
     border-radius: 10px;
     min-width: 120px;
-    //border-color: var(--md-sys-color-on-surface-variant);
-    //border-width: 1px;
-    //border-style: solid;
     box-shadow: 2px 2px 5px rgba($context-menu-border-color, 0.6);
     z-index: 1000;
 }
@@ -160,7 +157,7 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     top: 0;
     right: 0;
     height: 100vh;
-    width: 480px;
+    width: 400px;
     background: var(--md-sys-color-surface-container-lowest);
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 20;
@@ -195,6 +192,7 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     border-style: none;
     color: var(--md-sys-color-on-primary);
 }
+
 .upload-button{
     @include upload-button();
     cursor: pointer;
@@ -259,6 +257,36 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
 
 .progress-text {
     margin-top: 4px;
+}
+
+.settings-container {
+    position: absolute;
+    background: var(--md-sys-color-surface-container-lowest);
+    overflow: hidden;
+    border-radius: 10px;
+    min-width: 120px;
+    box-shadow: 2px 2px 5px rgba($context-menu-border-color, 0.6);
+    z-index: 1000;
+    border: 2px solid var(--md-sys-color-outline);
+
+    display: flex;
+    flex-direction: column;
+
+    top: 50px;
+    right: 10px;
+
+    h4{
+        padding: 0.8rem 1rem;
+    }
+
+    div{
+        @include common.hover-bg-color;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        cursor: pointer;
+    }
 }
 
 @media (max-width: 1500px) {

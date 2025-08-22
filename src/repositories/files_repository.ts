@@ -3,8 +3,6 @@ import { join } from "path";
 import { statSync } from "fs";
 import { stat, rm, cp, copyFile, rename as fsRename, mkdir } from 'fs/promises';
 
-import { isVideoOrAudio } from "../utils/util";
-
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
 }

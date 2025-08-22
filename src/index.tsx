@@ -1,10 +1,10 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import api from "./api";
-import auth from "./auth";
+import { htmlBuilder } from "./utils/util";
 
 
-const app = new Elysia().use(api).use(api).use(auth);
+const app = new Elysia().use(api);
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
 app.get('/files/*',  async (req) => {
@@ -75,43 +75,11 @@ const pageHeaders: HeadersInit = {
     'Pragma': 'no-cache'
 };
 
-app.get("/*", async ({ user, redirect }) => {
-    if (!user) {
-        return redirect(`/login`);
+app.get("/*", async ({ user, redirect, path }) => {
+    let html = htmlBuilder({ title: "Connect | App", jsFile: "index.js", cssFiles: ["app.css", "streaming.css" ]});
+    if(!user){
+        html = htmlBuilder({ title: "Connect | Login", jsFile: "login.js", cssFiles: ["app.css", "login.css"]});
     }
-
-    const html = `<!DOCTYPE html>
-        <html lang="en">
-            <head>
-                <title>Connect | App</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <link rel="stylesheet" href="/assets/css/app.css" />
-                <link rel="stylesheet" href="/assets/css/streaming.css" />
-                <link rel="icon" href="/favicon.ico" />
-            </head>
-            <body>
-                <main id="root"></main>
-                <script src="/assets/js/app.js"></script>
-            </body>
-        </html>`;
-
-    return new Response(html, { headers: pageHeaders });
-});
-
-app.get('/login', async () => {
-    const html = `<!DOCTYPE html>
-        <html lang="en">
-            <head>
-                <title>Connect | Login</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <link rel="icon" href="/favicon.ico" />
-                <link rel="stylesheet" href="/assets/css/login.css" />
-            </head>
-            <body>
-                <main id="root"></main>
-                <script src="/assets/js/login.js"></script>
-            </body>
-        </html>`;
 
     return new Response(html, { headers: pageHeaders });
 });

@@ -1,7 +1,8 @@
 import { Show, type Component } from "solid-js";
-import type { DirectoryFile } from "../../utils/files_repository";
 import { isVideoOrAudio } from "../../utils/util";
 import { useAppContext } from "../providers/app";
+import { useUserContext } from "../providers/user";
+import type { DirectoryFile } from "../repositories/files_repository";
 
 interface FileContextMenuProps{
     x?: string, y?: string,
@@ -9,6 +10,7 @@ interface FileContextMenuProps{
 }
 
 const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
+    const { userState } = useUserContext();
     const { goto, stream, deleteFile, appState, saveClipboard, paste } = useAppContext();
     
     const download = () =>{
@@ -38,14 +40,16 @@ const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
                 <Show when={!props.file?.isDir}>
                     <li class="menu-item" id="menu-download" onClick={download}>Download</li>
                 </Show>
-                <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
-                <li class="menu-item" id="menu-copy" onClick={copy}>Copy</li>
-                <li class="menu-item" id="menu-cut" onClick={move}>Move</li>
+                <Show when={userState().user?.accessLevel === "read-write"}>
+                    <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
+                    <li class="menu-item" id="menu-copy" onClick={copy}>Copy</li>
+                    <li class="menu-item" id="menu-cut" onClick={move}>Move</li>
+                </Show>
                 <Show when={appState().clipboard && props.file?.isDir}>
                     <li class="menu-item" id="menu-paste" onClick={pasteInto}>Paste</li>
                 </Show>
-                <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
-                <Show when={!props.file?.isDir}>
+                <Show when={!props.file?.isDir && userState().user?.accessLevel === "read-write"}>
+                    <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
                     <li class="menu-item" id="menu-delete" onClick={deleteSelf}>Delete</li>
                 </Show>
             </ul>

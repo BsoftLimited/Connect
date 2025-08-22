@@ -1,9 +1,9 @@
 import { createContext, createSignal, useContext, type ParentComponent } from "solid-js";
-import type { DirectoryFile } from "../../utils/files_repository";
+import type { DirectoryFile } from "../../repositories/files_repository";
 
 type ContextMenuStatus = {
     x?: string, y?: string,
-    show: "file" | "directory" | "none",
+    show: "file" | "directory" | "settings" | "none",
 
     file?: DirectoryFile
 }
@@ -13,6 +13,7 @@ type ContextMenuType = {
     clear: () => void,
     showFileContext: (event: PointerEvent, file: DirectoryFile) => void,
     showDirectoryContext: (event: PointerEvent) => void
+    showSettings: () => void
 }
 
 const ContextMenuContext = createContext<ContextMenuType>();
@@ -42,6 +43,11 @@ const ContextMenuProvider: ParentComponent = (props) =>{
 
             clear();
             setStatus({ show: "directory", x: `${event.pageX}px`, y: `${event.pageY}px` });
+            document.addEventListener("click", clear);
+        },
+        showSettings: () => {
+            clear();
+            setStatus({ show: "settings" });
             document.addEventListener("click", clear);
         }
     };

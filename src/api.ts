@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
-import FilesRepository from "./utils/files_repository";
-import { authPlugin } from "./auth";
+import auth from "./auth";
+import FilesRepository from "./repositories/files_repository";
 
 const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -8,10 +8,10 @@ const headers: HeadersInit = {
     'Pragma': 'no-cache'
 };
 
-const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(authPlugin);
+const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(auth);
 api.onBeforeHandle(async ({ user, status }) => {
     if (!user) {
-        return status(404, 'unauthorized to use the API');
+        return status(401, 'unauthorized to use the API');
     }
 });
 
@@ -25,7 +25,16 @@ api.get("/*", async(req) => {
     return new Response(JSON.stringify(directory), { headers });
 });
 
+api.get("/user", async(req) => {
+
+    return new Response(JSON.stringify(req.user), { headers });
+});
+
 api.delete("/", async(req) => {
+    if( req.user?.accessLevel === "read-only") {
+        return new Response("you are not allowed to delete files", { status: 403 });
+    }
+
     const file = req.body.file;
     const directory = req.body.directory;
 
@@ -41,6 +50,10 @@ api.delete("/", async(req) => {
 }, { body: t.Object({ file: t.String(), directory: t.String() }) });
 
 api.post("/", async(req) => {
+    if( req.user!.accessLevel === "read-only") {
+        return new Response("you are not allowed to create files", { status: 403 });
+    }
+
     const name = req.body.name;
     const directory = req.body.directory;
 
@@ -56,6 +69,10 @@ api.post("/", async(req) => {
 }, { body: t.Object({ name: t.String(), directory: t.String() }) });
 
 api.patch("/move", async(req)=>{
+    if( req.user?.accessLevel === "read-only") {
+        return new Response("you are not allowed to move files", { status: 403 });
+    }
+
     const { message, status } = await req.repository.move(req.body.filePath, req.body.dest).then(()=>{
         return {  message: `${req.body.filePath.split("/").pop()} was moved to ${req.body.dest} successfully`, status: 200 };
     }).catch((error)=>{
@@ -68,6 +85,10 @@ api.patch("/move", async(req)=>{
 },{ body: t.Object({ filePath: t.String(), dest: t.String() }) });
 
 api.patch("/copy", async(req)=>{
+    if( req.user!.accessLevel === "read-only") {
+        return new Response("you are not allowed to copy files", { status: 403 });
+    }
+
     const { message, status } = await req.repository.copy(req.body.filePath, req.body.dest).then(()=>{
         return {  message: `${req.body.filePath.split("/").pop()} was copied to ${req.body.dest} successfully`, status: 200 };
     }).catch((error)=>{
@@ -80,6 +101,10 @@ api.patch("/copy", async(req)=>{
 }, { body: t.Object({ filePath: t.String(), dest: t.String() }) });
 
 api.patch("/rename", async(req)=>{
+    if( req.user!.accessLevel === "read-only") {
+        return new Response("you are not allowed to rename files", { status: 403 });
+    }
+
     const { message, status } = await req.repository.rename(req.body.directory, req.body.fileName, req.body.newName).then(()=>{
         return {  message: `${req.body.fileName} was remaned to ${req.body.newName} successfully`, status: 200 };
     }).catch((error)=>{
@@ -91,7 +116,11 @@ api.patch("/rename", async(req)=>{
     return new Response(JSON.stringify(message), { status, headers });
 }, { body: t.Object({ directory: t.String(), fileName: t.String(), newName: t.String() }) });
 
-api.post('/upload', async ({ request, repository }) => {
+api.post('/upload', async ({ request, repository, user }) => {
+    if( user?.accessLevel === "read-only") {
+        return new Response("you are not allowed to upload files", { status: 403 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | undefined;
     const dest = formData.get("dest")?.toString();

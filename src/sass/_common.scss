@@ -379,6 +379,32 @@ a{
             font-weight: 600;
         }
     }
+
+    span{
+        margin-right: 1.2rem;
+    }
+}
+
+.topbar-tranparent {
+    background: transparent;
+    box-shadow: none;
+    color: white;
+    .topbar-header {    
+        background: transparent;
+        .topbar-icon {
+            color: white;
+        }
+        .topbar-title {
+            color: white;
+        }
+    }
+
+    span {
+        color: whitesmoke;
+        &:hover {
+            color: white;
+        }
+    }
 }
 
 .clicakble {

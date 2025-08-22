@@ -22,3 +22,19 @@ export const formatBytes = (bytes: number, decimals = 2) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
+
+export const htmlBuilder = (config: { title: string, jsFile: string, cssFiles?: string[]}): string => {
+    return `<!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <title>${config.title}</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <link rel="icon" href="/favicon.ico" />
+                ${config.cssFiles?.map(css => `<link rel="stylesheet" href="/assets/css/${css}" />`).join('') ?? ''}
+            </head>
+            <body>
+                <main id="root"></main>
+                <script src="/assets/js/${config.jsFile}"></script>
+            </body>
+        </html>`;
+}

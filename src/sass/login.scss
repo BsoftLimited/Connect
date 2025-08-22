@@ -3,12 +3,12 @@
 body{
     background-image: url("/assets/images/background.png");
     background-repeat: no-repeat;
-    background-size: contain;
+    background-size:cover
 }
 
-.login-container{
+.container{
     width: 100vw;
-    height: 100vh;
+    flex: 1;
 
     display: flex;
     flex-direction: row;
@@ -44,36 +44,75 @@ form{
 }
 
 form > label{
-    font-size: 1.0em;
+    font-size: 1.2rem;
     color: whitesmoke;
-    margin-left: 8px;
+    margin-left: 0px;
 }
 
-form > input{
+$input-height: 3rem;
+$input-border-radius: 8px;
+
+.input-field{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: $input-height;
+    background-color: var(--md-sys-color-surface-container);
+
     margin-top: 5px;
     margin-bottom: 20px;
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    font-size: 0.8em;
-    border: solid white 0px;
-    border-radius: 20px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: $input-border-radius;
     width: 100%;
-}
 
-form > input:active{
-    border: solid #f4511e 0px;
+    input{
+        width: 100%;
+        color: var(--md-sys-color-on-surface);
+        font-size: 1rem;
+        border: none;
+        outline: none;
+        height: 100%;
+        background-color: transparent;
+        &::placeholder{
+            opacity: 0.5;
+        }
+        &:focus{
+            border:none;
+            outline: none;
+            box-shadow: none;
+            background-color: transparent;
+        }
+        &:active{
+            border:none;
+            outline: none;
+            box-shadow: none;
+            background-color: transparent;
+        }
+    }
+
+    span{
+        color: var(--md-sys-color-on-surface);
+        font-size: 0.8em;
+        opacity: 0.5;
+    }
 }
 
 .options-btn{
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+
     padding-top: 10px;
     padding-bottom: 10px;
     width: 100%;
-    font-size: 14px;
-    font-weight: 500;
+    height: $input-height;
+    font-size: 16px;
+    font-weight: 600;
     text-align: center;
-    border-radius: 20px;
+    border-radius: $input-border-radius;
     border-style: none;
     cursor: pointer;
 }

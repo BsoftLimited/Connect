@@ -1,32 +1,22 @@
-import jwt from "@elysiajs/jwt"
-import Elysia, { t } from "elysia"
+import jwt from "@elysiajs/jwt";
+import Elysia, { t } from "elysia";
+import type { User } from "./common/user";
+import UserRepository from "./repositories/user_repository";
 
-interface User {
-    id: string
-    email: string
-    username: string
-    role: "admin" | "user"
-}
-
-async function validateUser(email: string, password: string): Promise<User | null> {
-    if (email === 'admin@gmail.com' && password === 'admin') {
-        return { id: '1', email, username: 'admin', role: "admin" }
-    }
-
-    if (email === 'okelekelenobel@gmail.com' && password === 'Ruthless247@') {
-        return { id: '1', email, username: 'nobel44', role: "user" }
-    }
-    return null
-}
-
-const authPlugin = new Elysia({ prefix: "/auth"}).use( jwt({ name: 'jwt', secret: 'test'})).derive({ as: "global" }, async ({ jwt, cookie: { auth } })=>{
+const authPlugin = new Elysia({ prefix: "/auth"}).use( jwt({ name: 'jwt', secret: 'test'})).decorate({ "userRepository": new UserRepository() }).derive({ as: "global" }, async ({ jwt, userRepository, cookie: { auth } })=>{
     let user: User | undefined = undefined;
 
     console.log("checking for auth cookie");
     try {
         const payload: any = await jwt.verify(auth?.value);
         if (payload){
-            user = payload as User;
+            try {
+                const userId = payload.userId;
+                user = await userRepository.get(userId);
+                console.log("auth cookie found, user:", user);
+            } catch (error) {
+                console.error("Error fetching user details:", error);
+            }
         }
     } catch (error) {
         console.log(error);
@@ -36,24 +26,23 @@ const authPlugin = new Elysia({ prefix: "/auth"}).use( jwt({ name: 'jwt', secret
 
 const auth = new Elysia({ prefix: "/auth"}).use(authPlugin);
 
-auth.post('/login', async ({ jwt, status, body: { email, password }, cookie: { auth } }) => {
-    const user = await validateUser(email, password);
-    if(user){
-        const value = await jwt.sign({ ...user });
+auth.post('/login', async ({ jwt, userRepository, status, body: { email, password }, cookie: { auth } }) => {
+    try {
+        const user = await userRepository.login(email, password);
+        const value = await jwt.sign({ userId: user.id });
 
         auth?.set({ value, httpOnly: true, maxAge: 7 * 86400 });
 
         return `Sign in as ${value}`;
-    }else{
-        return status(404, 'user not found');
+    } catch (error) {
+        console.error("Login error:", error);
+        return status(404, "Invalid email or password");
     }
 }, { body: t.Object({ email: t.String(), password: t.String() }) });
 
-auth.post('/logout', ({ cookie: { auth_token } }) => {
-    auth_token?.remove();
+auth.post('/logout', ({ cookie: { auth } }) => {
+    auth?.set({ value: '', maxAge: 0, httpOnly: true });
     return { success: true }
 });
-
-export { authPlugin };
 
 export default auth;

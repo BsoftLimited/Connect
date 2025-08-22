@@ -1,11 +1,9 @@
-import { render, Show } from "solid-js/web";
+import { Show } from "solid-js/web";
 import Directory from "./components/directory";
 import SideBar from "./components/sidebar";
 import Streaming from "./components/streaming";
 import TopBar from "./components/topbar";
-import { useAppContext, AppContextProvider } from "./providers/app";
-import { ContextMenuProvider } from "./providers/context-menu";
-import { ThemeProvider } from "./providers/theme";
+import { AppContextProvider, useAppContext } from "./providers/app";
 import { UploadContextProvider } from "./providers/upload";
 
 export const App = () =>{
@@ -16,28 +14,20 @@ export const App = () =>{
             <TopBar />
             <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden" }}>
                 <SideBar />
-                <ContextMenuProvider>
-                    <Show when={appState().target === "stream"} fallback={<Directory />}>
-                        <Streaming />
-                    </Show>
-                </ContextMenuProvider>
+                <Show when={appState().target === "stream"} fallback={<Directory />}>
+                    <Streaming />
+                </Show>
             </div>
         </div>
     );
 }
 
-const root = document.getElementById("root");
-
-if(root){
-    render(() => (
+export default () =>{
+    return (
         <AppContextProvider>
-            <ThemeProvider>
-                <UploadContextProvider>
-                    <App />
-                </UploadContextProvider>
-            </ThemeProvider>
+            <UploadContextProvider>
+                <App />
+            </UploadContextProvider>
         </AppContextProvider>
-    ), root);
-}else{
-    console.log("root element not found");
-}
+    );
+};

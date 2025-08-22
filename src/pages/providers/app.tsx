@@ -1,5 +1,5 @@
 import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
-import type { DirectoryDetails, DirectoryFile } from "../../utils/files_repository";
+import type { DirectoryDetails, DirectoryFile } from "../../repositories/files_repository";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -111,7 +111,11 @@ const AppContextProvider: ParentComponent = (props) =>{
         }
     }
 
-    onMount(()=> fetchDirectory());
+    onMount(()=> {
+        if(window.location.pathname !== "/login"){
+            fetchDirectory();
+        }
+    });
 
     const providerValue: AppContextProviderType = {
         appState: state,
