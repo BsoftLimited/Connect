@@ -45,3 +45,5 @@ bun.lock.json
 /public/scripts
 /public/js
 /public/css
+
+/src/generated/prisma
