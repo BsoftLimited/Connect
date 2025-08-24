@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import api from "./api";
 import { htmlBuilder } from "./utils/util";
+import { seed } from "./config";
 
 
 const app = new Elysia().use(api);
@@ -98,7 +99,11 @@ app.get('/favicon.ico', async () => {
     }
 });
 
-app.listen(3000, (details)=>{
-    console.log(details);
-    console.log(`🦊 Elysia is running at ${details?.hostname}:${details?.port}`);
+seed().then(()=>{
+    app.listen(3000, (details)=>{
+        console.log(details);
+        console.log(`🦊 Elysia is running at ${details?.hostname}:${details?.port}`);
+    });
+}).catch((error)=>{
+    console.error("seeding error: ", error);
 });

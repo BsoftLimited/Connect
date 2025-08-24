@@ -5,7 +5,8 @@
         "dev": "concurrently \"bun run dev:client\" \"bun run dev:sass\" \"bun run dev:server\"",
         "dev:server": "bun run --watch ./src/index.tsx",
         "dev:client": "bun build.ts",
-        "dev:sass": "sass --watch src/sass:public/css"
+        "dev:sass": "sass --watch src/sass:public/css",
+        "migrate": "bun x prisma migrate dev --name init"
     },
     "dependencies": {
         "@elysiajs/cookie": "^0.8.0",
@@ -15,17 +16,20 @@
         "@ffmpeg/ffmpeg": "^0.12.15",
         "@lottiefiles/dotlottie-web": "^0.49.0",
         "@motionone/solid": "^10.16.4",
+        "@prisma/client": "6.14.0",
         "@solidjs/router": "^0.15.3",
         "elysia": "latest",
         "fluent-ffmpeg": "^2.1.3",
-        "solid-js": "^1.9.7"
+        "solid-js": "^1.9.7",
+        "sqlite3": "^5.1.7"
     },
     "devDependencies": {
         "@types/fluent-ffmpeg": "^2.1.27",
         "bun-types": "latest",
         "concurrently": "^9.2.0",
         "esbuild": "^0.25.8",
-        "esbuild-plugin-solid": "^0.6.0"
+        "esbuild-plugin-solid": "^0.6.0",
+        "prisma": "6.14.0"
     },
     "module": "src/index.js"
 }

@@ -26,9 +26,54 @@ api.get("/*", async(req) => {
 });
 
 api.get("/user", async(req) => {
-
     return new Response(JSON.stringify(req.user), { headers });
 });
+
+api.post("/user", async(req)=>{
+    if(req.user?.role === "admin"){
+        try{
+            const user = await req.userRepository.create({ ...req.body, accessLevel: req.body.accessLevel === "read-write" ? "read-write" : "read-only" });
+
+            return new Response(JSON.stringify(user), { headers });
+        }catch(error){
+            return new Response(JSON.stringify({ message: "user resgistration failed", error }), { headers, status: 400 });
+        }
+    }
+    return new Response("you are not allowed to create user", { status: 401 });
+}, { body: t.Object({ email: t.String(), username: t.String(), accessLevel: t.String(), password: t.String() }) });
+
+api.delete("/user", async(req)=>{
+    if(req.user?.role === "admin"){
+        try{
+            const user = await req.userRepository.delete(req.body.id);
+
+            return new Response(JSON.stringify(user), { headers });
+        }catch(error){
+            return new Response(JSON.stringify({ message: "user deletion failed", error }), { headers, status: 400 });
+        }
+    }
+    return new Response("you are not allowed to create user", { status: 401 });
+}, { body: t.Object({ id: t.String() }) });
+
+api.patch("/user", async(req)=>{
+    try{
+        const user = await req.userRepository.update({ ...req.body, id: req.user!.id, accessLevel: req.body.accessLevel === "read-write" ? "read-write" : "read-only" });
+
+        return new Response(JSON.stringify(user), { headers });
+    }catch(error){
+        return new Response(JSON.stringify({ message: "user update failed", error }), { headers, status: 400 });
+    }
+}, { body: t.Object({ email: t.Optional(t.String()), username: t.Optional(t.String()), accessLevel: t.Optional(t.String()) }) });
+
+api.patch("/user/password", async(req)=>{
+    try{
+        const user = await req.userRepository.changePassword({ ...req.body, id: req.user!.id });
+
+        return new Response(JSON.stringify(user), { headers });
+    }catch(error){
+        return new Response(JSON.stringify({ message: "user update failed", error }), { headers, status: 400 });
+    }
+}, { body: t.Object({ oldPassword:t.String(), newPassword: t.String() }) });
 
 api.delete("/", async(req) => {
     if( req.user?.accessLevel === "read-only") {
