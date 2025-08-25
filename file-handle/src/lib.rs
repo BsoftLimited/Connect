@@ -1,29 +1,13 @@
 use std::ffi::CString;
 use std::fs;
 use std::io;
-use serde::Serialize;
-
-
-// FFI-compatible structure
-#[repr(C)]
-pub struct ProgressEvent {
-    bytes_copied: u64,
-    total_bytes: u64,
-    percentage: f32,
-    completed: bool,
-    error: *const std::os::raw::c_char,
-}
 
 // Callback type for progress updates
-type ProgressCallback = extern "C" fn(event: ProgressEvent);
+type ProgressCallback = extern "C" fn(bytes_copied: u64, total_bytes: u64, percentage: f32, completed: bool, error: *const std::os::raw::c_char);
 
 // Main copy function with progress
 #[unsafe(no_mangle)]
-pub extern "C" fn copy_file_with_progress(
-    source_path: *const std::os::raw::c_char,
-    dest_path: *const std::os::raw::c_char,
-    callback: ProgressCallback,
-) -> bool {
+pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback) -> bool {
     // Convert C strings to Rust strings
     let source = unsafe { std::ffi::CStr::from_ptr(source_path).to_string_lossy().into_owned() };
     let destination = unsafe { std::ffi::CStr::from_ptr(dest_path).to_string_lossy().into_owned() };
@@ -84,15 +68,7 @@ fn send_progress(callback: ProgressCallback, copied: u64, total: u64, completed:
         std::ptr::null()
     };
     
-    let event = ProgressEvent {
-        bytes_copied: copied,
-        total_bytes: total,
-        percentage,
-        completed,
-        error: error_ptr,
-    };
-    
-    callback(event);
+    callback(copied, total, percentage, completed, error_ptr);
     
     // Clean up error string if we created one
     if !error_ptr.is_null() {
@@ -104,59 +80,24 @@ fn send_error(callback: ProgressCallback, error: &str) {
     send_progress(callback, 0, 0, true, Some(error));
 }
 
-#[unsafe(no_mangle)]
-pub extern "C" fn add(left: i32, right: i32) -> i32 {
-    left + right
-}
+type OnProgress = extern "C" fn(message: *const std::os::raw::c_char, percentage: f32, done: bool);
 
 #[unsafe(no_mangle)]
-pub extern "C" fn hello() -> *const std::os::raw::c_char {
-    CString::new("Hello from Rust!").unwrap().into_raw()
-}
+pub extern "C" fn progress_callback(name: *const std::os::raw::c_char,  callback: OnProgress) {
+    let name_string = unsafe { std::ffi::CStr::from_ptr(name).to_string_lossy().into_owned() };
 
-type OnClick = extern "C" fn(value: *mut std::os::raw::c_char);
+    // Run the async copy function
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async move {
+        let mut progress: f32 = 0.0;
+        while progress <= 100.0 {
+            let name_ptr = CString::new(format!("processing: {}", &name_string)).unwrap().into_raw();
 
-#[unsafe(no_mangle)]
-pub extern "C" fn with_callback(callback: OnClick) {
-    let msg = CString::new("Hello from Rust with callback!").unwrap();
-    callback(msg.into_raw());
-    let msg = CString::new("Another message from Rust!").unwrap();
-    callback(msg.into_raw());
-}
+            callback(name_ptr, progress, progress == 100.0);
+            progress += 10.0;
 
-
-#[derive(Serialize, Clone)]
-#[repr(C)]
-pub struct Progress { percentage: f32, done: bool}
-impl Progress {
-    fn to_json(&self) -> CString {
-        let init = serde_json::to_string(self).unwrap();
-
-        CString::new(init).unwrap()
-    }
-}
-
-type OnProgress = extern "C" fn(percentage: f32, done: bool);
-
-#[unsafe(no_mangle)]
-pub extern "C" fn progress_callback(callback: OnProgress) {
-    //let init = Progress { percentage: 0.1, done: false };
-    callback(0.1, false);
-    
-    //let init = Progress { percentage: 50.0, done: false };
-    callback(50.0, false);
-    
-    //let init = Progress { percentage: 100.0, done: true };
-    callback(1000.0, true);
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+            // 1 seconds delay
+            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        }
+    });
 }

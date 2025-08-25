@@ -6,7 +6,8 @@
         "dev:server": "bun run --watch ./src/index.tsx",
         "dev:client": "bun build.ts",
         "dev:sass": "sass --watch src/sass:public/css",
-        "migrate": "bun x prisma migrate dev --name init"
+        "migrate": "bun x prisma migrate dev --name init",
+        "compile-rs": "cd file-handle && cargo build --release"
     },
     "dependencies": {
         "@elysiajs/cookie": "^0.8.0",
