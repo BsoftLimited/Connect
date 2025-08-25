@@ -47,3 +47,4 @@ bun.lock.json
 /public/css
 
 /src/generated/prisma
+/file-handle/target
