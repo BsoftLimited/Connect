@@ -1,78 +1,64 @@
-import { dlopen, FFIType, suffix } from "bun:ffi";
-
+import { CString, dlopen, FFIType, JSCallback, suffix, type Pointer } from "bun:ffi";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Get the path to the compiled Rust library
 // `suffix` is either "dylib", "so", or "dll" depending on the platform
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const libPath = path.join(__dirname, `../../target/release/file_handle.${suffix}`); // .dll on Windows
-
-// Define the FFI interface
-/*interface ProgressEvent {
-  bytes_copied: number;
-  total_bytes: number;
-  percentage: number;
-  completed: boolean;
-  error: string | null;
-}
-
-type CopyCallback = (event: ProgressEvent) => void;
-
-// Load the Rust library
-const lib = ffi.Library(libPath, {
-  copy_file_with_progress: ['bool', ['string', 'string', 'pointer']],
-});*/
+const libPath = path.join(__dirname, `./file-handle/target/release/file_handle.${suffix}`); // .dll on Windows
 
 const {
-  symbols: {
-    add, // the function to call
-  },
+    symbols: { progress_callback, copy_file_with_progress },
 } = dlopen(libPath, {
-  add: {
-    args: [FFIType.u64, FFIType.u64], // no arguments
-    returns: FFIType.u64, // returns a string
-  },
+    progress_callback: {
+        args: [FFIType.cstring, FFIType.function], // takes a function pointer
+        returns: FFIType.void, // returns nothing
+    },
+    copy_file_with_progress: {
+        args: [FFIType.cstring, FFIType.cstring, FFIType.function], // takes a function pointer
+        returns: FFIType.bool, // returns a bool
+    },
 });
 
-console.log('3 + 5 =', add(3, 5)); // should print "Hello from Rust!"
+const progressCallback = (message: Pointer, percentage: number, done: boolean) => {
+    // Assuming update is a pointer to a C string for simplicity
+    const msg = new CString(message);
+    console.log(msg,percentage, done);
+}
 
-/*export class FileCopier {
-  static async copyFile(
-    sourcePath: string,
-    destPath: string,
-    onProgress?: (progress: ProgressEvent) => void
-  ): Promise<boolean> {
+const progressInit = new JSCallback(progressCallback, {
+    args: [FFIType.cstring, FFIType.f32, FFIType.bool],
+    returns: FFIType.void,
+});
+
+//progress_callback(Buffer.from("new.txt") , progressInit);
+export interface ProgressEvent {
+    bytes_copied: number;
+    total_bytes: number;
+    percentage: number;
+    completed: boolean;
+    error: string | null;
+}
+const copyFile = async( sourcePath: string, destPath: string, onProgress?: (progress: ProgressEvent) => void): Promise<boolean> => {
     return new Promise((resolve) => {
-      // Create callback function
-      const callback = ffi.Callback('void', ['pointer'], (eventPtr: any) => {
-        const event: ProgressEvent = {
-          bytes_copied: eventPtr.bytes_copied,
-          total_bytes: eventPtr.total_bytes,
-          percentage: eventPtr.percentage,
-          completed: eventPtr.completed,
-          error: eventPtr.error ? ffi.readCString(eventPtr.error) : null,
-        };
+        const callback = new JSCallback((bytes_copied: number, total_bytes: number, percentage: number, completed: boolean, error: string | null) => {
+            console.log(bytes_copied, total_bytes, percentage, completed, error);
+            if (onProgress) {
+                onProgress({ bytes_copied, total_bytes, percentage, completed, error});
+            }
+            if (completed) {
+                resolve(true);
+            }else if (error) {
+                resolve(false);
+            }
+        }, { args: [FFIType.u64, FFIType.u64, FFIType.f32, FFIType.bool, FFIType.cstring], returns: FFIType.void});
 
-        if (onProgress) {
-          onProgress(event);
+        const result = copy_file_with_progress( Buffer.from(sourcePath), Buffer.from(destPath), callback);
+
+        if (!result) {
+            resolve(false);
         }
-
-        if (event.completed) {
-          resolve(!event.error);
-        }
-      });
-
-      // Call the Rust function
-      const success = lib.copy_file_with_progress(
-        sourcePath,
-        destPath,
-        callback
-      );
-
-      if (!success) {
-        resolve(false);
-      }
     });
-  }
-}*/
+}
+
+export default copyFile;
