@@ -1,47 +1,13 @@
-import { FileCopier } from "./src/utils/file-copy";
+import { copyFile, copyFolder, folderInfo } from "./src/utils/file-handle_bridge";
 
-async function main() {
-  const source = './large-file.iso';
-  const destination = './copy-large-file.iso';
+/*folderInfo("C:/Users/Bobby/Pictures").then((value)=>{
+    console.log(value);
+}).catch(error => console.error(error));*/
 
-  console.log('Starting file copy...');
+/*copyFile("C:/Users/Bobby/Downloads/func-cli-x64.msi", "C:/Users/Bobby/Desktop", (progress)=>{
+  console.log(progress);
+});*/
 
-  try {
-    const success = await FileCopier.copyFile(source, destination, (progress) => {
-      if (progress.error) {
-        console.error(`Error: ${progress.error}`);
-        return;
-      }
-
-      if (progress.completed) {
-        console.log('Copy completed successfully!');
-        return;
-      }
-
-      console.log(
-        `Progress: ${progress.percentage.toFixed(1)}% ` +
-        `(${formatBytes(progress.bytes_copied)} / ${formatBytes(progress.total_bytes)})`
-      );
-    });
-
-    console.log(success ? 'Copy succeeded' : 'Copy failed');
-  } catch (error) {
-    console.error('Copy error:', error);
-  }
-}
-
-function formatBytes(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`;
-}
-
-// Run the example
-main();
+copyFolder("C:/Users/Bobby/Pictures", "C:/Users/Bobby/Desktop/Pictures", (progress)=>{
+    console.log(progress);
+});
