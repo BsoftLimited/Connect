@@ -2,8 +2,23 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-fn calculate_folder_size(path: &std::path::Path) -> u64 {
+#[derive(Debug, Clone, serde::Serialize)]
+struct FolderInfo {
+    total_size: u64,
+    file_count: u32,
+    folder_count: u32,
+}
+
+impl FolderInfo{
+    fn to_json(&self) -> String {
+        serde_json::to_string(self).unwrap_or_else(|_| "{}".to_string())
+    }
+}
+
+fn calculate_folder_size(path: &std::path::Path) -> FolderInfo {
     let mut size = 0;
+    let mut file_count = 0;
+    let mut folder_count = 0;
     let mut stack = vec![PathBuf::from(path)];
 
     while let Some(path) = stack.pop() {
@@ -12,13 +27,15 @@ fn calculate_folder_size(path: &std::path::Path) -> u64 {
                 let entry_path = entry.path();
                 if entry_path.is_dir() {
                     stack.push(entry_path);
+                    folder_count += 1;
                 } else if entry_path.is_file() {
                     size += entry_path.metadata().unwrap().len();
+                    file_count += 1;
                 }
             }
         }
     }
-    size
+    FolderInfo { total_size: size, file_count, folder_count }
 }
 
 // Callback type for progress updates
@@ -150,10 +167,14 @@ fn copy_folder_iterative(source: &str, destination: &str, bytes_copied: &mut u64
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn get_folder_size(path: *const std::os::raw::c_char) -> u64 {
+pub extern "C" fn get_folder_info(path: *const std::os::raw::c_char) -> *mut std::os::raw::c_char {
     let path_str = unsafe { std::ffi::CStr::from_ptr(path).to_string_lossy().into_owned() };
     
-    calculate_folder_size(&std::path::PathBuf::from(path_str))
+    let info = calculate_folder_size(&std::path::PathBuf::from(path_str));
+    let json = info.to_json();
+    let c_string = std::ffi::CString::new(json).unwrap();
+    
+    c_string.into_raw()
 }
 
 #[unsafe(no_mangle)]
@@ -187,7 +208,8 @@ pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_
         let source_file = PathBuf::from(&source);
 
         if let Some(file_name) = source_file.file_name(){
-            let total_bytes = calculate_folder_size(&source_file);
+            let folder_info = calculate_folder_size(&source_file);
+            let total_bytes = folder_info.total_size;
             let mut bytes_copied = 0;
 
             // Send initial progress
