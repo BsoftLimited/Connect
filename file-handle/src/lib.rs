@@ -9,33 +9,48 @@ struct FolderInfo {
     folder_count: u32,
 }
 
-impl FolderInfo{
+
+
+#[derive(serde::Serialize)]
+struct FolderInfoResult{
+    info: FolderInfo,
+    error: Option<String>
+}
+
+impl FolderInfoResult {
     fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap_or_else(|_| "{}".to_string())
+        serde_json::to_string(self).unwrap_or_else(|_| "{\"error\":\"Serialization failed\"}".to_string())
     }
 }
 
-fn calculate_folder_size(path: &std::path::Path) -> FolderInfo {
+fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error> {
     let mut size = 0;
     let mut file_count = 0;
     let mut folder_count = 0;
     let mut stack = vec![PathBuf::from(path)];
 
     while let Some(path) = stack.pop() {
-        if let Ok(entries) = fs::read_dir(&path) {
-            for entry in entries.flatten() {
-                let entry_path = entry.path();
-                if entry_path.is_dir() {
-                    stack.push(entry_path);
-                    folder_count += 1;
-                } else if entry_path.is_file() {
-                    size += entry_path.metadata().unwrap().len();
-                    file_count += 1;
+        match fs::read_dir(&path) {
+            Ok(entries) => {
+                for entry in entries.flatten() {
+                    let entry_path = entry.path();
+                    if entry_path.is_dir() {
+                        stack.push(entry_path);
+                        folder_count += 1;
+                    } else if entry_path.is_file() {
+                        size += entry_path.metadata().unwrap().len();
+                        file_count += 1;
+                    }
                 }
+            },
+            Err(e) => {
+                // Handle the error (e.g., log it) and continue
+                eprintln!("Error reading directory {}: {}", path.display(), &e);
+                return Err(e);
             }
         }
     }
-    FolderInfo { total_size: size, file_count, folder_count }
+    Ok(FolderInfo { total_size: size, file_count, folder_count })
 }
 
 // Callback type for progress updates

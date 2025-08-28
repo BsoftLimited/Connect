@@ -55,10 +55,12 @@ interface FileProgressEvent {
 
 const copyFile = async( sourcePath: string, destPath: string, onProgress?: (progress: FileProgressEvent) => void): Promise<boolean> => {
     return new Promise((resolve) => {
-        const callback = new JSCallback((bytes_copied: number, total_bytes: number, percentage: number, completed: boolean, error: string | null) => {
+        const callback = new JSCallback((bytes_copied: number, total_bytes: number, percentage: number, completed: boolean, error: Pointer | null) => {
             console.log(bytes_copied, total_bytes, percentage, completed, error);
             if (onProgress) {
-                onProgress({ bytes_copied, total_bytes, percentage, completed, error});
+                const errorStr = error ? new CString(error).toString() : undefined;
+
+                onProgress({ bytes_copied, total_bytes, percentage, completed, error: errorStr });
             }
             if (completed) {
                 resolve(true);
