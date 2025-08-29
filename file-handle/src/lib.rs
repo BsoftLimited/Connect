@@ -2,7 +2,6 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-#[derive(serde::Serialize)]
 struct FolderInfo {
     name: String,
     total_size: u64,
@@ -10,16 +9,18 @@ struct FolderInfo {
     folder_count: u32,
 }
 
-#[derive(serde::Serialize)]
-struct FolderInfoResult{
-    info: FolderInfo,
-    error: Option<String>
+struct FileInfo{
+    name: String,
+    total_size: u64,
 }
 
-impl FolderInfoResult {
-    fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap_or_else(|_| "{\"error\":\"Serialization failed\"}".to_string())
-    }
+enum FileType<'a>{
+    Folder(Box<&'a FolderInfo>),
+    File(Box<&'a FileInfo>)
+}
+
+struct ProgressReport<'a>{
+    name: &'a str, files_copied: u32, bytes_copied: u64, completed: bool, error: Option<&'a str>
 }
 
 fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error> {
@@ -53,27 +54,55 @@ fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error
     Ok(FolderInfo { name, total_size: size, file_count, folder_count })
 }
 
-// Callback type for progress updates
-type FileProgressCallback = extern "C" fn(bytes_copied: u64, total_bytes: u64, percentage: f32, completed: bool, error: *const std::os::raw::c_char);
+type ErrorCallback = extern "C" fn(error: *const std::os::raw::c_char);
+type FileProgressCallback = extern "C" fn(bytes_copied: u64, total_bytes: u64, percentage: f32, completed: bool);
+type ProgressCallback = extern "C" fn(
+    name: *const std::os::raw::c_char, total_files: u32, files_copied: u32,
+    total_bytes: u64, bytes_copied: u64, percentage: f32,completed: bool);
 
-fn send_file_progress(callback: FileProgressCallback, copied: u64, total: u64, completed: bool, error: Option<&str>) {
+fn send_file_progress(callback: FileProgressCallback, error_callback: ErrorCallback, copied: u64, total: u64, completed: bool, error: Option<&str>) {
     let percentage = if total > 0 { (copied as f32 / total as f32) * 100.0 } else { 0.0 };
     
-    let error_ptr = if let Some(err) = error {
-        std::ffi::CString::new(err).unwrap().into_raw()
-    } else {
-        std::ptr::null()
-    };
-    
-    callback(copied, total, percentage, completed, error_ptr);
-    
-    // Clean up error string if we created one
-    if !error_ptr.is_null() {
+    if let Some(err) = error {
+        let error_ptr = std::ffi::CString::new(err).unwrap().into_raw();
+
+        error_callback(error_ptr);
+
         unsafe { let _ = std::ffi::CString::from_raw(error_ptr as *mut _); };
-    }
+    } else {
+        callback(copied, total, percentage, completed);  
+    };
 }
 
-async fn copy_file_async( source: &str, destination: &str, callback: FileProgressCallback) -> io::Result<()> {
+fn send_progress(callback: ProgressCallback, error_callback: ErrorCallback, file_type: FileType, report: ProgressReport ) {
+    let bytes_copied = report.bytes_copied;
+    
+    if let Some(err) = report.error {
+        let error_ptr = std::ffi::CString::new(err).unwrap().into_raw();
+
+        error_callback(error_ptr);
+        unsafe { let _ = std::ffi::CString::from_raw(error_ptr as *mut _); };
+    } else {
+        let name_ptr = std::ffi::CString::new(report.name).unwrap().into_raw();
+        let files_copied = report.files_copied;
+        let completed = report.completed;
+
+        let (total_files, total_bytes) = match file_type {
+            FileType::Folder(info) => (info.file_count, info.total_size),
+            FileType::File(info) => (0, info.total_size)
+        };
+
+        let percentage = if total_bytes > 0 { (bytes_copied as f32 / total_bytes as f32) * 100.0 } else { 0.0 };
+        
+        callback(name_ptr, total_files, files_copied, total_bytes, bytes_copied, percentage, completed);
+        
+        unsafe {
+            let _ = std::ffi::CString::from_raw(name_ptr as *mut _);
+        }  
+    };
+}
+
+async fn copy_file_async( source: &str, destination: &str, callback: FileProgressCallback, error_callback: ErrorCallback) -> io::Result<()> {
     let source_buffer = PathBuf::from(source);
     let metadata = source_buffer.metadata().unwrap();
     let file_name = source_buffer.file_name().unwrap().to_str().unwrap();
@@ -90,7 +119,7 @@ async fn copy_file_async( source: &str, destination: &str, callback: FileProgres
     let mut last_time = std::time::Instant::now();
     
     // Send initial progress
-    send_file_progress(callback, bytes_copied, total_bytes, false, None);
+    send_progress(callback, bytes_copied, total_bytes, false);
     
     loop {
         let bytes_read = io::Read::read(&mut source_file, &mut buffer)?;
@@ -103,13 +132,13 @@ async fn copy_file_async( source: &str, destination: &str, callback: FileProgres
 
         // check if at least 500ms has passed since last update then send update
         if last_time.elapsed().as_millis() >= 500 {
-            send_file_progress(callback, bytes_copied, total_bytes, false, None);
+            send_progress(callback, bytes_copied, total_bytes, false, None);
             last_time = std::time::Instant::now();
         }
     }
     
     // Send completion
-    send_file_progress(callback, total_bytes, total_bytes, true, None);
+    send_progress(callback, total_bytes, total_bytes, true, None);
     Ok(())
 }
 
@@ -118,50 +147,7 @@ struct Transit{
     destination: PathBuf
 }
 
-type FolderProgressCallback = extern "C" fn(
-    name: *const std::os::raw::c_char,
-    total_files: u32,
-    files_copied: u32,
-    total_bytes: u64,
-    bytes_copied: u64,  
-    percentage: f32, 
-    completed: bool, 
-    error: *const std::os::raw::c_char);
-
-struct FolderProgressReport<'a>{
-    name: &'a str, files_copied: u32, bytes_copied: u64, completed: bool, error: Option<&'a str>
-}
-
-fn send_folder_progress(callback: FolderProgressCallback, folder_info: &FolderInfo, report: FolderProgressReport ) {
-    let total_bytes = folder_info.total_size;
-    let bytes_copied = report.bytes_copied;
-
-    let percentage = if total_bytes > 0 { (bytes_copied as f32 / total_bytes as f32) * 100.0 } else { 0.0 };
-    
-    let error_ptr = if let Some(err) = report.error {
-        std::ffi::CString::new(err).unwrap().into_raw()
-    } else {
-        std::ptr::null()
-    };
-
-    let name_ptr = std::ffi::CString::new(report.name).unwrap().into_raw();
-    let total_files = folder_info.file_count;
-    let files_copied = report.files_copied;
-    let completed = report.completed;
-    
-    callback(name_ptr, total_files, files_copied, total_bytes, bytes_copied, percentage, completed, error_ptr);
-    
-    // Clean up error and name string
-    unsafe {
-        if !error_ptr.is_null() {
-            let _ = std::ffi::CString::from_raw(error_ptr as *mut _);
-        }
-    
-        let _ = std::ffi::CString::from_raw(name_ptr as *mut _);
-    }
-}
-
-fn copy_folder_iterative(source: &str, destination: &str, folder_info: &FolderInfo, callback: FolderProgressCallback) -> io::Result<()>{
+fn copy_folder_iterative(source: &str, destination: &str, folder_info: &FolderInfo, callback: ProgressCallback) -> io::Result<()>{
     let mut bytes_copied: u64 = 0;
     let mut files_copied: u32  = 0;
 
@@ -228,7 +214,7 @@ pub extern "C" fn get_folder_info(path: *const std::os::raw::c_char) -> *mut std
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: FileProgressCallback) -> bool {
+pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) -> bool {
     // Convert C strings to Rust strings
     let source = unsafe { std::ffi::CStr::from_ptr(source_path).to_string_lossy().into_owned() };
     let destination = unsafe { std::ffi::CStr::from_ptr(dest_path).to_string_lossy().into_owned() };
@@ -247,7 +233,7 @@ pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_ch
 
 // copy folder recursively with progress
 #[unsafe(no_mangle)]
-pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: FolderProgressCallback) -> bool {
+pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) -> bool {
     // Convert C strings to Rust strings
     let source = unsafe { std::ffi::CStr::from_ptr(source_path).to_string_lossy().into_owned() };
     let destination = unsafe { std::ffi::CStr::from_ptr(dest_path).to_string_lossy().into_owned() };
