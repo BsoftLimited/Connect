@@ -4,12 +4,11 @@ use std::path::PathBuf;
 
 #[derive(serde::Serialize)]
 struct FolderInfo {
+    name: String,
     total_size: u64,
     file_count: u32,
     folder_count: u32,
 }
-
-
 
 #[derive(serde::Serialize)]
 struct FolderInfoResult{
@@ -27,6 +26,7 @@ fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error
     let mut size = 0;
     let mut file_count = 0;
     let mut folder_count = 0;
+    let name = path.file_name().unwrap_or_else(|| std::ffi::OsStr::new("")).to_string_lossy().into_owned();
     let mut stack = vec![PathBuf::from(path)];
 
     while let Some(path) = stack.pop() {
@@ -50,7 +50,7 @@ fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error
             }
         }
     }
-    Ok(FolderInfo { total_size: size, file_count, folder_count })
+    Ok(FolderInfo { name, total_size: size, file_count, folder_count })
 }
 
 // Callback type for progress updates
@@ -257,21 +257,28 @@ pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_
     rt.block_on(async move {
         let source_file = PathBuf::from(&source);
 
-        if let Some(file_name) = source_file.file_name(){
-            let folder_info = calculate_folder_size(&source_file);
-
+        if let Ok(folder_info) = calculate_folder_size(&source_file){
+            let file_name = folder_info.name.clone();
             // Send initial progress
             send_folder_progress(callback, &folder_info, FolderProgressReport{
-                name: &file_name.to_string_lossy(),  files_copied: 0, completed: false,  error: None, bytes_copied: 0
+                name: &file_name,  files_copied: 0, completed: false,  error: None, bytes_copied: 0
             });
 
-            if let Ok(()) = copy_folder_iterative(source.as_str(), &destination, &folder_info, callback){
+            if let Err(e) = copy_folder_iterative(&source, &destination, &folder_info, callback) {
                 send_folder_progress(callback, &folder_info, FolderProgressReport{
-                    name: &file_name.to_string_lossy(),  files_copied: 0, completed: true,  error: None, bytes_copied: 0
+                    name: &file_name,
+                    files_copied: 0, bytes_copied: 0, completed: true, error: Some(&e.to_string())
+                });
+                return false;
+            } else {
+                send_folder_progress(callback, &folder_info, FolderProgressReport{
+                    name: &file_name,
+                    files_copied: folder_info.file_count, bytes_copied: folder_info.total_size, completed: true, error: None
                 });
                 return true;
             }
+        } else {
+            return false;
         }
-        false
     })
 }
