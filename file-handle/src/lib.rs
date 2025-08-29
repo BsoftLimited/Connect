@@ -214,7 +214,7 @@ pub extern "C" fn get_folder_info(path: *const std::os::raw::c_char) -> *mut std
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) -> bool {
+pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) {
     // Convert C strings to Rust strings
     let source = unsafe { std::ffi::CStr::from_ptr(source_path).to_string_lossy().into_owned() };
     let destination = unsafe { std::ffi::CStr::from_ptr(dest_path).to_string_lossy().into_owned() };
@@ -222,18 +222,13 @@ pub extern "C" fn copy_file_with_progress(source_path: *const std::os::raw::c_ch
     // Run the async copy function
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async move {
-        if let Err(e) = copy_file_async(&source, &destination, callback).await {
-            send_file_progress(callback, 0, 0, true, Some(&e.to_string()));
-            false
-        } else {
-            true
-        }
+        copy_file_async(&source, &destination, callback).await;
     })
 }
 
 // copy folder recursively with progress
 #[unsafe(no_mangle)]
-pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) -> bool {
+pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) {
     // Convert C strings to Rust strings
     let source = unsafe { std::ffi::CStr::from_ptr(source_path).to_string_lossy().into_owned() };
     let destination = unsafe { std::ffi::CStr::from_ptr(dest_path).to_string_lossy().into_owned() };
