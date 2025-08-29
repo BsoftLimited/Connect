@@ -241,25 +241,21 @@ pub extern "C" fn copy_folder_with_progress(source_path: *const std::os::raw::c_
         if let Ok(folder_info) = calculate_folder_size(&source_file){
             let file_name = folder_info.name.clone();
             // Send initial progress
-            send_folder_progress(callback, &folder_info, FolderProgressReport{
+            send_progress(callback, &folder_info, FolderProgressReport{
                 name: &file_name,  files_copied: 0, completed: false,  error: None, bytes_copied: 0
             });
 
             if let Err(e) = copy_folder_iterative(&source, &destination, &folder_info, callback) {
-                send_folder_progress(callback, &folder_info, FolderProgressReport{
+                send_progress(callback, &folder_info, FolderProgressReport{
                     name: &file_name,
                     files_copied: 0, bytes_copied: 0, completed: true, error: Some(&e.to_string())
                 });
-                return false;
             } else {
-                send_folder_progress(callback, &folder_info, FolderProgressReport{
+                send_progress(callback, &folder_info, FolderProgressReport{
                     name: &file_name,
                     files_copied: folder_info.file_count, bytes_copied: folder_info.total_size, completed: true, error: None
                 });
-                return true;
             }
-        } else {
-            return false;
         }
     })
 }
