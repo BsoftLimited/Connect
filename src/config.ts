@@ -64,6 +64,29 @@ const queryLibraryPath = async(extention: string): Promise<string> =>{
     throw Error("file-handle library file not found. try running 'bun run compile-rs' in terminal/CMD");
 }
 
+class LibraryHandler{
+    private static __libraryPath?: string;
+
+    private constructor() {}
+
+    static instance(): PrismaClient{
+        if(!DBManager.__db){
+            try{
+                DBManager.__db = connect();
+                return DBManager.__db!;
+            }catch(error){
+                throw error;
+            }
+        }else{
+            return DBManager.__db!;
+        }
+    }
+
+    static disponse = () =>{
+        DBManager.__db?.$disconnect();
+    }
+}
+
 export async function seed() {
     console.info("initializing seeding: connecting to database");
     const database = DBManager.instance();
