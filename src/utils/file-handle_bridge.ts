@@ -1,16 +1,12 @@
 import { CString, dlopen, FFIType, JSCallback, suffix, type Pointer } from "bun:ffi";
 import { homedir } from "os";
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 // Get the path to the compiled Rust library
 // `suffix` is either "dylib", "so", or "dll" depending on the platform
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const libPath = path.join(__dirname, `../../file-handle/target/release/file_handle.${suffix}`); // .dll on Windows
+const libPath = path.join(process.cwd(), `./file-handle/target/release/${process.platform === "linux" ? "libfile_handle" : "file_handle"}.${suffix}`);
 
-const {
-    symbols: { copy_with_progress, get_folder_info, storage_info },
-} = dlopen(libPath, {
+const { symbols: { copy_with_progress, get_folder_info, storage_info }} = dlopen(libPath, {
     copy_with_progress: {
         args: [FFIType.cstring, FFIType.cstring, FFIType.function, FFIType.function],
         returns: FFIType.void,

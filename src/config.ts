@@ -1,4 +1,7 @@
 import { PrismaClient } from "./generated/prisma/client";
+import path from 'path';
+import { suffix } from "bun:ffi";
+import { join } from "@prisma/client/runtime/library";
 
 const connect = (): PrismaClient => {
     const client = new PrismaClient({ log: [{ level: 'query', emit: 'event' }], });
@@ -45,6 +48,20 @@ class DBManager{
     static disponse = () =>{
         DBManager.__db?.$disconnect();
     }
+}
+
+const queryLibraryPath = async(extention: string): Promise<string> =>{
+    const libraryPath = path.join(process.cwd(), "./file-handle/target/release");
+
+    let files = (await Bun.$`ls ${libraryPath}`.text()).split('\n').filter(init => init);
+
+    let libraryName = files.find((value)=> value.endsWith(suffix));
+
+    if(libraryName){
+        return `${libraryPath}/${libraryName}`;
+    }
+
+    throw Error("file-handle library file not found. try running 'bun run compile-rs' in terminal/CMD");
 }
 
 export async function seed() {
