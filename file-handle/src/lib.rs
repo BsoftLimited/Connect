@@ -4,7 +4,8 @@ use std::io::Error;
 use std::path::Path;
 use std::path::PathBuf;
 
-use sysinfo::Disks;
+use sysinfo::System;
+use sysinfo::{ Disks, IS_SUPPORTED_SYSTEM };
 
 struct FolderInfo {
     name: String,
@@ -288,13 +289,19 @@ async fn copy( source: &str, destination: &str, callback: ProgressCallback) -> i
 }
 
 fn get_disk_space_for_path(path: &Path) -> Option<(String, u64, u64)> {
+    let mut sys = System::new_all();
+
+    sys.refresh_all();
+    
     let disks = Disks::new_with_refreshed_list();
-    let canonical_path = path.canonicalize().ok()?;
+    //let canonical_path = path.canonicalize().ok()?;
 
     for disk in disks.list() {
+        println!("{disk:?}: {}", path.as_os_str().to_string_lossy());
         let mount_point = disk.mount_point();
-        if canonical_path.starts_with(mount_point) {
+        if path.starts_with(mount_point) {
             let name = disk.name().to_str().unwrap_or("home");
+            println!("I was hear, I think");
 
             return Some((name.to_owned(), disk.total_space(),  disk.available_space()));
         }
@@ -330,15 +337,19 @@ pub extern "C" fn storage_info(home: *const std::os::raw::c_char, callback: Stor
     // Run the async copy function
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async move {
-        let result = get_disk_space_for_path(&std::path::PathBuf::from(&home_str));
-        if let Some((name, total, available)) = result {
-            let name_ptr = std::ffi::CString::new(name).unwrap().into_raw();
-            callback(name_ptr, total, available);
-            
-            unsafe { let _ = std::ffi::CString::from_raw(name_ptr as *mut _); };
+        if IS_SUPPORTED_SYSTEM{
+            let result = get_disk_space_for_path(&std::path::PathBuf::from(&home_str));
+            if let Some((name, total, available)) = result {
+                let name_ptr = std::ffi::CString::new(name).unwrap().into_raw();
+                callback(name_ptr, total, available);
+
+                unsafe { let _ = std::ffi::CString::from_raw(name_ptr as *mut _); };
+            }else{
+                let error_msg = format!("Failed to get storage info for path: {}", &home_str);
+                send_error(error_callback, &error_msg);
+            }
         }else{
-            let error_msg = format!("Failed to get storage info for path: {}", &home_str);
-            send_error(error_callback, &error_msg);
+            send_error(error_callback, "this system doesn't support getting system info");
         }
     });
 }
