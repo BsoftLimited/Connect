@@ -294,14 +294,11 @@ fn get_disk_space_for_path(path: &Path) -> Option<(String, u64, u64)> {
     sys.refresh_all();
     
     let disks = Disks::new_with_refreshed_list();
-    //let canonical_path = path.canonicalize().ok()?;
 
     for disk in disks.list() {
-        println!("{disk:?}: {}", path.as_os_str().to_string_lossy());
         let mount_point = disk.mount_point();
         if path.starts_with(mount_point) {
             let name = disk.name().to_str().unwrap_or("home");
-            println!("I was hear, I think");
 
             return Some((name.to_owned(), disk.total_space(),  disk.available_space()));
         }

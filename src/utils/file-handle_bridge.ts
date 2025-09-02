@@ -1,11 +1,21 @@
 import { CString, dlopen, FFIType, JSCallback, suffix, type Pointer } from "bun:ffi";
 import { homedir } from "os";
-import path from 'path';
+import path from "path";
 
-// Get the path to the compiled Rust library
-// `suffix` is either "dylib", "so", or "dll" depending on the platform
-const libPath = path.join(process.cwd(), `./file-handle/target/release/${process.platform === "linux" ? "libfile_handle" : "file_handle"}.${suffix}`);
+const queryLibraryPath = async(): Promise<string> =>{
+    const libraryPath = path.join(process.cwd(), "./file-handle/target/release");
 
+    let files = (await Bun.$`ls ${libraryPath}`.text()).split('\n').filter(init => init);
+
+    let libraryName = files.find((value)=> value.endsWith(suffix));
+    if(libraryName){
+        return path.join(libraryPath, libraryName);
+    }
+
+    throw Error("file-handle library file not found. try running 'bun run compile-rs' in terminal/CMD");
+}
+
+const libPath = await queryLibraryPath();
 const { symbols: { copy_with_progress, get_folder_info, storage_info }} = dlopen(libPath, {
     copy_with_progress: {
         args: [FFIType.cstring, FFIType.cstring, FFIType.function, FFIType.function],
@@ -62,7 +72,6 @@ interface ProgressEvent {
 const copy = async( sourcePath: string, destPath: string, onProgress?: (progress: ProgressEvent) => void): Promise<void> => {
     return new Promise((resolve, reject) => {
         const callback = new JSCallback((name: Pointer, total_files: number, files_copied: number, total_bytes: number, bytes_copied: number, percentage: number, completed: boolean) => {
-            console.log(bytes_copied, total_bytes, percentage, completed);
             if (onProgress) {
                 const nameStr = new CString(name).toString();
                 onProgress({ name: nameStr, total_files, files_copied,  total_bytes, bytes_copied, percentage, completed });
