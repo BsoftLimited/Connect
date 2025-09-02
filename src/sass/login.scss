@@ -1,0 +1,118 @@
+@use "common" as common;
+
+body{
+    background-image: url("/assets/images/background.png");
+    background-repeat: no-repeat;
+    background-size:cover
+}
+
+.container{
+    width: 100vw;
+    flex: 1;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-container{
+    width: 40rem;
+    padding: 2rem;
+    margin: 2rem;
+    max-width: 36rem;
+    min-width: 24rem;
+    background-color: rgba( 255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    box-shadow: 3px;
+}
+
+.forms{
+    max-width: 600px;
+    min-width: 340px;
+    padding: 30px;
+    background-color: rgba( 255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    border: solid 0px white;
+    box-shadow: 3px;
+}
+
+form{
+    text-align: left;
+}
+
+form > label{
+    font-size: 1.2rem;
+    color: whitesmoke;
+    margin-left: 0px;
+}
+
+$input-height: 3rem;
+$input-border-radius: 8px;
+
+.input-field{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: $input-height;
+    background-color: var(--md-sys-color-surface-container);
+
+    margin-top: 5px;
+    margin-bottom: 20px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: $input-border-radius;
+    width: 100%;
+
+    input{
+        width: 100%;
+        color: var(--md-sys-color-on-surface);
+        font-size: 1rem;
+        border: none;
+        outline: none;
+        height: 100%;
+        background-color: transparent;
+        &::placeholder{
+            opacity: 0.5;
+        }
+        &:focus{
+            border:none;
+            outline: none;
+            box-shadow: none;
+            background-color: transparent;
+        }
+        &:active{
+            border:none;
+            outline: none;
+            box-shadow: none;
+            background-color: transparent;
+        }
+    }
+
+    span{
+        color: var(--md-sys-color-on-surface);
+        font-size: 0.8em;
+        opacity: 0.5;
+    }
+}
+
+.options-btn{
+    background-color: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 100%;
+    height: $input-height;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: $input-border-radius;
+    border-style: none;
+    cursor: pointer;
+}

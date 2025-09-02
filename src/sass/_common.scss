@@ -325,11 +325,14 @@
 
 $side-bar-width: 12rem;
 $side-bar-width-min: 5rem;
+$topbar-height: 4.5rem;
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    //font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 a{
@@ -350,6 +353,7 @@ a{
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    height: $topbar-height;
     color: var(--md-sys-color-on-surface-variant);
     background: var(--md-sys-color-surface-container-low);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -360,6 +364,7 @@ a{
         align-items: center;
         padding: 1rem;
         width: $side-bar-width;
+        height: $topbar-height;
         gap: 1rem;
         background: var(--md-sys-color-surface-container-highest);
 
@@ -374,11 +379,90 @@ a{
             font-weight: 600;
         }
     }
+
+    span{
+        margin-right: 1.2rem;
+    }
+}
+
+.topbar-tranparent {
+    background: transparent;
+    box-shadow: none;
+    color: white;
+    .topbar-header {    
+        background: transparent;
+        .topbar-icon {
+            color: white;
+        }
+        .topbar-title {
+            color: white;
+        }
+    }
+
+    span {
+        color: whitesmoke;
+        &:hover {
+            color: white;
+        }
+    }
 }
 
 .clicakble {
     cursor: pointer;
     @include hover-color;
+}
+
+.pathLink{
+    cursor: pointer;
+    color: var(--md-sys-color-primary);
+}
+
+.loading{
+    background-color: var(--md-sys-color-surface-container-lowest);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2rem;
+
+    canvas {
+        width: 20rem;
+        height: 20rem;
+    }
+
+    div{
+        font-size: medium;
+        color: var(--md-sys-color-on-surface-variant);
+        font-weight: bold;
+    }
+}
+
+.horizontal-loader-container {
+  width: 100%; /* Or a specific width */
+  height: 4px; /* Height of the loading bar */
+  background-color: #f3f3f3; /* Background color of the container */
+  overflow: hidden; /* Hide overflowing parts of the bar */
+  position: relative;
+}
+
+.horizontal-loader-bar {
+  height: 100%;
+  width: 30%; /* Initial width of the moving bar */
+  background-color: #3498db; /* Color of the loading bar */
+  position: absolute;
+  left: -30%; /* Start off-screen to the left */
+  animation: horizontal-loader-slide-in-out 1.5s linear infinite; /* Animation properties */
+}
+
+@keyframes horizontal-loader-slide-in-out {
+  0% {
+    left: -30%; /* Start position */
+  }
+  100% {
+    left: 100%; /* End position, moving off-screen to the right */
+  }
 }
 
 @media (max-width: 1500px) {

@@ -1,23 +1,50 @@
 @use "common" as common;
 
-.video-container {
-  position: relative;
-  width: 100%;
-  max-width: 800px;
-}
-
 .custom-controls {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
+  padding: 1rem;
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  min-width: 800px;
+  max-width: 100%;
+
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
-video {
-  width: 100%;
-  display: block;
+.video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@mixin overlay{
+    position: fixed;
+    bottom: 0;
+    top: common.$topbar-height;
+    left: common.$side-bar-width;
+    right: 0;
+}
+
+.controls {
+    @include overlay();
+
+    background: linear-gradient(to top, rgba(0,0,0, 0.8), rgba(0,0,0, 0.3));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.3s ease;
+    justify-content: space-between;
+    h4, p{
+      color: white;
+    }
+}
+
+.time-display{
+  font-size: 12px;
+  font-weight: 300;
 }
 
 .seek-bar {
@@ -29,4 +56,57 @@ button {
   border: none;
   color: white;
   cursor: pointer;
+}
+
+.slider {
+  --filled-color: #ff0000; /* Red highlight color */
+  --unfilled-color: #ddd;
+  --track-height: 2px;
+
+  -webkit-appearance: none; /* Remove default styling for WebKit browsers */
+  appearance: none; /* Remove default styling for modern browsers */
+  height: var(--track-height); /* Set the desired height */
+  //background: #ddd; /* Track color */
+  border-radius: 5px; /* Rounded corners for the track */
+  outline: none; /* Remove focus outline */
+  background: linear-gradient(
+    to right,
+    var(--filled-color) 0%,
+    var(--filled-color) var(--progress, 0%),
+    var(--unfilled-color) var(--progress, 0%),
+    var(--unfilled-color) 100%
+  );
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Remove default thumb styling for WebKit browsers */
+  appearance: none;
+  width: 10px; /* Thumb width */
+  height: 10px; /* Thumb height */
+  background: var(--filled-color); /* Thumb color */
+  border-radius: 50%; /* Make the thumb circular */
+  cursor: pointer; /* Change cursor to pointer */
+}
+
+.slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: var(--filled-color);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.mediaList {
+  position: fixed;
+  top: common.$topbar-height;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 20;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }

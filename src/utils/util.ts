@@ -2,3 +2,39 @@ export const isVideoOrAudio = (fileName: string): boolean => {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? "unknown";
     return ["mp4", "mkv", "avi", "mp3", "wav"].includes(ext);
 }
+
+export const isAudio = (fileName: string): boolean => {
+    const ext = fileName.split('.').pop()?.toLowerCase() ?? "unknown";
+    return ["mp3", "wav"].includes(ext);
+}
+
+export const isVideo = (fileName: string): boolean => {
+    const ext = fileName.split('.').pop()?.toLowerCase() ?? "unknown";
+    return ["mp4", "mkv", "avi"].includes(ext);
+}
+
+// funtion to convert bytes to human-readable format
+export const formatBytes = (bytes: number, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+export const htmlBuilder = (config: { title: string, jsFile: string, cssFiles?: string[]}): string => {
+    return `<!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <title>${config.title}</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <link rel="icon" href="/favicon.ico" />
+                ${config.cssFiles?.map(css => `<link rel="stylesheet" href="/assets/css/${css}" />`).join('') ?? ''}
+            </head>
+            <body>
+                <main id="root"></main>
+                <script src="/assets/js/${config.jsFile}"></script>
+            </body>
+        </html>`;
+}
