@@ -83,7 +83,7 @@ const copy = async( sourcePath: string, destPath: string, onProgress?: (progress
 
         const error_callback = new JSCallback((error: Pointer) => {
             const errorStr = new CString(error).toString();
-            reject(new Error(errorStr));
+            reject(errorStr);
         }, { args: [FFIType.cstring], returns: FFIType.void});
 
         try{

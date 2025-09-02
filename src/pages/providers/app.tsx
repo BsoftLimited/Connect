@@ -33,6 +33,27 @@ const AppContext = createContext<AppContextProviderType>();
 const AppContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
 
+    // Connect to the SSE endpoint
+    const eventSource = new EventSource('/api/progress');
+
+    // Listen for custom 'progress' events
+    eventSource.addEventListener('progress', (event) => {
+        const data = JSON.parse(event.data);
+
+    });
+  
+    // Listen for 'complete' event
+    eventSource.addEventListener('complete', (event) => {
+        const data = JSON.parse(event.data);
+        
+        eventSource.close(); // Optionally close the connection after completion
+    });
+  
+    // Handle errors
+    eventSource.onerror = (err) => {
+        console.error('EventSource failed:', err);
+    };
+
     // fetching initial directory details from api based on the url path on load
     const fetchDirectory = async (path?: string) => {
         const currentPath = path ?? localStorage.getItem('path') ?? "/";
