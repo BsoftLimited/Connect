@@ -1,4 +1,4 @@
-import Elysia, { t } from "elysia";
+import Elysia, { t, sse } from "elysia";
 import auth from "./auth";
 import FilesRepository from "./repositories/files_repository";
 
@@ -133,6 +133,10 @@ api.patch("/copy", async(req)=>{
     if( req.user!.accessLevel === "read-only") {
         return new Response("you are not allowed to copy files", { status: 403 });
     }
+
+    return sse(function* () {
+        yield { data: { progress: 50 } }; // Sends an SSE event
+    });
 
     const { message, status } = await req.repository.copy(req.body.filePath, req.body.dest).then(()=>{
         return {  message: `${req.body.filePath.split("/").pop()} was copied to ${req.body.dest} successfully`, status: 200 };
