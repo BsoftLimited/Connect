@@ -134,8 +134,8 @@ api.patch("/copy", async(req)=>{
         return new Response("you are not allowed to copy files", { status: 403 });
     }
 
-    return sse(function* () {
-        yield { data: { progress: 50 } }; // Sends an SSE event
+    return sse({
+        data: { progress: 50 }
     });
 
     const { message, status } = await req.repository.copy(req.body.filePath, req.body.dest).then(()=>{
