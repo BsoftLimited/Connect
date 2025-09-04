@@ -1,12 +1,15 @@
 import Elysia, { t, sse } from "elysia";
 import auth from "./auth";
 import FilesRepository from "./repositories/files_repository";
+import type { ElysiaWS } from "elysia/dist/ws";
 
 const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Pragma': 'no-cache'
 };
+
+const wsClients = new Map<string, ElysiaWS>();
 
 const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(auth);
 api.onBeforeHandle(async ({ user, status }) => {
@@ -134,10 +137,6 @@ api.patch("/copy", async(req)=>{
         return new Response("you are not allowed to copy files", { status: 403 });
     }
 
-    return sse({
-        data: { progress: 50 }
-    });
-
     const { message, status } = await req.repository.copy(req.body.filePath, req.body.dest).then(()=>{
         return {  message: `${req.body.filePath.split("/").pop()} was copied to ${req.body.dest} successfully`, status: 200 };
     }).catch((error)=>{
@@ -192,6 +191,20 @@ api.post('/upload', async ({ request, repository, user }) => {
         console.error(error);
         return new Response("internal server error", { status: 500 });
     }
+});
+
+api.ws("/", {
+    body: t.String(),
+    open(ws) {
+        console.log(`user: ${ws.id} has connected`);
+    },
+    close(ws, code, reason) {
+        console.log(`user: ${ws.id} has left with code: ${code} and reason: ${reason}`);
+    },
+    message(ws, message) {
+        
+    },
+    
 });
 
 export default  api;
