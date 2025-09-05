@@ -3,10 +3,10 @@ import Elysia, { t } from "elysia";
 import type { User } from "./common/user";
 import UserRepository from "./repositories/user_repository";
 
-const authPlugin = new Elysia({ prefix: "/auth"}).use( jwt({ name: 'jwt', secret: 'test'})).decorate({ "userRepository": new UserRepository() }).derive({ as: "global" }, async ({ jwt, userRepository, cookie: { auth } })=>{
+export const authPlugin = new Elysia().use( jwt({ name: 'jwt', secret: 'test'})).decorate({ "userRepository": new UserRepository() }).derive({ as: "global" }, async ({ request, jwt, userRepository, cookie: { auth } })=>{
     let user: User | undefined = undefined;
 
-    console.log("checking for auth cookie");
+    console.log(`checking for auth cookie for: ${request.url}`);
     try {
         const payload: any = await jwt.verify(auth?.value);
         if (payload){

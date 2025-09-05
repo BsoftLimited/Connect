@@ -1,8 +1,6 @@
 import { type Component, JSX } from "solid-js";
 import { ThemeProvider } from "./theme";
 import { UserContextProvider } from "./user";
-import { AppContextProvider } from "./app";
-import { UploadContextProvider } from "./upload";
 import { ContextMenuProvider } from "./context-menu";
 
 export interface MultiProviderProps {

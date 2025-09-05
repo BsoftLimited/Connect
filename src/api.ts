@@ -1,5 +1,5 @@
 import Elysia, { t, sse } from "elysia";
-import auth from "./auth";
+import { authPlugin } from "./auth";
 import FilesRepository from "./repositories/files_repository";
 import type { ElysiaWS } from "elysia/dist/ws";
 
@@ -11,7 +11,7 @@ const headers: HeadersInit = {
 
 const wsClients = new Map<string, ElysiaWS>();
 
-const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(auth);
+const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(authPlugin);
 api.onBeforeHandle(async ({ user, status }) => {
     if (!user) {
         return status(401, 'unauthorized to use the API');
@@ -196,7 +196,8 @@ api.post('/upload', async ({ request, repository, user }) => {
 api.ws("/", {
     body: t.String(),
     open(ws) {
-        console.log(`user: ${ws.id} has connected`);
+        
+        console.log(`user: ${ws.id} has connected to websocket`);
     },
     close(ws, code, reason) {
         console.log(`user: ${ws.id} has left with code: ${code} and reason: ${reason}`);

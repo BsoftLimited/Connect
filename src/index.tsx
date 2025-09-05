@@ -3,9 +3,10 @@ import { staticPlugin } from "@elysiajs/static";
 import api from "./api";
 import { htmlBuilder } from "./utils/util";
 import { seed } from "./config";
+import auth from "./auth";
 
 
-const app = new Elysia().use(api);
+const app = new Elysia().use(auth).use(api);
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
 app.get('/files/*',  async (req) => {

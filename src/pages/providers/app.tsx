@@ -33,26 +33,21 @@ const AppContext = createContext<AppContextProviderType>();
 const AppContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
 
-    // Connect to the SSE endpoint
-    const eventSource = new EventSource('/api/progress');
+    // Connect to WebSocket
+    const ws = new WebSocket('/api')
 
-    // Listen for custom 'progress' events
-    eventSource.addEventListener('progress', (event) => {
-        const data = JSON.parse(event.data);
+    ws.onopen = () => {
+        console.log('Connected to server')
+        ws.send('Hello from client!')
+    }
 
-    });
-  
-    // Listen for 'complete' event
-    eventSource.addEventListener('complete', (event) => {
-        const data = JSON.parse(event.data);
-        
-        eventSource.close(); // Optionally close the connection after completion
-    });
-  
-    // Handle errors
-    eventSource.onerror = (err) => {
-        console.error('EventSource failed:', err);
-    };
+    ws.onmessage = (event) => {
+        console.log('Received from server:', event.data)
+    }
+
+    ws.onclose = () => {
+        console.log('Connection closed')
+    }
 
     // fetching initial directory details from api based on the url path on load
     const fetchDirectory = async (path?: string) => {
