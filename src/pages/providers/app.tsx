@@ -34,7 +34,7 @@ const AppContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
 
     // Connect to WebSocket
-    const ws = new WebSocket('/api')
+    const ws = new WebSocket('/api/process')
 
     ws.onopen = () => {
         console.log('Connected to server')

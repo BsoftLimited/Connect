@@ -193,7 +193,7 @@ api.post('/upload', async ({ request, repository, user }) => {
     }
 });
 
-api.ws("/", {
+api.ws("/process", {
     body: t.String(),
     open(ws) {
         

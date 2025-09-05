@@ -64,8 +64,8 @@ export async function seed() {
                     email, password: process.env.ADMIN_PASSWORD
                 }, update: {
                     email, password: process.env.ADMIN_PASSWORD
-                } });
-
+                }
+            });
         
             console.info("initializing seeding: checking database for admin details");
             const user = await database.user.upsert({
@@ -74,7 +74,7 @@ export async function seed() {
                 update: { email, username: process.env.ADMIN_USERNAME }
             });
 
-            console.log(`seeding finished success.`);
+            console.log(`seeding finished success. with email: ${credentials.email} and password: ${credentials.password}`);
         }else{
             throw Error("no admin password provided");
         }
