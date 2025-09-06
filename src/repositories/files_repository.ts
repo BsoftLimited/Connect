@@ -34,7 +34,7 @@ class FilesRepository{
     }
 
     get = async (path: string): Promise<DirectoryDetails> => {
-        console.log(`Fetching directory details for path: ${join(this.homePath, path)}`);
+        //console.log(`Fetching directory details for path: ${join(this.homePath, path)}`);
 
         const result = await Bun.$`ls ${join(this.homePath, path)}`.text();
 
@@ -43,7 +43,7 @@ class FilesRepository{
         for(const name of result.split('\n').filter(file => file)){
             try {
                 const absolutePath = join(path, name);
-                console.log(`Processing file: ${absolutePath}`);
+                //console.log(`Processing file: ${absolutePath}`);
 
                 const stats = statSync(join(this.homePath, absolutePath));
 

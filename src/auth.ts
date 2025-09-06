@@ -6,14 +6,14 @@ import UserRepository from "./repositories/user_repository";
 export const authPlugin = new Elysia().use( jwt({ name: 'jwt', secret: 'test'})).decorate({ "userRepository": new UserRepository() }).derive({ as: "global" }, async ({ request, jwt, userRepository, cookie: { auth } })=>{
     let user: User | undefined = undefined;
 
-    console.log(`checking for auth cookie for: ${request.url}`);
+    //console.log(`checking for auth cookie for: ${request.url}`);
     try {
         const payload: any = await jwt.verify(auth?.value);
         if (payload){
             try {
                 const userId = payload.userId;
                 user = await userRepository.get(userId);
-                console.log("auth cookie found, user:", user);
+                //console.log("auth cookie found, user:", user);
             } catch (error) {
                 console.error("Error fetching user details:", error);
             }

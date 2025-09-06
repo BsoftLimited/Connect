@@ -194,16 +194,35 @@ api.post('/upload', async ({ request, repository, user }) => {
 });
 
 api.ws("/process", {
-    body: t.String(),
-    open(ws) {
-        
-        console.log(`user: ${ws.id} has connected to websocket`);
+    body: t.Object({ id: t.String(), operation: t.String(), data: t.Object({ filePath: t.String(), destination: t.String() }) }),
+    open({ id, data }) {
+        console.log(`user: ${id} has connected to websocket`);
+        console.log(`user `, data.user);
     },
+    
     close(ws, code, reason) {
         console.log(`user: ${ws.id} has left with code: ${code} and reason: ${reason}`);
     },
     message(ws, message) {
-        
+        if(message.operation === "copy"){
+            api.decorator.userRepository.get(message.id).then(async (user)=>{
+                if(user.accessLevel === "read-only") {
+                    return ws.send({ message: "you are not allowed to copy files", status: 401 });
+                }
+
+                const result = await api.decorator.repository.copy(message.data.filePath, message.data.destination).then(()=>{
+                    return {  message: `${message.data.filePath.split("/").pop()} was copied to ${message.data.destination} successfully`, status: 200 };
+                }).catch((error)=>{
+                    console.error(error);
+
+                    return { message: "server error", status: 503 };
+                }); 
+
+                return ws.send(result);
+            }).catch((error)=>{
+                ws.send({ message: error, status: 503 });
+            });
+        }
     },
     
 });
