@@ -9,8 +9,6 @@ const headers: HeadersInit = {
     'Pragma': 'no-cache'
 };
 
-const wsClients = new Map<string, ElysiaWS>();
-
 const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(authPlugin);
 api.onBeforeHandle(async ({ user, status }) => {
     if (!user) {
@@ -194,7 +192,7 @@ api.post('/upload', async ({ request, repository, user }) => {
 });
 
 api.ws("/process", {
-    body: t.Object({ id: t.String(), operation: t.String(), data: t.Object({ filePath: t.String(), destination: t.String() }) }),
+    body: t.Object({ operation: t.String(), filePath: t.String(), destination: t.String() }),
     open({ id, data }) {
         console.log(`user: ${id} has connected to websocket`);
         console.log(`user `, data.user);
@@ -203,15 +201,16 @@ api.ws("/process", {
     close(ws, code, reason) {
         console.log(`user: ${ws.id} has left with code: ${code} and reason: ${reason}`);
     },
-    message(ws, message) {
-        if(message.operation === "copy"){
-            api.decorator.userRepository.get(message.id).then(async (user)=>{
-                if(user.accessLevel === "read-only") {
+    message: async (ws, message) => {
+        console.log(message);
+        if(ws.data.user){
+            if(message.operation === "copy"){
+                if(ws.data.user.accessLevel === "read-only") {
                     return ws.send({ message: "you are not allowed to copy files", status: 401 });
                 }
 
-                const result = await api.decorator.repository.copy(message.data.filePath, message.data.destination).then(()=>{
-                    return {  message: `${message.data.filePath.split("/").pop()} was copied to ${message.data.destination} successfully`, status: 200 };
+                const result = await api.decorator.repository.copy(message.filePath, message.destination).then(()=>{
+                    return {  message: `${message.filePath.split("/").pop()} was copied to ${message.destination} successfully`, status: 200 };
                 }).catch((error)=>{
                     console.error(error);
 
@@ -219,9 +218,9 @@ api.ws("/process", {
                 }); 
 
                 return ws.send(result);
-            }).catch((error)=>{
-                ws.send({ message: error, status: 503 });
-            });
+            }
+        }else{
+            return ws.send({ message: "access denied, try signing in", status: 401 });
         }
     },
     

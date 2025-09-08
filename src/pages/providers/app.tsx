@@ -122,8 +122,8 @@ const AppContextProvider: ParentComponent = (props) =>{
             fetchDirectory();
         }catch(error){
             setState(init => { return { ...init, loading: false, error } });
-            console.error(`Error deleting file ${file}:`, error);
-            alert(`File: ${file} deletion fialed`);
+            console.error(`Error pasting file ${file}:`, error);
+            alert(`File: ${file} paste fialed`);
         }
     }
 
@@ -150,7 +150,8 @@ const AppContextProvider: ParentComponent = (props) =>{
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
         paste: (file) => {
-            parseFile(file);
+            //parseFile(file);
+            ws.send(JSON.stringify({ operation: "test", filePath: "test.text", destination: "he is HIM" }));
         }
     };
 
