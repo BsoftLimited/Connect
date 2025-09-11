@@ -105,7 +105,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         const file = state().clipboard!.file;
 
         if(state().clipboard?.command === "copy"){
-            ws.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
+            ws()?.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
