@@ -38,11 +38,10 @@ const AppContextProvider: ParentComponent = (props) =>{
 
     ws.onopen = () => {
         console.log('Connected to server')
-        ws.send('Hello from client!')
     }
 
     ws.onmessage = (event) => {
-        console.log('Received from server:', event.data)
+        console.log('Received from server:', event.data);
     }
 
     ws.onclose = () => {
@@ -96,34 +95,38 @@ const AppContextProvider: ParentComponent = (props) =>{
     }
 
     const parseFile = async (destFile?: DirectoryFile) => {
-        setState(init => { return { ...init, loading: true, error: undefined } });
-
         const dest = destFile?.path ?? state().directory!.path;
         const file = state().clipboard!.file;
 
-        try{
-            const request = new Request(`/api/${ state().clipboard?.command}`, {
-                method: "PATCH",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify({ filePath: file.path, dest })
-            });
+        if(state().clipboard?.command === "copy"){
+            ws.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
+        }else{
+            setState(init => { return { ...init, loading: true, error: undefined } });
 
-            const response = await fetch(request);
-            if (!response.ok) {
-                throw new Error(`Failed to ${ state().clipboard?.command } ${file.name}`);
-            }
+            try{
+                const request = new Request(`/api/${ state().clipboard?.command}`, {
+                    method: "PATCH",
+                    headers: {
+                        'Content-type': 'application/json'
+                    },
+                    body: JSON.stringify({ filePath: file.path, dest })
+                });
 
-            if(state().clipboard?.command === 'move'){
-                setState(init => { return { ...init, clipboard: undefined } });
+                const response = await fetch(request);
+                if (!response.ok) {
+                    throw new Error(`Failed to ${ state().clipboard?.command } ${file.name}`);
+                }
+
+                if(state().clipboard?.command === 'move'){
+                    setState(init => { return { ...init, clipboard: undefined } });
+                }
+                
+                fetchDirectory();
+            }catch(error){
+                setState(init => { return { ...init, loading: false, error } });
+                console.error(`Error pasting file ${file}:`, error);
+                alert(`File: ${file} paste fialed`);
             }
-            
-            fetchDirectory();
-        }catch(error){
-            setState(init => { return { ...init, loading: false, error } });
-            console.error(`Error pasting file ${file}:`, error);
-            alert(`File: ${file} paste fialed`);
         }
     }
 
@@ -150,8 +153,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
         paste: (file) => {
-            //parseFile(file);
-            ws.send(JSON.stringify({ operation: "test", filePath: "test.text", destination: "he is HIM" }));
+            parseFile(file);
         }
     };
 

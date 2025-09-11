@@ -353,9 +353,12 @@ pub extern "C" fn storage_info(home: *const std::os::raw::c_char, callback: Stor
 
 #[unsafe(no_mangle)]
 pub extern "C" fn copy_with_progress(source_path: *const std::os::raw::c_char, dest_path: *const std::os::raw::c_char, callback: ProgressCallback, error_callback: ErrorCallback) {
+    println!("source_path: {:?}, dest_path: {:?}", source_path, dest_path);
     // Convert C strings to Rust strings
     let source = unsafe { std::ffi::CStr::from_ptr(source_path).to_string_lossy().into_owned() };
     let destination = unsafe { std::ffi::CStr::from_ptr(dest_path).to_string_lossy().into_owned() };
+
+    println!("source_path: {}, dest_path: {}", source, destination);
 
     // Run the async copy function
     let rt = tokio::runtime::Runtime::new().unwrap();

@@ -59,7 +59,7 @@ const folderInfo = async( path: string): Promise<FolderInfo> => {
     });
 }
 
-interface ProgressEvent {
+interface CopyProgressEvent {
     name: string,
     total_files: number,
     files_copied: number,
@@ -69,7 +69,7 @@ interface ProgressEvent {
     completed: boolean;
 }
 
-const copy = async( sourcePath: string, destPath: string, onProgress?: (progress: ProgressEvent) => void): Promise<void> => {
+const copyNative = async( sourcePath: string, destPath: string, onProgress?: (progress: CopyProgressEvent) => void): Promise<void> => {
     return new Promise((resolve, reject) => {
         const callback = new JSCallback((name: Pointer, total_files: number, files_copied: number, total_bytes: number, bytes_copied: number, percentage: number, completed: boolean) => {
             if (onProgress) {
@@ -114,4 +114,4 @@ const storageInfo = async (): Promise<{ name: string, total: number, available: 
     });
 }
 
-export { type ProgressEvent, type FolderInfo, folderInfo, copy, storageInfo };
+export { type CopyProgressEvent, type FolderInfo, folderInfo, copyNative, storageInfo };

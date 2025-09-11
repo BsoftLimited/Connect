@@ -2,6 +2,7 @@ import { homedir } from "os";
 import { join } from "path";
 import { statSync } from "fs";
 import { stat, rm, cp, copyFile, rename as fsRename, mkdir } from 'fs/promises';
+import { copyNative, type CopyProgressEvent } from "../utils/file-handle_bridge";
 
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
@@ -138,14 +139,14 @@ class FilesRepository{
         }
     }
 
-    copy = async (filePath: string, dest: string) =>{
-        await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest, isDir) =>{
-            if(isDir){
-                await cp( absoluteFilePath, absoluteDest , { recursive: true });
-            }else{
-                await copyFile(absoluteFilePath, absoluteDest);
-            }
-        });
+    copy = async (filePath: string, dest: string, onProcess: (progress: CopyProgressEvent)=>void) =>{
+        const absoluteFilePath = join(this.homePath, filePath);
+        const absoluteDest = join(this.homePath, dest);
+
+        console.log(`file to copied: ${absoluteFilePath}`);
+        console.log(`file destination: ${absoluteDest}`);
+
+        await copyNative(absoluteFilePath, absoluteDest, onProcess);
     }
 
     move = async (filePath: string, dest: string) =>{

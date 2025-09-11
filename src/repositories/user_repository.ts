@@ -1,4 +1,4 @@
-import type { User, Credentials, CreateUser } from "../common/user";
+import type { User, CreateUser } from "../common/user";
 import { DBManager } from "../config";
 
 class UserRepository{
