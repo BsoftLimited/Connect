@@ -105,7 +105,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         const file = state().clipboard!.file;
 
         if(state().clipboard?.command === "copy"){
-            ws()?.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
+            ws()!.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
@@ -160,8 +160,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
         paste: (file) => {
-            //parseFile(file);
-            ws()?.send(JSON.stringify({ operation: "test", filePath: "test.text", destination: "he is HIM" }));
+            parseFile(file);
         }
     };
 

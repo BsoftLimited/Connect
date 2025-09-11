@@ -48,3 +48,4 @@ bun.lock.json
 
 /src/generated/prisma
 /file-handle/target
+/prisma/dev.db
