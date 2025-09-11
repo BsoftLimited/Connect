@@ -1,4 +1,4 @@
-import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
+import { createContext, createEffect, createMemo, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
 import type { DirectoryDetails, DirectoryFile } from "../../repositories/files_repository";
 
 type ClipbordCommand = "copy" | "move";
@@ -32,20 +32,26 @@ const AppContext = createContext<AppContextProviderType>();
 
 const AppContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
+    const [ws, setWS] = createSignal<WebSocket>();
 
-    // Connect to WebSocket
-    const ws = new WebSocket('/api/process')
+    const connect = () =>{
+        // Connect to WebSocket
+        const init = new WebSocket('/api/process')
 
-    ws.onopen = () => {
-        console.log('Connected to server')
-    }
+        init.onopen = () => {
+            console.log('Connected to server')
+            init.send('Hello from client!')
+        }
 
-    ws.onmessage = (event) => {
-        console.log('Received from server:', event.data);
-    }
+        init.onmessage = (event) => {
+            console.log('Received from server:', event.data)
+        }
 
-    ws.onclose = () => {
-        console.log('Connection closed')
+        init.onclose = () => {
+            console.log('Connection closed');
+            setWS();
+        }
+        return init;
     }
 
     // fetching initial directory details from api based on the url path on load
@@ -134,6 +140,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         if(window.location.pathname !== "/login"){
             fetchDirectory();
         }
+        setWS(connect());
     });
 
     const providerValue: AppContextProviderType = {
@@ -153,7 +160,8 @@ const AppContextProvider: ParentComponent = (props) =>{
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
         paste: (file) => {
-            parseFile(file);
+            //parseFile(file);
+            ws()?.send(JSON.stringify({ operation: "test", filePath: "test.text", destination: "he is HIM" }));
         }
     };
 
