@@ -9,6 +9,13 @@
     overflow: hidden
 }
 
+.horizontal-line { 
+    height: 100%;
+    width: 2px;
+    border-radius: 1px;
+    background-color: var(--md-sys-color-on-surface-variant); 
+}
+
 .account-options{
     display: flex;
     flex-direction: row;
@@ -45,6 +52,7 @@
     justify-content: center;
     cursor: pointer;
     max-width: 12rem;
+    max-height: 12rem;
 }
 
 .profile-container{

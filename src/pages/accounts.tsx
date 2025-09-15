@@ -1,5 +1,4 @@
-import TopBar from "./components/topbar";
-import {createSignal, JSX, Match, onMount, type ParentComponent, Switch} from "solid-js";
+import {createSignal, Match, onMount, type ParentComponent, Switch} from "solid-js";
 import Profile from "./components/profile.tsx";
 import Users from "./components/users.tsx";
 import Settings from "./components/settings.tsx";
@@ -71,7 +70,7 @@ const Accounts = () => {
                         </AccountOption>
                     </div>
                 </div>
-                <div style={{ height: "100%", width: "0.5px", background: "grey" }}/>
+                <div class="horizontal-line"/>
                 <Switch>
                     <Match when={page() === "profile"}>
                         <Profile />

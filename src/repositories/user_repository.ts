@@ -71,7 +71,7 @@ class UserRepository{
         throw new Error("password mismatch");
     }
 
-    users = async (): List<User> =>{
+    users = async (): Promise<User[]> =>{
         const users =  await this.database.user.findMany({ where: { role: "user" } });
         if (users) {
             return users;
