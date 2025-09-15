@@ -1,35 +1,5 @@
-import { CString, dlopen, FFIType, JSCallback, suffix, type Pointer } from "bun:ffi";
-import { homedir } from "os";
-import path from "path";
-
-const queryLibraryPath = async(): Promise<string> =>{
-    const libraryPath = path.join(process.cwd(), "./file-handle/target/release");
-
-    let files = (await Bun.$`ls ${libraryPath}`.text()).split('\n').filter(init => init);
-
-    let libraryName = files.find((value)=> value.endsWith(suffix));
-    if(libraryName){
-        return path.join(libraryPath, libraryName);
-    }
-
-    throw Error("file-handle library file not found. try running 'bun run compile-rs' in terminal/CMD");
-}
-
-const libPath = await queryLibraryPath();
-const { symbols: { copy_with_progress, get_folder_info, storage_info }} = dlopen(libPath, {
-    copy_with_progress: {
-        args: [FFIType.cstring, FFIType.cstring, FFIType.function, FFIType.function],
-        returns: FFIType.void,
-    },
-    get_folder_info: {
-        args: [FFIType.cstring, FFIType.function, FFIType.function],
-        returns: FFIType.void
-    },
-    storage_info: {
-        args: [FFIType.cstring, FFIType.function, FFIType.function],
-        returns: FFIType.void
-    },
-});
+import {DataType, define, funcConstructor, open} from "ffi-rs";
+import {homedir} from "os";
 
 interface FolderInfo {
     name: string,
@@ -38,25 +8,8 @@ interface FolderInfo {
     folder_count: number,
 }
 
-const folderInfo = async( path: string): Promise<FolderInfo> => {
-    return new Promise((resolve, reject)=>{
-        const callback = new JSCallback((name_ptr: Pointer, folder_count: number, file_count: number, total_size: number) => {
-            const name = new CString(name_ptr).toString();
-
-            resolve({ name, total_size, file_count, folder_count });
-        }, { args: [FFIType.cstring, FFIType.u32, FFIType.u32, FFIType.u64], returns: FFIType.void});
-
-        const error_callback = new JSCallback((error: Pointer) => {
-            const errorStr = new CString(error).toString();
-            reject(new Error(errorStr));
-        }, { args: [FFIType.cstring], returns: FFIType.void});
-
-        try{
-            get_folder_info(Buffer.from(path), callback, error_callback);
-        }catch(error){
-            reject(error);
-        }
-    });
+interface StorageInfo{
+    name: string, total: number, available: number
 }
 
 interface CopyProgressEvent {
@@ -66,52 +19,100 @@ interface CopyProgressEvent {
     total_bytes: number;
     bytes_copied: number;
     percentage: number;
-    completed: boolean;
 }
 
-const copyNative = async( sourcePath: string, destPath: string, onProgress?: (progress: CopyProgressEvent) => void): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        const callback = new JSCallback((name: Pointer, total_files: number, files_copied: number, total_bytes: number, bytes_copied: number, percentage: number, completed: boolean) => {
+const library_name = "file-handle";
+const { get_folder_info, storage_info, copy_with_progress } = define({
+    get_folder_info: {
+        library: library_name,
+        paramsType: [
+            DataType.String,
+            funcConstructor({
+                paramsType: [ DataType.String, DataType.I32, DataType.I32, DataType.U64 ],
+                retType: DataType.Void
+            }),
+            funcConstructor({ paramsType: [ DataType.String], retType: DataType.Void })
+        ],
+        retType: DataType.Void,
+        runInNewThread: true
+    },
+    storage_info: {
+        library: library_name,
+        paramsType: [
+            DataType.String,
+            funcConstructor({
+                paramsType: [ DataType.String, DataType.U64, DataType.U64 ],
+                retType: DataType.Void
+            }),
+            funcConstructor({ paramsType: [ DataType.String], retType: DataType.Void })
+        ],
+        retType: DataType.Void,
+        runInNewThread: true
+    },
+    copy_with_progress: {
+        library: library_name,
+        paramsType: [
+            DataType.String,
+            DataType.String,
+            funcConstructor({
+                paramsType: [ DataType.String, DataType.I32, DataType.I32, DataType.U64, DataType.U64, DataType.Double ],
+                retType: DataType.Void
+            }),
+            funcConstructor({ paramsType: [ DataType.String], retType: DataType.Void })
+        ],
+        retType: DataType.Void,
+        runInNewThread: true
+    }
+});
+
+const folderInfo = ( path: string): Promise<FolderInfo> => {
+    return new Promise((resolve, reject)=>{
+        const callback = (name: string, folder_count: number, file_count: number, total_size: number) => {
+            resolve({ name, total_size, file_count, folder_count });
+        }
+
+        const error_callback = (error: string) => reject(new Error(error));
+
+        get_folder_info([path, callback, error_callback]).catch((error)=> reject(error));
+    });
+}
+
+const copy = ( sourcePath: string, destPath: string, onProgress?: (progress: CopyProgressEvent) => void): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+        const callback = (name: string, total_files: number, files_copied: number, total_bytes: number, bytes_copied: number, percentage: number) => {
             if (onProgress) {
-                const nameStr = new CString(name).toString();
-                onProgress({ name: nameStr, total_files, files_copied,  total_bytes, bytes_copied, percentage, completed });
+                onProgress({ name, total_files, files_copied,  total_bytes, bytes_copied, percentage });
             }
-            if (completed) {
+            if (total_bytes === bytes_copied) {
+                console.log("copy completed");
                 resolve();
             }
-        }, { args: [FFIType.cstring, FFIType.u32, FFIType.u32, FFIType.u64, FFIType.u64, FFIType.f32, FFIType.bool], returns: FFIType.void});
+        }
 
-        const error_callback = new JSCallback((error: Pointer) => {
-            const errorStr = new CString(error).toString();
-            reject(errorStr);
-        }, { args: [FFIType.cstring], returns: FFIType.void});
+        const error_callback = (error: string) => reject(new Error(error));
 
         try{
-            copy_with_progress(Buffer.from(sourcePath), Buffer.from(destPath), callback, error_callback);
+            await copy_with_progress([sourcePath, destPath, callback, error_callback]);
+
+            console.log("copy_with_progress finished processing")
         }catch(error){
             reject(error);
         }
     });
 }
 
-const storageInfo = async (): Promise<{ name: string, total: number, available: number }> => {
+const storageInfo = (): Promise<StorageInfo> => {
     return new Promise((resolve, reject) => {
-        const callback = new JSCallback((name_ptr: Pointer, total: number, available: number) => {
-            const name = new CString(name_ptr).toString(); 
+        const callback = (name: string, total: number, available: number) => {
             resolve({ name, total, available });
-        }, { args: [FFIType.cstring, FFIType.u64, FFIType.u64], returns: FFIType.void});
-
-        const error_callback = new JSCallback((error: Pointer) => {
-            const errorStr = new CString(error).toString();
-            reject(new Error(errorStr));
-        }, { args: [FFIType.cstring], returns: FFIType.void});
-
-        try{
-            storage_info(Buffer.from(homedir()), callback, error_callback);
-        }catch(error){
-            reject(error);
         }
+
+        const error_callback = (error: string) => reject(new Error(error));
+
+        storage_info([homedir(), callback, error_callback]).catch((error)=> {
+            reject(error);
+        });
     });
 }
 
-export { type CopyProgressEvent, type FolderInfo, folderInfo, copyNative, storageInfo };
+export { type CopyProgressEvent, type FolderInfo, folderInfo, copy, storageInfo };

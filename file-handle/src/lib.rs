@@ -10,8 +10,8 @@ use sysinfo::{ Disks, IS_SUPPORTED_SYSTEM };
 struct FolderInfo {
     name: String,
     total_size: u64,
-    file_count: u32,
-    folder_count: u32,
+    file_count: i32,
+    folder_count: i32,
 }
 
 enum FileType<'a>{
@@ -20,17 +20,17 @@ enum FileType<'a>{
 }
 
 struct ProgressReport<'a>{
-    name: &'a str, files_copied: u32, bytes_copied: u64, completed: bool
+    name: &'a str, files_copied: i32, bytes_copied: u64
 }
 
 type FolderSizeCallback = extern "C" fn(
-    name: *const std::os::raw::c_char, folder_count: u32, file_count: u32,
+    name: *const std::os::raw::c_char, folder_count: i32, file_count: i32,
     total_bytes: u64);
 
 fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error> {
     let mut size = 0;
-    let mut file_count = 0;
-    let mut folder_count = 0;
+    let mut file_count:i32 = 0;
+    let mut folder_count: i32 = 0;
     let name = path.file_name().unwrap_or_else(|| std::ffi::OsStr::new("")).to_string_lossy().into_owned();
     let mut stack = vec![PathBuf::from(path)];
 
@@ -60,8 +60,8 @@ fn calculate_folder_size(path: &std::path::Path) -> Result<FolderInfo, io::Error
 
 type ErrorCallback = extern "C" fn(error: *const std::os::raw::c_char);
 type ProgressCallback = extern "C" fn(
-    name: *const std::os::raw::c_char, total_files: u32, files_copied: u32,
-    total_bytes: u64, bytes_copied: u64, percentage: f32,completed: bool);
+    name: *const std::os::raw::c_char, total_files: i32, files_copied: i32,
+    total_bytes: u64, bytes_copied: u64, percentage: f64 );
 
 type StorageCallback = extern "C" fn(name: *const std::os::raw::c_char, total: u64, available: u64);
 
@@ -70,16 +70,15 @@ fn send_progress(callback: ProgressCallback, file_type: FileType, report: Progre
     
     let name_ptr = std::ffi::CString::new(report.name).unwrap().into_raw();
     let files_copied = report.files_copied;
-    let completed = report.completed;
 
     let (total_files, total_bytes) = match file_type {
         FileType::Folder(info) => (info.file_count, info.total_size),
         FileType::File(info) => (1, info)
     };
 
-    let percentage = if total_bytes > 0 { (bytes_copied as f32 / total_bytes as f32) * 100.0 } else { 0.0 };
+    let percentage = if total_bytes > 0 { (bytes_copied as f64 / total_bytes as f64) * 100.0 } else { 0.0 };
     
-    callback(name_ptr, total_files, files_copied, total_bytes, bytes_copied, percentage, completed);
+    callback(name_ptr, total_files, files_copied, total_bytes, bytes_copied, percentage);
     
     unsafe {
         let _ = std::ffi::CString::from_raw(name_ptr as *mut _);
@@ -92,7 +91,7 @@ fn send_error(error_callback: ErrorCallback, error: &str) {
     unsafe { let _ = std::ffi::CString::from_raw(error_ptr as *mut _); };
 }
 
-fn copy_file_process<F>(source: &str, destination: &str, file_name: &str, callback: F) -> io::Result<()> where F: Fn(&str, u64, bool){
+fn copy_file_process<F>(source: &str, destination: &str, file_name: &str, callback: F) -> io::Result<()> where F: Fn(&str, usize){
     let mut bytes_copied = 0;
 
     let source_result = fs::File::open(source);
@@ -132,7 +131,7 @@ fn copy_file_process<F>(source: &str, destination: &str, file_name: &str, callba
     // get current time
     let mut last_time = std::time::Instant::now();
     // Send initial progress
-    callback(file_name, 0, false);
+    callback(file_name, 0);
     
     loop {
         let bytes_result = io::Read::read(&mut source_file, &mut buffer);
@@ -142,26 +141,29 @@ fn copy_file_process<F>(source: &str, destination: &str, file_name: &str, callba
         }
 
         let bytes_read = bytes_result.unwrap();
-        if bytes_read == 0 {
+        if bytes_read < 1 {
+            println!("I am leaving");
             break;
         }
+        //println!("bytes read: {}", bytes_read);
         
         if let Err(error) =  io::Write::write_all(&mut dest_file, &buffer[..bytes_read]){
             let error_msg = format!("Failed to write to destination file {}/{}: {}", destination, file_name, error);
             return Err(Error::new(io::ErrorKind::Other, error_msg));
         }
 
-        bytes_copied += bytes_read as u64;
+        bytes_copied += bytes_read;
 
         // check if at least 500ms has passed since last update then send update
         if last_time.elapsed().as_millis() >= 500 {
-            callback(file_name, bytes_copied, false);
+            callback(file_name, bytes_copied);
             last_time = std::time::Instant::now();
         }
     }
     
     // Send completion
-    callback(file_name, bytes_copied, true);
+    println!("send completion update");
+    callback(file_name, bytes_copied);
 
     Ok(())
 }
@@ -173,7 +175,7 @@ struct Transit{
 
 fn copy_folder_iterative(source: &str, destination: &str, folder_info: &FolderInfo, callback: ProgressCallback) -> io::Result<()>{
     let mut bytes_copied: u64 = 0;
-    let mut files_copied: u32  = 0;
+    let mut files_copied: i32  = 0;
 
     let mut stack = vec![
         Transit{ source: PathBuf::from(source), destination: PathBuf::from(destination) }
@@ -202,9 +204,9 @@ fn copy_folder_iterative(source: &str, destination: &str, folder_info: &FolderIn
                 let file_source = entry.path().to_str().unwrap().to_string();
                 let file_destination = transit.destination.to_str().unwrap();
 
-                let copy_result = copy_file_process(&file_source, file_destination, &file_name, | file_name, file_bytes_copied, _ |{
+                let copy_result = copy_file_process(&file_source, file_destination, &file_name, | file_name, file_bytes_copied |{
                     send_progress(callback, FileType::Folder(&folder_info), ProgressReport{
-                        name: file_name, files_copied, bytes_copied: bytes_copied + file_bytes_copied, completed: false
+                        name: file_name, files_copied, bytes_copied: bytes_copied + file_bytes_copied as u64
                     });
                 });
 
@@ -225,7 +227,7 @@ fn copy_folder_iterative(source: &str, destination: &str, folder_info: &FolderIn
     }
 
     send_progress(callback, FileType::Folder(&folder_info), ProgressReport{
-        name: &folder_info.name,  files_copied: folder_info.folder_count, bytes_copied: folder_info.total_size, completed: true
+        name: &folder_info.name,  files_copied: folder_info.folder_count, bytes_copied: folder_info.total_size
     });
 
     Ok(())
@@ -247,12 +249,12 @@ async fn copy( source: &str, destination: &str, callback: ProgressCallback) -> i
 
         // Send initial progress
         send_progress(callback, FileType::File(total_size), ProgressReport{
-            name: &file_name,  files_copied: 0, completed: false, bytes_copied: 0
+            name: &file_name,  files_copied: 0, bytes_copied: 0
         });
 
-        let copy_result = copy_file_process(source, destination, &file_name, | file_name, bytes_copied, completed |{
+        let copy_result = copy_file_process(source, destination, &file_name, | file_name, bytes_copied|{
             send_progress(callback, FileType::File(total_size), ProgressReport{
-                name: &file_name,  files_copied: 1, completed, bytes_copied
+                name: &file_name,  files_copied: 1, bytes_copied: bytes_copied as u64
             });
         });
 
@@ -278,7 +280,7 @@ async fn copy( source: &str, destination: &str, callback: ProgressCallback) -> i
         if copy_result.is_ok() {
             send_progress(callback, FileType::Folder(&folder_info), ProgressReport{
                 name: &folder_info.name,
-                files_copied: folder_info.file_count, bytes_copied: folder_info.total_size, completed: true
+                files_copied: folder_info.file_count, bytes_copied: folder_info.total_size
             });
         }
         return copy_result;

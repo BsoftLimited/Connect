@@ -1,5 +1,6 @@
 import { createContext, createEffect, createMemo, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
 import type { DirectoryDetails, DirectoryFile } from "../../repositories/files_repository";
+import type { CopyProgressEvent } from "../../utils/file-handle_bridge";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -10,6 +11,7 @@ type Clipboard = {
 
 type AppContextType = {
     loading: boolean;
+    connected: boolean;
     directory?: DirectoryDetails;
     file?: string; 
     error?: any;
@@ -31,27 +33,44 @@ interface AppContextProviderType {
 const AppContext = createContext<AppContextProviderType>();
 
 const AppContextProvider: ParentComponent = (props) =>{
-    const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
+    const [state, setState] = createSignal<Omit<AppContextType, "connected">>({ loading: false, target: "directory" });
     const [ws, setWS] = createSignal<WebSocket>();
 
     const connect = () =>{
-        // Connect to WebSocket
-        const init = new WebSocket('/api/process')
+        if(ws() === undefined || ws()?.CLOSED){
+            // Connect to WebSocket
+            const init = new WebSocket('/api/process')
 
-        init.onopen = () => {
-            console.log('Connected to server')
-            init.send('Hello from client!')
-        }
+            init.onopen = () => {
+                console.log('Connected to server')
+                setWS(init);
+            }
 
-        init.onmessage = (event) => {
-            console.log('Received from server:', event.data)
-        }
+            init.onmessage = (event) => {
+                console.log('Received from server:', event.data);
 
-        init.onclose = () => {
-            console.log('Connection closed');
-            setWS();
+                const message = JSON.parse(event.data) as { message: string, progress?: CopyProgressEvent, completed?: boolean, status: number };
+                if(message.status === 200 && message.progress){
+                    
+                }
+
+                if(message.completed){
+                    console.log("time to refresh");
+                    fetchDirectory();
+                }
+            }
+
+            init.onclose = () => {
+                console.log('Connection closed');
+                setWS();
+            }
+
+            init.onerror = (event) =>{
+                
+            }
+            return init;
         }
-        return init;
+        return ws();
     }
 
     // fetching initial directory details from api based on the url path on load
@@ -105,7 +124,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         const file = state().clipboard!.file;
 
         if(state().clipboard?.command === "copy"){
-            ws()!.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
+            connect()?.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
@@ -140,11 +159,13 @@ const AppContextProvider: ParentComponent = (props) =>{
         if(window.location.pathname !== "/login"){
             fetchDirectory();
         }
-        setWS(connect());
+        connect();
     });
 
     const providerValue: AppContextProviderType = {
-        appState: state,
+        appState: () => {
+            return {...state(), connected: ws() !== null}
+        },
         goto: (path) => {
             path = path.replaceAll("\\", "/");
             console.log(path);

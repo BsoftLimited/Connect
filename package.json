@@ -3,7 +3,7 @@
     "version": "1.0.50",
     "scripts": {
         "dev": "concurrently \"bun run dev:client\" \"bun run dev:sass\" \"bun run dev:server\"",
-        "dev:server": "bun run --watch ./src/index.tsx",
+        "dev:server": "bun run --watch src/index.ts",
         "dev:client": "bun build.ts",
         "dev:sass": "sass --watch src/sass:public/css",
         "migrate": "bun x prisma migrate dev --name init",
@@ -20,6 +20,7 @@
         "@prisma/client": "6.14.0",
         "@solidjs/router": "^0.15.3",
         "elysia": "latest",
+        "ffi-rs": "^1.3.0",
         "solid-js": "^1.9.7",
         "sqlite3": "^5.1.7"
     },

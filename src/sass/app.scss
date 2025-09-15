@@ -164,10 +164,7 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
 }
 
 .panel-title{
-    padding-left: 1.8rem;
-    padding-right: 1.8rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
+    padding: 0.5rem 1.8rem;
     background-color: var(--md-sys-color-surface-container-low);
     color: var(--md-sys-color-on-surface-variant);
 }
@@ -281,10 +278,7 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
 
     div{
         @include common.hover-bg-color;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding: 0.5rem 1rem;
         cursor: pointer;
     }
 }

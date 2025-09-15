@@ -13,13 +13,13 @@ app.get('/files/*',  async (req) => {
     if(req.user){
         try{
             const { filePath, stats } = await req.repository.process(req.path, "/files");
-    
+
             const ext = filePath.split('.').pop()?.toLowerCase() ?? "unknown";
             const headers: Record<string, string> = {
                 'Content-Length': stats.size.toString(),
                 'Content-Disposition': `inline; filename="${filePath.split('/').pop() || 'file'}"`,
             };
-    
+
             if (["pdf", "docx", "xlsx"].includes(ext)) {
                 headers['Content-Type'] = 'application/pdf';
             } else if (ext === 'txt') {
@@ -38,22 +38,22 @@ app.get('/files/*',  async (req) => {
             }else {
                 headers['Content-Type'] = 'application/octet-stream';
             }
-    
+
             return new Response(req.repository.serve(filePath), { headers });
         }catch(error){
             console.error(error);
             return new Response('Not found', { status: 404 });
-        } 
+        }
     }else{
         return new Response('unathourized access', { status: 401 });
-    } 
+    }
 });
 
 app.get('/download/*',  async (req) => {
     if(req.user){
         try{
             const { filePath, stats } = await req.repository.process(req.path, "/download");
-    
+
             return new Response(req.repository.serve(filePath), {
                 headers: {
                     'Content-Type': 'application/octet-stream',
@@ -77,18 +77,17 @@ const pageHeaders: HeadersInit = {
     'Pragma': 'no-cache'
 };
 
-app.get("/*", async ({ user, redirect, path }) => {
-    let html = htmlBuilder({ title: "Connect | App", jsFile: "index.js", cssFiles: ["app.css", "streaming.css" ]});
-    if(!user){
-        html = htmlBuilder({ title: "Connect | Login", jsFile: "login.js", cssFiles: ["app.css", "login.css"]});
-    }
+app.get("/*", async ({ user }) => {
+    let html = user ?
+        htmlBuilder({ title: "Connect | App", jsFile: "index.js", cssFiles: ["app.css", "streaming.css", "account.css"] }) :
+        htmlBuilder({ title: "Connect | Login", jsFile: "login.js", cssFiles: ["app.css", "login.css"]});
 
     return new Response(html, { headers: pageHeaders });
 });
 
 app.get('/favicon.ico', async () => {
     const filePath = `./public/favicon.ico`;
-    
+
     try {
         const file = Bun.file(filePath)
         if (await file.exists()) {

@@ -1,6 +1,7 @@
 import { PrismaClient } from "./generated/prisma/client";
 import path from 'path';
-import { suffix } from "bun:ffi";
+import {open, close} from "ffi-rs";
+import {platform} from "os";
 
 const connect = (): PrismaClient => {
     const client = new PrismaClient({ log: [{ level: 'query', emit: 'event' }], });
@@ -49,10 +50,14 @@ class DBManager{
     }
 }
 
+const libPath = path.join(process.cwd(), "./file-handle/target/release", platform() === 'win32' ? 'file_handle.dll' : "libfile_handle.so");
+const library_name = "file-handle";
+
 export async function seed() {
     let email = "admin@connect.com";
     let username = "admin";
 
+    open({ library: library_name, path: libPath });
     try{
         console.info("initializing seeding: connecting to database");
         const database = DBManager.instance();

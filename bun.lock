@@ -12,13 +12,14 @@
         "@motionone/solid": "^10.16.4",
         "@prisma/client": "6.14.0",
         "@solidjs/router": "^0.15.3",
-        "concurrently": "^9.2.1",
         "elysia": "latest",
+        "ffi-rs": "^1.3.0",
         "solid-js": "^1.9.7",
         "sqlite3": "^5.1.7",
       },
       "devDependencies": {
         "bun-types": "latest",
+        "concurrently": "^9.2.1",
         "esbuild": "^0.25.8",
         "esbuild-plugin-solid": "^0.6.0",
         "prisma": "6.14.0",
@@ -220,6 +221,28 @@
 
     "@types/react": ["@types/react@19.1.9", "", { "dependencies": { "csstype": "^3.0.2" } }, "sha512-WmdoynAX8Stew/36uTSVMcLJJ1KRh6L3IZRx1PZ7qJtBqT3dYTgyDTx8H1qoRghErydW7xw9mSJ3wS//tCRpFA=="],
 
+    "@yuuang/ffi-rs-android-arm64": ["@yuuang/ffi-rs-android-arm64@1.3.0", "", { "os": "android", "cpu": "arm64" }, "sha512-1kO6gmoDwZVlEzqbWXkQke8WLGAECOAAjTNBjphPN1sn+ICdUGBfR7TKHMbygspGXpFUFFI7/H75l3Gt8QsaLQ=="],
+
+    "@yuuang/ffi-rs-darwin-arm64": ["@yuuang/ffi-rs-darwin-arm64@1.3.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-JJOG1MXNV04FN0SWNUSK1i3LJVn76XF15+OcRYl0bWgjYnfsBzXzeIQdAp3wIlDTPPQQ+Z3Fxbb+b7wuf7uIDA=="],
+
+    "@yuuang/ffi-rs-darwin-x64": ["@yuuang/ffi-rs-darwin-x64@1.3.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-YAagzuM6LNqbcFhXMfUFmTT0F+RD6qV59Qe7L20mb5Xf9luipieqs2fEUVU+MAkgXk1gXRj7HczWkI97+qa3Mg=="],
+
+    "@yuuang/ffi-rs-linux-arm-gnueabihf": ["@yuuang/ffi-rs-linux-arm-gnueabihf@1.3.0", "", { "os": "linux", "cpu": "arm" }, "sha512-RZOU9PcYpaE920dDoDSEL+UQ19CU9MEf9Gm3kKSpb161TPeKzqMZPUEMpbRaww18pPBN1aWbe2BHiyKAO6tTcg=="],
+
+    "@yuuang/ffi-rs-linux-arm64-gnu": ["@yuuang/ffi-rs-linux-arm64-gnu@1.3.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-US8XxQUja+dK4WTZWy9RD2/N/c4bLpFoH7sNYO+ENEpmfMbrB7Nw2bKvCk/I0OptuV4P3pScRgDD5xk4ztXgEA=="],
+
+    "@yuuang/ffi-rs-linux-arm64-musl": ["@yuuang/ffi-rs-linux-arm64-musl@1.3.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-DQ++kgJ6hks90wnDoY3PSkoxX2DmNI4e/H/gKFLKoOm+3K++se/ZyONwlVvDmOWKt2yTt6SyrxoIO7atr5LQmQ=="],
+
+    "@yuuang/ffi-rs-linux-x64-gnu": ["@yuuang/ffi-rs-linux-x64-gnu@1.3.0", "", { "os": "linux", "cpu": "x64" }, "sha512-HTk+RUDozycipfL97TsmVhZpJKK3ciTY4gIC6Wlg9dFpwcCscUVH5B6DKctbV/KmCV7r3FMB2eJxQBuLRH1JFg=="],
+
+    "@yuuang/ffi-rs-linux-x64-musl": ["@yuuang/ffi-rs-linux-x64-musl@1.3.0", "", { "os": "linux", "cpu": "x64" }, "sha512-qpcPQW2AIeuS/CCBZhKEI07JxfoVulFQUHjsx6rhoAC5SVb2V+wcf8X5CkIvwhiRzydelw/uRml5vY0z+ieh1w=="],
+
+    "@yuuang/ffi-rs-win32-arm64-msvc": ["@yuuang/ffi-rs-win32-arm64-msvc@1.3.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-Dflhd43LH4Y4pcWp3opozPp0b+8xAvxWq8ZyIWf/HhTMYIvWWjBoGo3LvLgzx8R2CdELKMO17dni76qCgJfv1A=="],
+
+    "@yuuang/ffi-rs-win32-ia32-msvc": ["@yuuang/ffi-rs-win32-ia32-msvc@1.3.0", "", { "os": "win32", "cpu": [ "x64", "ia32", ] }, "sha512-auc7WR0fKArxxt2m9HaHWrgJMlkwVg94+AN5TGGwT0RIAJTfc7juExXHwpRcWifDTykooXyGvJdTY351L1BVww=="],
+
+    "@yuuang/ffi-rs-win32-x64-msvc": ["@yuuang/ffi-rs-win32-x64-msvc@1.3.0", "", { "os": "win32", "cpu": "x64" }, "sha512-GL9q9cyuZXkNomr3DmkwSaTKpRInY8y4efcCLvv8J4oiIRkrUzKUQ9//l26uqGmPGYGtSJ5rjLBX9uDmkhhZjQ=="],
+
     "abbrev": ["abbrev@1.1.1", "", {}, "sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q=="],
 
     "agent-base": ["agent-base@6.0.2", "", { "dependencies": { "debug": "4" } }, "sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ=="],
@@ -353,6 +376,8 @@
     "fast-check": ["fast-check@3.23.2", "", { "dependencies": { "pure-rand": "^6.1.0" } }, "sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A=="],
 
     "fast-decode-uri-component": ["fast-decode-uri-component@1.0.1", "", {}, "sha512-WKgKWg5eUxvRZGwW8FvfbaH7AXSh2cL+3j5fMGzUMCxWBJ3dV3a7Wz8y2f/uQ0e3B6WmodD3oS54jTQ9HVTIIg=="],
+
+    "ffi-rs": ["ffi-rs@1.3.0", "", { "optionalDependencies": { "@yuuang/ffi-rs-android-arm64": "1.3.0", "@yuuang/ffi-rs-darwin-arm64": "1.3.0", "@yuuang/ffi-rs-darwin-x64": "1.3.0", "@yuuang/ffi-rs-linux-arm-gnueabihf": "1.3.0", "@yuuang/ffi-rs-linux-arm64-gnu": "1.3.0", "@yuuang/ffi-rs-linux-arm64-musl": "1.3.0", "@yuuang/ffi-rs-linux-x64-gnu": "1.3.0", "@yuuang/ffi-rs-linux-x64-musl": "1.3.0", "@yuuang/ffi-rs-win32-arm64-msvc": "1.3.0", "@yuuang/ffi-rs-win32-ia32-msvc": "1.3.0", "@yuuang/ffi-rs-win32-x64-msvc": "1.3.0" } }, "sha512-xdyaooHKShKvNZE9X7PDn4KdNtZaX8cPPJkIqwsx2b7u4UFk6m1VdzsmCSc6eQDFCbk7LyygU1VDl9VRbmPXEg=="],
 
     "fflate": ["fflate@0.8.2", "", {}, "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="],
 

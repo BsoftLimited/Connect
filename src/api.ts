@@ -1,8 +1,7 @@
-import Elysia, { t, sse } from "elysia";
+import Elysia, { t } from "elysia";
 import { authPlugin } from "./auth";
 import FilesRepository from "./repositories/files_repository";
-import type { ElysiaWS } from "elysia/dist/ws";
-import type { CopyProgressEvent } from "./utils/file-handle_bridge";
+import type {CopyProgressEvent} from "./utils/file-handle_bridge.ts";
 
 const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -28,6 +27,11 @@ api.get("/*", async(req) => {
 });
 
 api.get("/user", async(req) => {
+    if(req.user?.role === "admin"){
+        const users = await req.userRepository.users();
+        
+        return new Response(JSON.stringify({ ...req.user, users }), { headers });
+    }
     return new Response(JSON.stringify(req.user), { headers });
 });
 
@@ -131,12 +135,12 @@ api.patch("/move", async(req)=>{
     return new Response(JSON.stringify(message), { status, headers });
 },{ body: t.Object({ filePath: t.String(), dest: t.String() }) });
 
-/*api.patch("/copy", async(req)=>{
+api.patch("/copy", async(req)=>{
     if( req.user!.accessLevel === "read-only") {
         return new Response("you are not allowed to copy files", { status: 403 });
     }
 
-    const { message, status } = await req.repository.copy(req.body.filePath, req.body.dest).then(()=>{
+    const { message, status } = await req.repository.copy(req.body.filePath, req.body.dest, undefined).then(()=>{
         return {  message: `${req.body.filePath.split("/").pop()} was copied to ${req.body.dest} successfully`, status: 200 };
     }).catch((error)=>{
         console.error(error);
@@ -145,7 +149,7 @@ api.patch("/move", async(req)=>{
     }); 
 
     return new Response(JSON.stringify(message), { status, headers });
-}, { body: t.Object({ filePath: t.String(), dest: t.String() }) });*/
+}, { body: t.Object({ filePath: t.String(), dest: t.String() }) });
 
 api.patch("/rename", async(req)=>{
     if( req.user!.accessLevel === "read-only") {
@@ -210,12 +214,12 @@ api.ws("/process", {
                 }else{
                     const onProcess = (progress: CopyProgressEvent) =>{
                         console.log(progress);
-                        //ws.send({ message: "copying", progress, status: 200 });
+                        ws.send({ message: "copying", progress, status: 200 });
                     }
 
                     console.log(message);
                     const result = await api.decorator.repository.copy(message.filePath, message.destination, onProcess).then(()=>{
-                        return {  message: `${message.filePath.split("/").pop()} was copied to ${message.destination} successfully`, status: 200 };
+                        return {  message: `${message.filePath.split("/").pop()} was copied to ${message.destination} successfully`, completed: true, status: 200 };
                     }).catch((error)=>{
                         console.error(error);
 
@@ -228,7 +232,6 @@ api.ws("/process", {
             ws.send({ message: "access denied, try signing in", status: 401 });
         }
     },
-    
 });
 
 export default  api;

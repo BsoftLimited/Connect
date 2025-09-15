@@ -45,9 +45,9 @@ class UserRepository{
                 data: { email: input.email }
             });
         }
-        return await this.database.user.update({ 
-            where: { id: input.id },
-            data: { ...input }
+        return this.database.user.update({
+            where: {id: input.id},
+            data: {...input}
         });
     }
 
@@ -69,6 +69,15 @@ class UserRepository{
             return init.user!;
         }
         throw new Error("password mismatch");
+    }
+
+    users = async (): List<User> =>{
+        const users =  await this.database.user.findMany({ where: { role: "user" } });
+        if (users) {
+            return users;
+        } else {
+            throw new Error(`error fetching users`);
+        }
     }
 }
 

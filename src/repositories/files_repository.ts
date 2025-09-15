@@ -1,8 +1,8 @@
 import { homedir } from "os";
 import { join } from "path";
 import { statSync } from "fs";
-import { stat, rm, cp, copyFile, rename as fsRename, mkdir } from 'fs/promises';
-import { copyNative, type CopyProgressEvent } from "../utils/file-handle_bridge";
+import { stat, rm, rename as fsRename, mkdir } from 'fs/promises';
+import { copy, type CopyProgressEvent } from "../utils/file-handle_bridge";
 
 export interface DirectoryFile{ 
     name: string, path: string, size: number, isDir: boolean 
@@ -11,12 +11,11 @@ export interface DirectoryFile{
 export interface DirectoryDetails{
     name: string,
     path: string,
-
     files: DirectoryFile[]
 }
 
 const getName = (path: string) =>{
-    let init: string[] = [""];
+    let init: string[];
 
     if(path.includes("/")){
         init = path.split("/");
@@ -89,7 +88,8 @@ class FilesRepository{
         console.log(`Checking if file exists at: ${path}`);
         const absolutePath = relative ? join(this.homePath, path) : path;
 
-        return await Bun.file(absolutePath).exists();
+        const file = Bun.file(absolutePath);
+        return await file.exists() || (await file.stat()).isDirectory();
     }
 
     save = async (path: string, file: File) =>{
@@ -107,7 +107,7 @@ class FilesRepository{
         console.write(`final name is: ${finalPath}`);
         await Bun.write(finalPath, file, { createPath: true }).catch((error)=>{
             console.error(error);
-        }).then((value)=>{
+        }).then(()=>{
             console.log(`finished saving file: ${file.name} to path: ${absolutePath}`);
         });
     }
@@ -139,18 +139,18 @@ class FilesRepository{
         }
     }
 
-    copy = async (filePath: string, dest: string, onProcess: (progress: CopyProgressEvent)=>void) =>{
+    copy = async (filePath: string, dest: string, onProcess?: (progress: CopyProgressEvent)=>void) =>{
         const absoluteFilePath = join(this.homePath, filePath);
         const absoluteDest = join(this.homePath, dest);
 
-        console.log(`file to copied: ${absoluteFilePath}`);
-        console.log(`file destination: ${absoluteDest}`);
+        console.log(`file to copied:${absoluteFilePath}`);
+        console.log(`file destination:${absoluteDest}`);
 
-        await copyNative(absoluteFilePath, absoluteDest, onProcess);
+        await copy(absoluteFilePath, absoluteDest, onProcess);
     }
 
     move = async (filePath: string, dest: string) =>{
-        return await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest, isDir) =>{
+        return await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest) =>{
             await fsRename(absoluteFilePath, absoluteDest);
         });
     }

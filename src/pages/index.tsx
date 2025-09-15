@@ -3,7 +3,6 @@ import { render } from "solid-js/web";
 import AllProviders from "./providers";
 import { lazy } from "solid-js";
 
-
 const App = lazy(() => import("./app"));
 const Accounts = lazy(() => import("./accounts"));
 

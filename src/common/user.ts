@@ -10,6 +10,8 @@ export interface User {
     username: string
     role: "admin" | "user" | string
     accessLevel: "read-only" | "read-write" | string
+    
+    users?: User[]
 }
 
 export interface CreateUser{
