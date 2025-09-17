@@ -1,4 +1,4 @@
-import {createSignal, Match, onMount, type ParentComponent, Switch} from "solid-js";
+import {createSignal, Match, type ParentComponent, Switch} from "solid-js";
 import Profile from "./components/profile.tsx";
 import Users from "./components/users.tsx";
 import Settings from "./components/settings.tsx";
@@ -6,6 +6,28 @@ import {useTheme} from "./providers/theme.tsx";
 import ThemeIcon from "./components/theme-icon.tsx";
 import {useUserContext} from "./providers/user.tsx";
 import {Show} from "solid-js/web";
+import { Motion } from "@motionone/solid";
+import EditProfile from "./components/edit-profile.tsx";
+import ChangePassword from "./components/change-password.tsx";
+import AddUser from "./components/add-user.tsx";
+
+const PanelContent: ParentComponent<{ title: string, close: ()=> void }> = (props) =>{
+    return (
+        <div style={{ display: 'flex', "flex-direction": "column", height: "100%", width: "100%" }}>
+            <div class="panel-title" style={{ display: "flex", width: "100%", "align-items": "center", "flex-direction": "row" }}>
+                <div onClick={props.close} style={{ cursor: "pointer" }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="2rem" height="2rem" viewBox="0 0 24 24">
+                        <path stroke-width="1" fill="currentColor" d="M9.193 9.249a.75.75 0 0 1 1.059-.056l2.5 2.25a.75.75 0 0 1 0 1.114l-2.5 2.25a.75.75 0 0 1-1.004-1.115l1.048-.942H6.75a.75.75 0 1 1 0-1.5h3.546l-1.048-.942a.75.75 0 0 1-.055-1.06M22 17.25A2.75 2.75 0 0 1 19.25 20H4.75A2.75 2.75 0 0 1 2 17.25V6.75A2.75 2.75 0 0 1 4.75 4h14.5A2.75 2.75 0 0 1 22 6.75zm-2.75 1.25c.69 0 1.25-.56 1.25-1.25V6.749c0-.69-.56-1.25-1.25-1.25h-3.254V18.5zm-4.754 0v-13H4.75c-.69 0-1.25.56-1.25 1.25v10.5c0 .69.56 1.25 1.25 1.25z"/>
+                    </svg>
+                </div>
+                <h3 style={{ flex: 1, "text-align": "center" }}>{props.title}</h3>
+            </div>
+            <div style={{ flex: 1, overflow: "auto" }}>
+                {props.children}
+            </div>
+        </div>
+    );
+}
 
 type Pages = "profile" | "users" | "settings"
 interface AccountOptionProps{
@@ -36,10 +58,10 @@ const Accounts = () => {
     const { toggle } = useTheme();
     const { userState } = useUserContext();
     const [page, setPage] = createSignal<Pages>("profile");
+    const [panelState, setPanelState] = createSignal({ open: false, content: "" });
 
-    onMount(()=>{
-        document.head.title = "Connect | Account";
-    });
+    const closePanel = () => setPanelState({ open: false, content: "" });
+    const openPanel = (content: string) => setPanelState({ open: true, content });
 
     return (
         <div class="account-container">
@@ -73,16 +95,31 @@ const Accounts = () => {
                 <div class="horizontal-line"/>
                 <Switch>
                     <Match when={page() === "profile"}>
-                        <Profile />
+                        <Profile edith={openPanel}/>
                     </Match>
                     <Match when={page() === "users"}>
-                        <Users />
+                        <Users create={openPanel}/>
                     </Match>
                     <Match when={page() === "settings"}>
                         <Settings />
                     </Match>
                 </Switch>
             </div>
+            <Motion.div initial={{ x: "100%" }} animate={{ x: panelState().open ? 0 : "100%" }} transition={{ duration: 0.3, easing: "ease-out" }} class="panel">
+                <PanelContent title={panelState().content} close={closePanel}>
+                    <Switch>
+                        <Match when={panelState().content === "Edit Profile"}>
+                            <EditProfile close={closePanel}/>
+                        </Match>
+                        <Match when={panelState().content === "Change Password"}>
+                            <ChangePassword close={closePanel}/>
+                        </Match>
+                        <Match when={panelState().content === "Create User"}>
+                            <AddUser close={closePanel}/>
+                        </Match>
+                    </Switch>
+                </PanelContent>
+            </Motion.div>
         </div>
     );
 }

@@ -21,9 +21,12 @@ const UserView = () =>{
     );
 }
 
-const CreateUserView = () =>{
+interface CreateUserViewProps{
+    create?: CallableFunction
+}
+const CreateUserView: Component<CreateUserViewProps> = (props) =>{
     return (
-        <div class={"create-user-container"}>
+        <div class={"create-user-container"} onClick={props.create ? ()=> props.create!() : undefined}>
             <svg xmlns="http://www.w3.org/2000/svg" width="5rem" height="5rem" viewBox="0 0 30 26">
                 <path fill="currentColor" d="M10.5.156c-3.017 0-5.438 2.072-5.438 6.032c0 2.586 1.03 5.22 2.594 6.843c.61 1.623-.49 2.227-.718 2.313C3.781 16.502.093 18.602.093 20.688v.78c0 2.843 5.414 3.5 10.437 3.5a46 46 0 0 0 3.281-.124a7.75 7.75 0 0 1-2.124-5.344c0-1.791.61-3.432 1.624-4.75c-.15-.352-.21-.907.063-1.75c1.555-1.625 2.563-4.236 2.563-6.813c0-3.959-2.424-6.03-5.438-6.03zm9 13.031a6.312 6.312 0 1 0 0 12.625a6.312 6.312 0 0 0 0-12.625M18.625 16h1.75v2.594h2.594v1.812h-2.594V23h-1.75v-2.594H16v-1.812h2.625z"/>
             </svg>
@@ -31,11 +34,22 @@ const CreateUserView = () =>{
     );
 }
 
-const Users = () =>{
+
+interface UsersProps{
+    create?: (title: string) => void
+}
+
+const Users: Component<UsersProps> = (props) =>{
     const { userState } = useUserContext();
 
     const indices = () =>{
         return [...userState()!.user!.users!, 1].map((_, index) => index);
+    }
+
+    const createUser = () =>{
+        if(props.create){
+            props.create("Create User");
+        }
     }
 
     return (
@@ -44,7 +58,7 @@ const Users = () =>{
             <div class={"users-container"}>
                 <For each={indices()}>
                     {(item) => (
-                        <Show when={item < userState().user!.users!.length} fallback={<CreateUserView />}>
+                        <Show when={item < userState().user!.users!.length} fallback={<CreateUserView create={createUser}/>}>
                             <UserView />
                         </Show>
                     )}
