@@ -1,10 +1,13 @@
 import type { Component } from "solid-js";
+import { useAccountsContext } from "../providers/accounts";
 
 interface AddUserProps {
-    close: ()=> void
+    
 }
 
 const AddUser: Component<AddUserProps> = (props) => {
+    const { closePanel } = useAccountsContext();
+    
     return (
         <div style={{ display: "flex", "flex-direction": "column", width: "100%", height: "100%" }}>
             <h1 style={{ "padding": "2rem 2rem 1rem 2rem", "font-weight": "300" }}>Add User</h1>

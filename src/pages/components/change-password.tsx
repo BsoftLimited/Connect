@@ -1,10 +1,13 @@
 import type { Component } from "solid-js";
+import { useAccountsContext } from "../providers/accounts";
 
 interface ChangePasswordProps{
-    close: ()=> void
+    
 }
 
 const ChangePassword: Component<ChangePasswordProps> = (props) => {
+    const { closePanel } = useAccountsContext();
+    
     return (
         <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", width: "100%", height: "100%", overflow: "auto" }}>
             <h1 style={{ "padding": "2rem 2rem 1rem 2rem", "font-weight": "300" }}>Change Password</h1>

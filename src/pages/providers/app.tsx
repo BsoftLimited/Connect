@@ -65,9 +65,7 @@ const AppContextProvider: ParentComponent = (props) =>{
                 setWS();
             }
 
-            init.onerror = (event) =>{
-                
-            }
+            init.onerror = (event) =>{}
             return init;
         }
         return ws();

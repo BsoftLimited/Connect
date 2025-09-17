@@ -1,10 +1,13 @@
 import type { Component } from "solid-js";
+import { useAccountsContext } from "../providers/accounts";
 
 interface EditProfileProps{
-    close: ()=> void
+    
 }
 
 const EditProfile: Component<EditProfileProps> = (props) =>{
+    const { closePanel } = useAccountsContext();
+    
     return (
         <div style={{ padding: "1rem" }}>
             <form>
