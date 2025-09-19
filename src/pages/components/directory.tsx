@@ -16,7 +16,7 @@ interface FilesProps{
     context: (event: PointerEvent, file: DirectoryFile) => void
 }
 
-const Flies: Component<FilesProps> = ({ filter, context }) =>{
+const Files: Component<FilesProps> = ({ filter, context }) =>{
     const { appState } = useAppContext();
 
     return (
@@ -71,7 +71,7 @@ const Directory = () => {
                         <PathBar path={appState().directory!.path} />
                     </div>
                     <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }} onContextMenu={showDirectoryContext}>
-                        <Flies filter={filter} context={showFileContext} />
+                        <Files filter={filter} context={showFileContext} />
                         <Upload open={showUpload()} onClocse={()=> setShowUpload(false)}/> 
                     </div>
                     <Show when={status().show === "file"}>

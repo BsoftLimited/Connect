@@ -5,7 +5,7 @@ import { stat, rm, rename as fsRename, mkdir } from 'fs/promises';
 import { copy, type CopyProgressEvent } from "../utils/file-handle_bridge";
 
 export interface DirectoryFile{ 
-    name: string, path: string, size: number, isDir: boolean 
+    name: string, path: string, size?: number, fileCount?: number, folderCount?: number, isDir: boolean 
 }
 
 export interface DirectoryDetails{
@@ -48,9 +48,20 @@ class FilesRepository{
                 const stats = statSync(join(this.homePath, absolutePath));
 
                 if(stats.isDirectory()){
-                    const size = (await Bun.$`ls ${join(this.homePath, absolutePath)}`.text()).split('\n').filter(init => init).length;
+                    let fileCount = 0;
+                    let folderCount = 0;
 
-                    folders.push({ name, path: absolutePath, size, isDir: true });
+                    (await Bun.$`ls ${join(this.homePath, absolutePath)}`.text()).split('\n').filter(init => init).forEach((init)=>{
+                        const subStats = statSync(join(this.homePath, absolutePath, init));
+
+                        if(subStats.isDirectory()){
+                            folderCount += 1;
+                        }else{
+                            fileCount += 1
+                        }
+                    });
+
+                    folders.push({ name, path: absolutePath, fileCount, folderCount, isDir: true });
                 }else{
                     files.push({ name, path: absolutePath, size: stats.size, isDir: false });
                 }

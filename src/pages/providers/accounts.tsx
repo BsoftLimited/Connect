@@ -28,6 +28,7 @@ type AccountsStateType = {
     openPanel: (panel: AccountsPanels) => void,
     choosePage: (page: AccountsPages) => void,
     createUser: (data: CreateUser) => Promise<void>,
+    updateProfile: (data: { username?: string, email?: string }) => Promise<void>,
     changePassword: (data: { oldPassword: string, newPassword: string }) => Promise<void>,
 }
 
@@ -40,7 +41,6 @@ const AccountsStateProvider: ParentComponent = (props) =>{
 
     const createUser = async (data: CreateUser) =>{
         try{
-            setState(init => ({ ...init, loading: true, error: undefined }));
             const request = new Request(`/api/user`, {
                 method: "POST",
                 headers: {
@@ -53,11 +53,31 @@ const AccountsStateProvider: ParentComponent = (props) =>{
                 throw new Error("Failed to create user");
             }
             fetchUsers();
-            setState(init => ({ ...init, loading: false }));
         }catch(error){
             setState(init => { return { ...init, loading: false, error } });
             console.error(`User creation failied`, error);
             alert(`User creation failied: ${error}`);
+        }
+    }
+
+    const updateProfile = async (data: { username?: string, email?: string }) =>{
+        try{
+            const request = new Request(`/api/user`, {
+                method: "POST",
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            const response = await fetch(request);
+            if (!response.ok) {
+                throw new Error("Failed to update profile");
+            }
+            fetchUsers();
+        }catch(error){
+            setState(init => { return { ...init, loading: false, error } });
+            console.error(`User update failied`, error);
+            alert(`Profile update failied: ${error}`);
         }
     }
 
@@ -117,7 +137,8 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         },
         pageState,
         createUser,
-        changePassword
+        changePassword,
+        updateProfile
     };
 
     onMount(() => {

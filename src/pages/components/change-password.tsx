@@ -4,7 +4,7 @@ const ChangePassword = () => {
     const { closePanel } = useAccountsContext();
     
     return (
-        <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", width: "100%", height: "100%", overflow: "auto" }}>
+        <div style={{ display: "flex", "flex-direction": "column", width: "100%", height: "100%" }}>
             <h1 style={{ "padding": "2rem 2rem 1rem 2rem", "font-weight": "300" }}>Change Password</h1>
             <div style={{ width: "100%", display: "flex", "flex-direction": "column", gap: "1rem", padding: "1rem" }}>
                 <form>

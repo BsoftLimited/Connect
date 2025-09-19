@@ -63,18 +63,32 @@ api.delete("/user", async(req)=>{
             return new Response(JSON.stringify({ message: "user deletion failed", error }), { headers, status: 400 });
         }
     }
-    return new Response("you are not allowed to create user", { status: 401 });
+    return new Response("you are not allowed to delete user", { status: 401 });
 }, { body: t.Object({ id: t.String() }) });
 
 api.patch("/user", async(req)=>{
     try{
-        const user = await req.userRepository.update({ ...req.body, id: req.user!.id, accessLevel: req.body.accessLevel === "read-write" ? "read-write" : "read-only" });
+        const user = await req.userRepository.update({ ...req.body, id: req.user!.id });
 
         return new Response(JSON.stringify(user), { headers });
     }catch(error){
         return new Response(JSON.stringify({ message: "user update failed", error }), { headers, status: 400 });
     }
-}, { body: t.Object({ email: t.Optional(t.String()), username: t.Optional(t.String()), accessLevel: t.Optional(t.String()) }) });
+}, { body: t.Object({ email: t.Optional(t.String()), username: t.Optional(t.String()) }) });
+
+api.patch("/user/access", async(req)=>{
+    if(req.user?.role === "admin"){
+        try{
+            const user = await req.userRepository.update({ ...req.body, accessLevel: req.body.accessLevel === "read-write" ? "read-write" : "read-only" });
+
+            return new Response(JSON.stringify(user), { headers });
+        }catch(error){
+            return new Response(JSON.stringify({ message: "user update failed", error }), { headers, status: 400 });
+        }
+    }else{
+        return new Response("you are not allowed to alter user access level", { status: 401 });
+    }
+}, { body: t.Object({ id: t.String(), accessLevel: t.Optional(t.String()) }) });
 
 api.patch("/user/password", async(req)=>{
     try{
