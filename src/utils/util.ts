@@ -1,3 +1,5 @@
+import type { User } from "../common/user";
+
 export const isVideoOrAudio = (fileName: string): boolean => {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? "unknown";
     return ["mp4", "mkv", "avi", "mp3", "wav"].includes(ext);
@@ -37,4 +39,11 @@ export const htmlBuilder = (config: { title: string, jsFile: string, cssFiles?: 
                 <script src="/assets/js/${config.jsFile}"></script>
             </body>
         </html>`;
+}
+
+export const formatAccessLevel = (user?: User) =>{
+    if(user?.accessLevel === "read-write"){
+        return "Read Write";
+    }
+    return "Read Only";
 }

@@ -40,7 +40,7 @@ interface AccountOptionProps{
 }
 
 const AccountOption: ParentComponent<AccountOptionProps> = (props) =>{
-    const { choosePage, state } = useAccountsContext();
+    const { choosePage, pageState } = useAccountsContext();
 
     const clicked = () =>{
         if(props.clicked){
@@ -51,7 +51,7 @@ const AccountOption: ParentComponent<AccountOptionProps> = (props) =>{
     }
 
     return (
-        <div onClick={clicked} class={`account-options ${state().currentPage === props.page ? "active" : "clicakble"}`}>
+        <div onClick={clicked} class={`account-options ${pageState().currentPage === props.page ? "active" : "clicakble"}`}>
             {props.children}
             <span>{props.label}</span>
         </div>
@@ -61,7 +61,7 @@ const AccountOption: ParentComponent<AccountOptionProps> = (props) =>{
 const Accounts = () => {
     const { toggle } = useTheme();
     const { userState } = useUserContext();
-    const { state } = useAccountsContext();   
+    const { pageState } = useAccountsContext();   
 
     return (
         <div class="account-container">
@@ -77,7 +77,7 @@ const Accounts = () => {
                         <AccountOption label={ "Profile" } page={ "profile"}>
                             <svg xmlns="http://www.w3.org/2000/svg" width={"2rem"} height={"2rem"} viewBox="0 0 48 48"><g fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"><path d="M24 27a8 8 0 1 0 0-16a8 8 0 0 0 0 16m0-2a6 6 0 1 0 0-12a6 6 0 0 0 0 12"/><path d="M44 24c0 11.046-8.954 20-20 20S4 35.046 4 24S12.954 4 24 4s20 8.954 20 20M33.63 39.21A17.9 17.9 0 0 1 24 42a17.9 17.9 0 0 1-9.831-2.92q-.36-.45-.73-.93A2.14 2.14 0 0 1 13 36.845c0-1.077.774-1.98 1.809-2.131c6.845-1 11.558-.914 18.412.035A2.08 2.08 0 0 1 35 36.818c0 .48-.165.946-.463 1.31q-.461.561-.907 1.082m3.355-2.744c-.16-1.872-1.581-3.434-3.49-3.698c-7.016-.971-11.92-1.064-18.975-.033c-1.92.28-3.335 1.856-3.503 3.733A17.94 17.94 0 0 1 6 24c0-9.941 8.059-18 18-18s18 8.059 18 18a17.94 17.94 0 0 1-5.015 12.466"/></g></svg>
                         </AccountOption>
-                        <Show when={userState().user?.users}>
+                        <Show when={userState().user?.role === "admin"}>
                             <AccountOption label={ "Accounts" } page={ "users" }>
                                 <svg xmlns="http://www.w3.org/2000/svg" width={"2rem"} height={"2rem"} viewBox="0 0 256 256"><path fill="currentColor" d="M107.19 159a56 56 0 1 0-46.38 0a91.83 91.83 0 0 0-53.93 38.81a4 4 0 1 0 6.7 4.37a84 84 0 0 1 140.84 0a4 4 0 1 0 6.7-4.37A91.83 91.83 0 0 0 107.19 159M36 108a48 48 0 1 1 48 48a48.05 48.05 0 0 1-48-48m212 95.35a4 4 0 0 1-5.53-1.17A83.81 83.81 0 0 0 172 164a4 4 0 0 1 0-8a48 48 0 1 0-17.82-92.58a4 4 0 1 1-3-7.43a56 56 0 0 1 44 103a91.83 91.83 0 0 1 53.93 38.86a4 4 0 0 1-1.11 5.5"/></svg>
                             </AccountOption>
@@ -94,27 +94,27 @@ const Accounts = () => {
                 </div>
                 <div class="horizontal-line"/>
                 <Switch>
-                    <Match when={ state().currentPage === "profile"}>
+                    <Match when={ pageState().currentPage === "profile"}>
                         <Profile />
                     </Match>
-                    <Match when={state().currentPage === "users"}>
+                    <Match when={pageState().currentPage === "users"}>
                         <Users />
                     </Match>
-                    <Match when={ state().currentPage === "settings"}>
+                    <Match when={ pageState().currentPage === "settings"}>
                         <Settings />
                     </Match>
                 </Switch>
             </div>
-            <Motion.div initial={{ x: "100%" }} animate={{ x: state().panelState.show ? 0 : "100%" }} transition={{ duration: 0.3, easing: "ease-out" }} class="panel">
-                <PanelContent title={state().panelState.panel}>
+            <Motion.div initial={{ x: "100%" }} animate={{ x: pageState().panelState.show ? 0 : "100%" }} transition={{ duration: 0.3, easing: "ease-out" }} class="panel">
+                <PanelContent title={pageState().panelState.panel}>
                     <Switch>
-                        <Match when={state().panelState.panel === "Edit Profile"}>
+                        <Match when={pageState().panelState.panel === "Edit Profile"}>
                             <EditProfile />
                         </Match>
-                        <Match when={state().panelState.panel === "Change Password"}>
+                        <Match when={pageState().panelState.panel === "Change Password"}>
                             <ChangePassword />
                         </Match>
-                        <Match when={state().panelState.panel === "Create User"}>
+                        <Match when={pageState().panelState.panel === "Create User"}>
                             <AddUser />
                         </Match>
                     </Switch>
@@ -126,9 +126,12 @@ const Accounts = () => {
 
 
 export default () =>{
+    const { userState } = useUserContext();
     return (
-        <AccountsStateProvider>
-            <Accounts />
-        </AccountsStateProvider>
+        <Show when={userState().loading === false} fallback={<div class="loading-screen"><div class="loader"/>Loading...</div>}>
+            <AccountsStateProvider>
+                <Accounts />
+            </AccountsStateProvider>
+        </Show>
     );
 };

@@ -31,27 +31,6 @@ const UserContextProvider: ParentComponent = (props) => {
         }
     };
 
-    const createUser = async (data: { email: string, username: string, accessLevel: string, password: string }) =>{
-        try{
-            const request = new Request(`/api/user`, {
-                method: "POST",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            const response = await fetch(request);
-            if (!response.ok) {
-                throw new Error("Failed to create user");
-            }
-        }catch(error){
-            setState(init => { return { ...init, loading: false, error } });
-            console.error(`User creation failied`, error);
-            alert(`User creation failied: ${error}`);
-        }
-    }
-
     onMount(() => {
         if(window.location.pathname !== "/login"){
             fetchUser();

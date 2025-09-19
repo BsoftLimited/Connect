@@ -2,6 +2,8 @@ import {useUserContext} from "../providers/user.tsx";
 import {createSignal, JSX, type Component, type ParentComponent} from "solid-js";
 import {Show} from "solid-js/web";
 import { useAccountsContext } from "../providers/accounts.tsx";
+import type { User } from "../../common/user.ts";
+import { formatAccessLevel } from "../../utils/util.ts";
 
 interface ProfileDetailProps{
     label: string,
@@ -10,6 +12,8 @@ interface ProfileDetailProps{
 }
 
 const ProfileDetail: ParentComponent<ProfileDetailProps> = (props) =>{
+    const { userState } = useUserContext();
+
     const edith = () =>{
         if(props.edith){
             props.edith();
@@ -24,7 +28,7 @@ const ProfileDetail: ParentComponent<ProfileDetailProps> = (props) =>{
                     <div style={{ display: "flex", "flex-direction": "row", gap: "4px", "align-items": "center", "font-weight": "300", "font-size": "16px" }}>
                         { props.label }
                     </div>
-                    <Show when={props.edith}>
+                    <Show when={props.edith && userState().user?.role !== "admin"}>
                         <span class={"clicakble"} onClick={edith}>Edit</span>
                     </Show>
                 </div>
@@ -41,13 +45,6 @@ const Profile = () =>{
     const { userState } = useUserContext();
     const { openPanel } = useAccountsContext();
 
-    const accessLevel = () =>{
-        if(userState().user?.accessLevel === "read-write"){
-            return "Read Write";
-        }
-        return "Read Only";
-    }
-
     const edithProfile = () => openPanel("Edit Profile");
     const edithPassword = () => openPanel("Change Password");
 
@@ -57,16 +54,21 @@ const Profile = () =>{
             <div class={"profile-container"}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="10rem" height="10rem" viewBox="0 0 24 24">
                     <path fill="currentColor" fill-opacity="0.16" d="M3 12a9 9 0 1 1 18 0a9 9 0 0 1-18 0"/>
-                    <circle cx="12" cy="10" r="4" fill="#fe9244ff" />
+                    <circle cx="12" cy="10" r="4" fill="#f8a365ff" />
                     <path fill="currentColor" fill-rule="evenodd" fill-opacity="0.62" d="M18.22 18.246c.06.097.041.22-.04.297A8.97 8.97 0 0 1 12 21a8.97 8.97 0 0 1-6.18-2.457a.24.24 0 0 1-.04-.297C6.942 16.318 9.291 15 12 15s5.057 1.318 6.22 3.246" clip-rule="evenodd"/>
                 </svg>
                 <div class={"profile-details-container"}>
                     <div style={{ display: "flex", "flex-direction": "row", "justify-content": "space-between", "align-items": "center", width: "100%", "padding": "0.7rem 1rem" }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="2.4rem" height="2.4rem" viewBox="0 0 16 16">
-                            <path fill="currentColor" d="M9.5 5a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zM9 9.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m-2.39-3C6.61 7.328 5.891 8 5 8s-1.61-.672-1.61-1.5S4.109 5 5 5s1.61.672 1.61 1.5M5 8h-.04c-.92 0-1.72.585-1.94 1.42c-.08.295.16.582.485.582h3c.326 0 .565-.286.486-.582C6.768 8.586 5.971 8 5.051 8h-.04z"/>
-                            <path fill="currentColor" fill-rule="evenodd" d="M.327 3.64C0 4.282 0 5.12 0 6.8v2.4c0 1.68 0 2.52.327 3.16a3.02 3.02 0 0 0 1.31 1.31c.642.327 1.48.327 3.16.327h6.4c1.68 0 2.52 0 3.16-.327a3 3 0 0 0 1.31-1.31c.327-.642.327-1.48.327-3.16V6.8c0-1.68 0-2.52-.327-3.16a3 3 0 0 0-1.31-1.31c-.642-.327-1.48-.327-3.16-.327h-6.4c-1.68 0-2.52 0-3.16.327a3.02 3.02 0 0 0-1.31 1.31m10.9-.638h-6.4c-.857 0-1.44 0-1.89.038c-.438.035-.663.1-.819.18a2 2 0 0 0-.874.874c-.08.156-.145.38-.18.819c-.037.45-.038 1.03-.038 1.89v2.4c0 .857.001 1.44.038 1.89c.036.438.101.663.18.819c.192.376.498.682.874.874c.156.08.381.145.819.18c.45.036 1.03.037 1.89.037h6.4c.857 0 1.44 0 1.89-.037c.438-.036.663-.101.819-.18c.376-.192.682-.498.874-.874c.08-.156.145-.381.18-.82c.037-.45.038-1.03.038-1.89v-2.4c0-.856-.001-1.44-.038-1.89c-.036-.437-.101-.662-.18-.818a2 2 0 0 0-.874-.874c-.156-.08-.381-.145-.819-.18c-.45-.037-1.03-.038-1.89-.038" clip-rule="evenodd"/>
-                        </svg>
-                        <span class={"clicakble"} onClick={edithProfile}>Edit</span>
+                        <div style={{ "display": "flex", "flex-direction": "row", "align-items": "center", gap: "4px" }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="2.4rem" height="2.4rem" viewBox="0 0 16 16">
+                                <path fill="currentColor" d="M9.5 5a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zM9 9.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m-2.39-3C6.61 7.328 5.891 8 5 8s-1.61-.672-1.61-1.5S4.109 5 5 5s1.61.672 1.61 1.5M5 8h-.04c-.92 0-1.72.585-1.94 1.42c-.08.295.16.582.485.582h3c.326 0 .565-.286.486-.582C6.768 8.586 5.971 8 5.051 8h-.04z"/>
+                                <path fill="currentColor" fill-rule="evenodd" d="M.327 3.64C0 4.282 0 5.12 0 6.8v2.4c0 1.68 0 2.52.327 3.16a3.02 3.02 0 0 0 1.31 1.31c.642.327 1.48.327 3.16.327h6.4c1.68 0 2.52 0 3.16-.327a3 3 0 0 0 1.31-1.31c.327-.642.327-1.48.327-3.16V6.8c0-1.68 0-2.52-.327-3.16a3 3 0 0 0-1.31-1.31c-.642-.327-1.48-.327-3.16-.327h-6.4c-1.68 0-2.52 0-3.16.327a3.02 3.02 0 0 0-1.31 1.31m10.9-.638h-6.4c-.857 0-1.44 0-1.89.038c-.438.035-.663.1-.819.18a2 2 0 0 0-.874.874c-.08.156-.145.38-.18.819c-.037.45-.038 1.03-.038 1.89v2.4c0 .857.001 1.44.038 1.89c.036.438.101.663.18.819c.192.376.498.682.874.874c.156.08.381.145.819.18c.45.036 1.03.037 1.89.037h6.4c.857 0 1.44 0 1.89-.037c.438-.036.663-.101.819-.18c.376-.192.682-.498.874-.874c.08-.156.145-.381.18-.82c.037-.45.038-1.03.038-1.89v-2.4c0-.856-.001-1.44-.038-1.89c-.036-.437-.101-.662-.18-.818a2 2 0 0 0-.874-.874c-.156-.08-.381-.145-.819-.18c-.45-.037-1.03-.038-1.89-.038" clip-rule="evenodd"/>
+                            </svg>
+                            <span style={{ "font-size": "16px" }}>Profile Details</span>
+                        </div>
+                        <Show when={userState().user?.role !== "admin"}>
+                            <span class={"clicakble"} onClick={edithProfile}>Edit</span>
+                        </Show>
                     </div>
                     <hr />
                     <ProfileDetail label={"Email"} value={userState().user?.email}>
@@ -90,7 +92,7 @@ const Profile = () =>{
                             </g>
                         </svg>
                     </ProfileDetail>
-                    <ProfileDetail label={"Access level"} value={ accessLevel() }>
+                    <ProfileDetail label={"Access level"} value={ formatAccessLevel(userState().user) }>
                         <svg xmlns="http://www.w3.org/2000/svg" width="2rem" height="2rem" viewBox="0 0 24 24">
                             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
                                 <path d="M18 12a6 6 0 1 0-12 0c0 3.314 1 5.5 3 8"/>

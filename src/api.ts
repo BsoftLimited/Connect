@@ -27,12 +27,17 @@ api.get("/*", async(req) => {
 });
 
 api.get("/user", async(req) => {
+    return new Response(JSON.stringify(req.user), { headers });
+});
+
+api.get("/users", async(req) => {
     if(req.user?.role === "admin"){
         const users = await req.userRepository.users();
         
-        return new Response(JSON.stringify({ ...req.user, users }), { headers });
+        return new Response(JSON.stringify(users), { headers });
+    }else{
+        return new Response("you are not allowed to view users", { status: 401 });
     }
-    return new Response(JSON.stringify(req.user), { headers });
 });
 
 api.post("/user", async(req)=>{

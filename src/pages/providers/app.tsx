@@ -55,7 +55,6 @@ const AppContextProvider: ParentComponent = (props) =>{
                 }
 
                 if(message.completed){
-                    console.log("time to refresh");
                     fetchDirectory();
                 }
             }
