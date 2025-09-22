@@ -65,11 +65,11 @@ class UserRepository{
         throw new Error('Invalid email or password');
     }
 
-    create = async (input: CreateUser): Promise<User> =>{
+    create = async (input: CreateUser): Promise<User| UserCreateError> =>{
         const emailResults = await this.database.credentials.findMany({ where: { email: input.email } });
         const usernameResults = await this.database.user.findMany({ where: { username: input.username } });
         if(emailResults.length > 0 || usernameResults.length > 0){
-            throw Error({ message: "" });
+            return {  }
         }
         const credentials = await this.database.credentials.create({ data: { email: input.email, password: input.password } });
         if(credentials){
