@@ -70,23 +70,19 @@ export const request = <T>(data: { url:string, input?: T, method?: string }) =>{
 
 export class Dual<T,S>{
     private __first?: T;
-    get first(){
-        return this.__first!;
-    }
+    get first(){ return this.__first!; }
 
     private __second?: S;
-    get second(){
-        return this.__second!;
-    }
+    get second(){ return this.__second!; }
 
     private constructor(first?: T, second?: S){
         this.__first = first;
         this.__second = second;
     }
 
-    isFirst = () => this.__first !== undefined;
-    isSecond = () => this.__second !== undefined;
+    get isFirst(){ return  this.__first !== undefined; }
+    get isSecond(){ return this.__second !== undefined; }
 
-    static first = <T>(value: T): Dual<T, undefined> => new Dual(value, undefined);
-    static second = <S>(value: S): Dual<undefined, S> => new Dual(undefined, value);
+    static first = <T, S>(value: T): Dual<T, S> => new Dual<T, S>(value, undefined);
+    static second = <T, S>(value: S): Dual<T, S> => new Dual<T, S>(undefined, value);
 }

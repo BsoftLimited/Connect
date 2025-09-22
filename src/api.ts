@@ -39,12 +39,18 @@ api.get("/users", async({ session, userRepository, status }) => {
 api.post("/user", async({ userRepository, session, body, status })=>{
     if(session?.user.role === "admin"){
         try{
-            const user = await userRepository.create({ ...body, 
+            const result = await userRepository.create({ ...body, 
                 accessLevel: body.accessLevel as ("read-write" | "read-write") | "read-only",
                 role: body.role as ("user" | "guest") || "guest"
             });
 
-            return status(201, user);
+            if(result.isFirst){
+                return status(201, result.first);
+            }else{
+                const error = result.second;
+
+                return status(400, { message: "form validation failed", ...error });
+            }
         }catch(error){
             return status(400, { message: "user resgistration failed", error });
         }

@@ -65,13 +65,18 @@ auth.post('/logout', async ({ cookie: { auth }, status, session, userRepository 
 auth.use(sitePlugin).post('/register', async ({ userRepository, config, jwt, cookie: { auth }, status, body: { email, username, password } }) => {
     if(config?.allowGuestSignup){
         try {
-            const session = await userRepository.register({ email, username, password });
-            
-            const value = await jwt.sign({ sessionID: session.id });
+            const result = await userRepository.register({ email, username, password });
+            if(result.isFirst){
+                const session = result.first;
+                const value = await jwt.sign({ sessionID: session.id });
+                auth?.set({ value, httpOnly: true, maxAge: 7 * 86400 });
+                
+                return status(201, { message: "Registration successful", user: session.user, config: session.config });
+            }else{
+                const error = result.second;
 
-            auth?.set({ value, httpOnly: true, maxAge: 7 * 86400 });
-
-            return status(201, { message: "Registration successful", user: session.user, config: session.config });
+                return status(400, { message: "form validation failed", ...error });
+            }
         } catch (error) {
             console.error("Registration error:", error);
             return status(400,{ message: `User registration failed: ${error}` });

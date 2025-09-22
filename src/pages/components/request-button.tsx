@@ -22,9 +22,8 @@ const RequestButton: Component<RequestButtonProps> = (props) => {
     
     return (
         <button class={props.class} type="submit" onClick={clicked} disabled={props.disabled || loading()}>
-            {loading() ? props.loadingText : props.text}
             <Show when={loading()} fallback={<span>{props.text}</span>}>
-                <span class="spinner" style={{ "margin-left": "8px" }}></span>
+                {props.loadingText}<span class="spinner" style={{ "margin-left": "8px" }}></span>
             </Show>
         </button>
     );

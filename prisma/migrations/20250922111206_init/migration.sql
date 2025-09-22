@@ -11,7 +11,7 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'guest',
-    "accessLevel" TEXT NOT NULL,
+    "accessLevel" TEXT NOT NULL DEFAULT 'read-only',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "User_id_fkey" FOREIGN KEY ("id") REFERENCES "Credentials" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -40,17 +40,19 @@ CREATE TABLE "UserConfig" (
 -- CreateTable
 CREATE TABLE "SiteConfig" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "adminID" TEXT NOT NULL,
     "siteName" TEXT NOT NULL DEFAULT 'Connect',
     "siteLogo" TEXT NOT NULL DEFAULT '/logo.svg',
     "siteFavicon" TEXT NOT NULL DEFAULT '/favicon.ico',
     "siteUrl" TEXT NOT NULL DEFAULT 'http://localhost:3000',
     "siteDescription" TEXT NOT NULL DEFAULT 'Connect - The ultimate platform for managing your applications and services.',
-    "adminEmail" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     "maintenanceMode" BOOLEAN NOT NULL DEFAULT false,
     "maintenanceMessage" TEXT NOT NULL DEFAULT 'The site is under maintenance. Please check back later.',
-    "allowQuestSignup" BOOLEAN NOT NULL DEFAULT true
+    "allowGuestSignup" BOOLEAN NOT NULL DEFAULT true,
+    "allowGuestDownload" BOOLEAN NOT NULL DEFAULT false,
+    CONSTRAINT "SiteConfig_adminID_fkey" FOREIGN KEY ("adminID") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateIndex
@@ -76,3 +78,6 @@ CREATE UNIQUE INDEX "UserConfig_userId_key" ON "UserConfig"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SiteConfig_id_key" ON "SiteConfig"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SiteConfig_adminID_key" ON "SiteConfig"("adminID");

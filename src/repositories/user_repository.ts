@@ -1,6 +1,7 @@
 import type { AccessLevel, Role, Session, ThemePreference, UserConfig } from "../common";
 import type { User, CreateUser } from "../common";
 import { DBManager } from "../config";
+import { Dual } from "../utils/util";
 
 interface UserCreateError{
     email?: string
@@ -65,11 +66,14 @@ class UserRepository{
         throw new Error('Invalid email or password');
     }
 
-    create = async (input: CreateUser): Promise<User| UserCreateError> =>{
+    create = async (input: CreateUser): Promise<Dual<User, UserCreateError>> =>{
         const emailResults = await this.database.credentials.findMany({ where: { email: input.email } });
         const usernameResults = await this.database.user.findMany({ where: { username: input.username } });
         if(emailResults.length > 0 || usernameResults.length > 0){
-            return {  }
+            return Dual.second({
+                email: emailResults.length > 0 ? `email: ${input.email} already exists` : undefined,
+                username: usernameResults.length > 0 ? `username: ${input.username} already exists` : undefined
+            });
         }
         const credentials = await this.database.credentials.create({ data: { email: input.email, password: input.password } });
         if(credentials){
@@ -77,7 +81,7 @@ class UserRepository{
                     email: input.email, username: input.username, role: input.role, accessLevel: input.accessLevel
              } });
             if (user) {
-                return { ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel };
+                return Dual.first({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel });
             }else{
                 await this.database.credentials.delete({ where: { id: credentials.id } });
             }
@@ -85,15 +89,24 @@ class UserRepository{
         throw Error(`User creation fialed. user with email: ${input.email} already exists`);
     }
 
-    register = async (input: { email: string, username: string, password: string }): Promise<Session> =>{
+    register = async (input: { email: string, username: string, password: string }): Promise<Dual<Session, UserCreateError>> =>{
         console.log("Creating user:", input);
+        const emailResults = await this.database.credentials.findMany({ where: { email: input.email } });
+        const usernameResults = await this.database.user.findMany({ where: { username: input.username } });
+        if(emailResults.length > 0 || usernameResults.length > 0){
+            return Dual.second({
+                email: emailResults.length > 0 ? `email: ${input.email} already exists` : undefined,
+                username: usernameResults.length > 0 ? `username: ${input.username} already exists` : undefined
+            });
+        }
+
         const credentials = await this.database.credentials.create({ data: { email: input.email, password: input.password } });
         if(credentials){
             const user =  await this.database.user.create({ data: { id: credentials.id,
                     email: input.email, username: input.username
              } });
             if (user) {
-                return this.createSession({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel });
+                return Dual.first(await this.createSession({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel }));
             }else{
                 await this.database.credentials.delete({ where: { id: credentials.id } });
             }
