@@ -1,7 +1,4 @@
 import { type Component, JSX } from "solid-js";
-import { ThemeProvider } from "./theme";
-import { UserContextProvider } from "./user";
-import { ContextMenuProvider } from "./context-menu";
 
 export interface MultiProviderProps {
     providers: Component<{ children: JSX.Element }>[];
@@ -14,17 +11,3 @@ export const MultiProvider: Component<MultiProviderProps> = (props) => {
         props.children
     );
 };
-
-const AllProviders: Component<{ children: JSX.Element }> = (props) => {
-    return (
-        <ThemeProvider>
-            <UserContextProvider>
-                <ContextMenuProvider>
-                    {props.children}
-                </ContextMenuProvider>
-            </UserContextProvider>
-        </ThemeProvider>
-    );
-}
-
-export default AllProviders;

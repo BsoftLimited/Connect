@@ -22,7 +22,7 @@ const FormInput: Component<FormInputProps> = (props) => {
     return (
         <div style={{ display: "flex", "flex-direction": "column", gap: "0.3rem" }}>
             <label for={props.name}>{props.label}</label>
-            <input id={props.name} name={props.name} type={props.type} value={props.value} placeholder={props.placeholder} onChange={onChange} style={{ padding: "0.5rem", "border-radius": "4px", border: "1px solid", "border-color": (props.error ? "red" : "#ccc"), width: "100%" }}/>
+            <input id={props.name} name={props.name} type={props.type} value={props.value ?? ""} placeholder={props.placeholder} onChange={onChange} style={{ padding: "0.5rem", "border-radius": "4px", border: "1px solid", "border-color": (props.error ? "red" : "#ccc"), width: "100%" }}/>
             <Show when={props.error}>
                 <InputError message={props.error} />
             </Show>

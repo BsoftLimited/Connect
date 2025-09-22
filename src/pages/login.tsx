@@ -1,18 +1,19 @@
 import { createSignal, JSX, Show } from "solid-js";
 import { render } from "solid-js/web";
-import TopBar from "./components/topbar";
 import RequestButton from "./components/request-button";
-import AllProviders from "./providers";
+import type { SiteConfig } from "../common";
+import Loading from "./components/loading";
+import { SystmeProvider, useSystem } from "./providers/system";
 
-interface LoginStatus{
+interface SignInStatus{
     message: string;
     type: "warning" | "error";
 }
 
-const Login = () =>{
+const Signin = (props: { config: SiteConfig }) =>{
     const [email, setEmail] = createSignal("");
     const [password, setPassword] = createSignal("");
-    const [status, setStatus] = createSignal<LoginStatus>();
+    const [status, setStatus] = createSignal<SignInStatus>();
 
     const handleEmailChange: JSX.ChangeEventHandler<HTMLInputElement, Event> = (event) => {
         event.preventDefault();
@@ -50,9 +51,13 @@ const Login = () =>{
     
     return (
         <div class="login-container" style={{ display: "flex", "flex-direction": "column", width: "100vw", height: "100vh", overflow: "hidden" }}>
-            <TopBar transparent/>
             <div class="container">
                 <div class="form-container">
+                    <Show when={props.config.allowGuestSignup}>
+                        <div style={{ "text-align": "center", "margin-bottom": "1rem" }}>
+                            Register as a Guest
+                        </div>
+                    </Show>
                     <form class="slidin">
                         <label for='email'>Email</label>
                         <div class="input-field">
@@ -81,12 +86,22 @@ const Login = () =>{
     );
 }
 
+const Page = () =>{
+    const { systemState } = useSystem();
+
+    return (
+        <Show when={systemState().data} fallback={<Loading message={systemState().error ? "Failed to load site configuration" : "Loading site configuration..."} />}>
+            <Signin config={systemState().data!} />
+        </Show>
+    );
+}
+
 const root = document.getElementById("root");
 if(root){
     render(() => (
-        <AllProviders>
-            <Login />
-        </AllProviders>
+        <SystmeProvider>
+            <Page />
+        </SystmeProvider>
     ), root);
 }else{
     console.log("root element not found");

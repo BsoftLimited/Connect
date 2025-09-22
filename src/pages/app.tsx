@@ -3,7 +3,7 @@ import Directory from "./components/directory";
 import SideBar from "./components/sidebar";
 import Streaming from "./components/streaming";
 import TopBar from "./components/topbar";
-import { AppContextProvider, useAppContext } from "./providers/app";
+import { AppProvider, useAppContext } from "./providers/app";
 import { UploadContextProvider } from "./providers/upload";
 
 export const App = () =>{
@@ -24,10 +24,10 @@ export const App = () =>{
 
 export default () =>{
     return (
-        <AppContextProvider>
+        <AppProvider>
             <UploadContextProvider>
                 <App />
             </UploadContextProvider>
-        </AppContextProvider>
+        </AppProvider>
     );
 };

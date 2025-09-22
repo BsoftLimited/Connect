@@ -1,11 +1,11 @@
 import {type Component, Match, Switch} from "solid-js";
-import {useTheme} from "../providers/theme.tsx";
+import { useUserContext } from "../providers/user";
 
 interface ThemeIconProps{
     size?: number | string
 }
 const ThemeIcon: Component<ThemeIconProps> = (props) =>{
-    const { isDark } = useTheme();
+    const { isDark } = useUserContext();
 
     const size = props.size ?? "2.5rem";
 

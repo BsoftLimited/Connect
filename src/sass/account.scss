@@ -35,10 +35,9 @@
 
 .users-container{
     display: grid;
-    grid-template-columns: repeat(5, auto);
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
     width: 100%;
     padding: 1rem;
-    gap: 1.5rem;
 }
 
 .create-user-container{
@@ -66,14 +65,14 @@
 .profile-details-container{
     display: flex;
     flex-direction: column;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     border: 2px solid var(--md-sys-color-surface-container-highest);
     border-radius: 10px;
     background-color: var(--md-sys-color-surface-container-lowest);
 
     hr{
         border: none;
-        height: 2px; /* Adjust thickness */
+        width: 2px; /* Adjust thickness */
         background-color: var(--md-sys-color-surface-container-highest);
     }
 }

@@ -1,9 +1,10 @@
 import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
-import type { CreateUser, User } from "../../common/user";
-import { useUserContext } from "./user";
+import type { CreateUser, User } from "../../common";
+import { UserProvider, useUserContext } from "./user";
+import { request, type RequestFailed } from "../../utils/util";
 
 export type AccountsPages = "profile" | "users" | "settings"
-export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User";
+export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "Edit User" | "Delete User";
 
 export type AccountsPanelsState = {
     show: boolean,
@@ -28,6 +29,7 @@ type AccountsStateType = {
     openPanel: (panel: AccountsPanels) => void,
     choosePage: (page: AccountsPages) => void,
     createUser: (data: CreateUser) => Promise<void>,
+    deleteUser: (id: string) => Promise<void>,
     updateProfile: (data: { username?: string, email?: string }) => Promise<void>,
     changePassword: (data: { oldPassword: string, newPassword: string }) => Promise<void>,
 }
@@ -37,26 +39,54 @@ const AccountsStateContext = createContext<AccountsStateType>();
 const AccountsStateProvider: ParentComponent = (props) =>{
     const [pageState, setPageState] = createSignal<AccountsPageState>({ currentPage: "profile", panelState: { show: false } });
     const [state, setState] = createSignal<AccountsState>({ loading: false, users: [] });
-    const {userState} = useUserContext();
+    const {sessionState} = useUserContext();
+
+    const closePanel = () =>{
+        setPageState((init)=>{
+            return {...init, panelState: { show: false }}
+        });
+    }
 
     const createUser = async (data: CreateUser) =>{
         try{
-            const request = new Request(`/api/user`, {
-                method: "POST",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            const response = await fetch(request);
-            if (!response.ok) {
-                throw new Error("Failed to create user");
+            const response = await request({ url: `/api/user`, input: data, method: "POST" });
+            if(response.status === 201){
+                const newUser = response.data as User;
+                setState(init => ({ ...init, users: [...init.users, newUser], loading: false }));
+                alert("User created successfully");
+                closePanel();
+            }else{
+                console.error(response);
             }
-            fetchUsers();
         }catch(error){
-            setState(init => { return { ...init, loading: false, error } });
-            console.error(`User creation failied`, error);
-            alert(`User creation failied: ${error}`);
+            const failedResponse = error as RequestFailed;
+            setState(init => { return { ...init, loading: false, error: failedResponse.error } });
+            console.error(`User creation failied`, failedResponse.error);
+            alert(`User creation failied: ${failedResponse}`);
+        }
+    }
+
+    const deleteUser = async (id: string) =>{
+        try{
+            const response = await fetch(`/api/users/`, {
+                method: "DELETE",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id })
+            });
+            if(!response.ok){
+                throw new Error("Failed to delete user");
+            }
+
+            const updatedUsers = state().users.filter(u => u.id !== id);
+            setState(init => ({ ...init, users: updatedUsers, loading: false }));
+            alert("User deleted successfully");
+            closePanel();
+        }catch(error){
+            console.error("Failed to delete user", error);
+            alert(`Failed to delete user: ${error}`);
+            setState(init => ({ ...init, loading: false, error }));
         }
     }
 
@@ -120,11 +150,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
 
     const accountsStateType: AccountsStateType = {
         state,
-        closePanel: () =>{
-            setPageState((init)=>{
-                return {...init, panelState: { show: false }}
-            });
-        },
+        closePanel,
         openPanel: (panel: AccountsPanels) => {
             setPageState((init)=>{
                 return {...init, panelState: { show: true, panel } }
@@ -137,12 +163,13 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         },
         pageState,
         createUser,
+        deleteUser,
         changePassword,
         updateProfile
     };
 
     onMount(() => {
-        if(userState().user?.role === "admin"){
+        if(sessionState().data?.user.role === "admin"){
             fetchUsers();
         }
     });
@@ -154,7 +181,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
     );
 }
 
-const useAccountsContext = () =>{
+export const useAccountsContext = () =>{
     const context = useContext(AccountsStateContext);
     if(!context){
         throw new Error("useAccountsContext must be used within an AccountsStateProvider");
@@ -162,4 +189,4 @@ const useAccountsContext = () =>{
     return context;
 }
 
-export { AccountsStateProvider, useAccountsContext };
+export { AccountsStateProvider };

@@ -1,4 +1,4 @@
-import { createSignal, type Component } from "solid-js";
+import { createSignal, Show, type Component } from "solid-js";
 
 interface RequestButtonProps {
     text: string;
@@ -21,8 +21,11 @@ const RequestButton: Component<RequestButtonProps> = (props) => {
     }
     
     return (
-        <button class={props.class} onClick={clicked} disabled={props.disabled || loading()}>
+        <button class={props.class} type="submit" onClick={clicked} disabled={props.disabled || loading()}>
             {loading() ? props.loadingText : props.text}
+            <Show when={loading()} fallback={<span>{props.text}</span>}>
+                <span class="spinner" style={{ "margin-left": "8px" }}></span>
+            </Show>
         </button>
     );
 }

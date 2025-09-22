@@ -1,6 +1,7 @@
 import { createContext, createEffect, createMemo, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
 import type { DirectoryDetails, DirectoryFile } from "../../repositories/files_repository";
 import type { CopyProgressEvent } from "../../utils/file-handle_bridge";
+import { ContextMenuProvider } from "./context-menu";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -189,7 +190,7 @@ const AppContextProvider: ParentComponent = (props) =>{
     );
 }
 
-const useAppContext = () => {
+export const useAppContext = () => {
     const context = useContext(AppContext);
     if (!context) {
         console.log(JSON.stringify(context));
@@ -198,4 +199,12 @@ const useAppContext = () => {
     return context;
 }
 
-export { AppContextProvider, useAppContext }
+export const AppProvider: ParentComponent = (props) => {
+    return (
+        <ContextMenuProvider>
+            <AppContextProvider>
+                {props.children}
+            </AppContextProvider>
+        </ContextMenuProvider>
+    );
+}

@@ -28,6 +28,53 @@ model User{
 
     email         String        @unique
     username      String
-    role          String        @default("user")
-    accessLevel   String
+    role          String        @default("guest") // roles: admin, user, guest
+    accessLevel   String        @default("read-only") // access levels: read-only, read-write
+
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+    sessions      Session[]
+
+    config        UserConfig?
+    siteConfig   SiteConfig?
+}
+
+model Session{
+    id            String        @id @default(uuid()) @unique
+    user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        String
+
+    createdAt     DateTime      @default(now())
+    expiresAt     DateTime
+}
+
+model UserConfig{
+    id            String        @id @default(uuid()) @unique
+    user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        String        @unique
+
+    theme         String        @default("light") // light, dark
+    language      String        @default("en") // en, es, fr, de, it, pt, ru, zh, ja, ko
+    notifications Boolean       @default(true)
+    imagePreview   Boolean      @default(false)
+}
+
+model SiteConfig{
+    id            String        @id @default(uuid()) @unique
+    adminID      String         @unique
+    admin         User          @relation(fields: [adminID], references: [id], onDelete: Cascade)
+
+    siteName      String        @default("Connect")
+    siteLogo      String        @default("/logo.svg")
+    siteFavicon   String        @default("/favicon.ico")
+    siteUrl       String        @default("http://localhost:3000")
+    siteDescription String      @default("Connect - The ultimate platform for managing your applications and services.")
+
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+
+    maintenanceMode Boolean     @default(false)
+    maintenanceMessage String   @default("The site is under maintenance. Please check back later.")
+    allowGuestSignup Boolean    @default(true)
+    allowGuestDownload Boolean  @default(false)
 }

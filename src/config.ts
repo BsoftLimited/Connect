@@ -79,7 +79,13 @@ export async function seed() {
                 update: { email, username: process.env.ADMIN_USERNAME }
             });
 
-            console.log(`seeding finished success. with email: ${credentials.email} and password: ${credentials.password}`);
+            const config = await database.siteConfig.upsert({ 
+                where: { adminID: user.id },
+                update: { },
+                create: { adminID: user.id }
+            });
+
+            console.log(`seeding finished success. site config:`, config);
         }else{
             throw Error("no admin password provided");
         }

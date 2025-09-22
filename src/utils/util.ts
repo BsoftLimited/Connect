@@ -1,4 +1,4 @@
-import type { User } from "../common/user";
+import type { User } from "../common";
 
 export const isVideoOrAudio = (fileName: string): boolean => {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? "unknown";
@@ -46,4 +46,47 @@ export const formatAccessLevel = (user?: User) =>{
         return "Read Write";
     }
     return "Read Only";
+}
+
+export interface RequestSuccess{ status: number, data: any }
+export interface RequestFailed{ status: number, error: any }
+
+export const request = <T>(data: { url:string, input?: T, method?: string }) =>{
+    return new Promise<RequestSuccess>(async(reslove, reject) =>{
+        const request = new Request(data.url, {
+            method: data.method || "GET",
+            headers: { 'Content-type': 'application/json'},
+            body: JSON.stringify(data.input)
+        });
+
+        const response = await fetch(request);
+        if (!response.ok) {
+            reject({ status: response.status, error: await response.text() });
+        }else{
+            reslove({ status: response.status, data: await response.json() });
+        }
+    });
+}
+
+export class Dual<T,S>{
+    private __first?: T;
+    get first(){
+        return this.__first!;
+    }
+
+    private __second?: S;
+    get second(){
+        return this.__second!;
+    }
+
+    private constructor(first?: T, second?: S){
+        this.__first = first;
+        this.__second = second;
+    }
+
+    isFirst = () => this.__first !== undefined;
+    isSecond = () => this.__second !== undefined;
+
+    static first = <T>(value: T): Dual<T, undefined> => new Dual(value, undefined);
+    static second = <S>(value: S): Dual<undefined, S> => new Dual(undefined, value);
 }

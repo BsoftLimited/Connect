@@ -3,22 +3,38 @@ import { staticPlugin } from "@elysiajs/static";
 import api from "./api";
 import { htmlBuilder } from "./utils/util";
 import { seed } from "./config";
-import auth from "./auth";
+import auth, { sitePlugin } from "./auth";
 
 
 const app = new Elysia().use(auth).use(api);
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
-app.get('/files/*',  async (req) => {
-    if(req.user){
+app.use(sitePlugin).get('/files/*',  async ({ session, repository, path, config, status }) => {
+    if(session?.user){
         try{
-            const { filePath, stats } = await req.repository.process(req.path, "/files");
+            const { filePath, stats } = await repository.process(path, "/files");
 
             const ext = filePath.split('.').pop()?.toLowerCase() ?? "unknown";
             const headers: Record<string, string> = {
                 'Content-Length': stats.size.toString(),
                 'Content-Disposition': `inline; filename="${filePath.split('/').pop() || 'file'}"`,
             };
+
+            if(["mp4", "mkv", "avi"].includes(ext)) {
+                headers['Content-Type'] = 'video/mp4';
+                headers['Accept-Ranges'] = 'bytes';
+
+                return new Response(repository.serve(filePath), { headers });
+            }else if (["mp3", "wav"].includes(ext)) {
+                headers['Content-Type'] = 'audio/mpeg';
+                headers['Accept-Ranges'] = 'bytes';
+
+                return new Response(repository.serve(filePath), { headers });
+            }
+
+            if(session.user.role === "guest" && config?.allowGuestDownload !== true){
+                return new Response('you are not allowed to preview files', { status: 403 });
+            }
 
             if (["pdf", "docx", "xlsx"].includes(ext)) {
                 headers['Content-Type'] = 'application/pdf';
@@ -27,34 +43,28 @@ app.get('/files/*',  async (req) => {
             } else if (["zip", "rar", "gz"].includes(ext)) {
                 headers['Content-Type'] = 'application/zip';
                 headers['Accept-Ranges'] = 'bytes';
-            }else if(["mp4", "mkv", "avi"].includes(ext)) {
-                headers['Content-Type'] = 'video/mp4';
-                headers['Accept-Ranges'] = 'bytes';
             }else if (["jpg", "png", "gif", "webp"].includes(ext)) {
                 headers['Content-Type'] = `image/${ext}`;
-            }else if (["mp3", "wav"].includes(ext)) {
-                headers['Content-Type'] = 'audio/mpeg';
-                headers['Accept-Ranges'] = 'bytes';
             }else {
                 headers['Content-Type'] = 'application/octet-stream';
             }
 
-            return new Response(req.repository.serve(filePath), { headers });
+            return new Response(repository.serve(filePath), { headers });
         }catch(error){
             console.error(error);
-            return new Response('Not found', { status: 404 });
+            return status(404, { message: 'File not found' });
         }
     }else{
-        return new Response('unathourized access', { status: 401 });
+        return status(401, { message: 'Unauthorized access' });
     }
 });
 
-app.get('/download/*',  async (req) => {
-    if(req.user){
+app.use(sitePlugin).get('/download/*',  async ({ session, config, repository, path, status }) => {
+    if(session?.user && (session.user.role !== "guest" || config?.allowGuestDownload === true)){
         try{
-            const { filePath, stats } = await req.repository.process(req.path, "/download");
+            const { filePath, stats } = await repository.process(path, "/download");
 
-            return new Response(req.repository.serve(filePath), {
+            return new Response(repository.serve(filePath), {
                 headers: {
                     'Content-Type': 'application/octet-stream',
                     'Content-Disposition': `attachment; filename="${filePath.split('/').pop()}"`,
@@ -64,10 +74,10 @@ app.get('/download/*',  async (req) => {
             });
         }catch(error){
             console.error(error);
-            return new Response('Not found', { status: 404 });
+            return status(404, { message: 'File not found' });
         }
     }else{
-        return new Response('unathourized access', { status: 401 });
+        return status(401, { message: 'Unauthorized access' });
     }
 });
 
@@ -77,15 +87,15 @@ const pageHeaders: HeadersInit = {
     'Pragma': 'no-cache'
 };
 
-app.get("/*", async ({ user }) => {
-    let html = user ?
-        htmlBuilder({ title: "Connect | App", jsFile: "index.js", cssFiles: ["app.css", "streaming.css", "account.css"] }) :
-        htmlBuilder({ title: "Connect | Login", jsFile: "login.js", cssFiles: ["app.css", "login.css"]});
+app.use(sitePlugin).get("/*", async ({ session, config }) => {
+    let html = session ?
+        htmlBuilder({ title: `${config?.siteName} | App`, jsFile: "index.js", cssFiles: ["app.css", "streaming.css", "account.css"] }) :
+        htmlBuilder({ title: `${config?.siteName} | Login`, jsFile: "login.js", cssFiles: ["app.css", "login.css"]});
 
     return new Response(html, { headers: pageHeaders });
 });
 
-app.get('/favicon.ico', async () => {
+app.get('/favicon.ico', async ({ status }) => {
     const filePath = `./public/favicon.ico`;
 
     try {
@@ -93,9 +103,17 @@ app.get('/favicon.ico', async () => {
         if (await file.exists()) {
             return new Response(file)
         }
-        return new Response('Not found', { status: 404 })
+        return status(404, { message: 'Not found' });
     } catch (error) {
-        return new Response('Invalid request', { status: 400 })
+        return status(400, { message: 'Bad request' });
+    }
+});
+
+app.use(sitePlugin).get("/config", async({ config, status }) =>{
+    if(config){
+        return status(200, { config });
+    }else{
+        return status(500, { message: "Configuration not found" });
     }
 });
 
