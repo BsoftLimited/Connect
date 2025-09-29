@@ -1,9 +1,21 @@
-import { PopUp, type PopUpComponent } from "../components/pop-up";
+import type { Component } from "solid-js";
+import { PopUp} from "../components/pop-up";
+import type { User } from "../../common";
 
-const DeleteUser: PopUpComponent = (props) =>{
+interface DeleteUserProps{
+    user: User
+    proceed: (user: User) =>void
+    cancel: () => void
+}
+
+const DeleteUser: Component<DeleteUserProps> = (props) =>{
     return (
         <PopUp>
-            
+            <div style={{ display: "flex", "flex-direction": "column" }}>
+                <div></div>
+            </div>
         </PopUp>
     );
 }
+
+export default DeleteUser;
