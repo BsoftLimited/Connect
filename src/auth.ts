@@ -39,19 +39,25 @@ const auth = new Elysia({ prefix: "/auth"}).use(authPlugin);
 
 auth.post('/login', async ({ jwt, userRepository, status, body: { email, password }, cookie: { auth } }) => {
     try {
-        const session = await userRepository.login(email, password);
-        const value = await jwt.sign({ sessionID: session.id });
+        const result = await userRepository.login(email, password);
+        if(result.isFirst){
+            const session = result.first;
+            const value = await jwt.sign({ sessionID: session.id });
 
-        auth?.set({ value, httpOnly: true, maxAge: 7 * 86400 });
+            auth?.set({ value, httpOnly: true, maxAge: 7 * 86400 });
 
-        return status(200, { message: "Login successful", user: session.user, config: session.config });
+            return status(200, { message: "Login successful", user: session.user, config: session.config });
+        }else{
+            const error = result.second;
+            return status(401, { message: "Login failed, check inpts and try again", error });
+        }
     } catch (error) {
         console.error("Login error:", error);
         return status(404, "Invalid email or password");
     }
-}, { body: t.Object({ email: t.String(), password: t.String() }) });
+}, { body: t.Object({ email: t.String(), password: t.Optional(t.String()) }) });
 
-auth.post('/logout', async ({ cookie: { auth }, status, session, userRepository }) => {
+auth.get('/logout', async ({ cookie: { auth }, status, session, userRepository }) => {
     if(session){
         await userRepository.deleteSesssion(session.id).then(() =>{
             console.log(`Logging out user: ${session?.user.username}`);
@@ -75,7 +81,7 @@ auth.use(sitePlugin).post('/register', async ({ userRepository, config, jwt, coo
             }else{
                 const error = result.second;
 
-                return status(400, { message: "form validation failed", ...error });
+                return status(401, { message: "form validation failed", error });
             }
         } catch (error) {
             console.error("Registration error:", error);

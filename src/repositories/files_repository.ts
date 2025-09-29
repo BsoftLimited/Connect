@@ -2,7 +2,7 @@ import { homedir } from "os";
 import { join } from "path";
 import { statSync } from "fs";
 import { stat, rm, rename as fsRename, mkdir } from 'fs/promises';
-import { copy, type CopyProgressEvent } from "../utils/file-handle_bridge";
+import { copy, deleteFile, type CopyProgressEvent, type DeletePregressEvent } from "../utils/file-handle_bridge";
 
 export interface DirectoryFile{ 
     name: string, path: string, size?: number, fileCount?: number, folderCount?: number, isDir: boolean 
@@ -179,24 +179,13 @@ class FilesRepository{
         return await mkdir(join(absoluteDest, name));
     }
 
-    delete = async (path: string, fileName: string) =>{
+    delete = async (path: string, fileName: string, onProcess?: (event: DeletePregressEvent) => void) =>{
         const absolutePath = join(this.homePath, path);
 
         let finalPath = join(absolutePath, fileName);
         console.log(`trying to delete: ${finalPath}`);
         if(await this.fileExists(finalPath, false)){
-            // Delete a file
-            const stats = statSync(finalPath);
-            if(stats.isFile()){
-                const file = Bun.file(finalPath);
-                console.log(file.name);
-                await file.delete().catch((error)=>{
-                    console.error(error);
-                });
-            }else{
-                // Delete a directory and all its contents
-                await rm(finalPath, { recursive: true, force: true });
-            }
+            await deleteFile(finalPath, onProcess);
         }
     }
 

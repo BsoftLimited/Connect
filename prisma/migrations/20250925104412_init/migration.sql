@@ -1,8 +1,9 @@
 -- CreateTable
 CREATE TABLE "Credentials" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL
+    "password" TEXT NOT NULL,
+    CONSTRAINT "Credentials_id_fkey" FOREIGN KEY ("id") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -12,9 +13,9 @@ CREATE TABLE "User" (
     "username" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'guest',
     "accessLevel" TEXT NOT NULL DEFAULT 'read-only',
+    "initialized" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "User_id_fkey" FOREIGN KEY ("id") REFERENCES "Credentials" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable

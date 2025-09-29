@@ -2,16 +2,13 @@ import { createSignal, JSX, type Component } from "solid-js";
 import { useAccountsContext } from "../providers/accounts";
 import { useUserContext } from "../providers/user";
 import FormInput from "./form-input";
+import { isEmailValid, isUsernameValid } from "../../utils/util";
 
-interface EditProfileProps{
-    
-}
-
-const EditProfile: Component<EditProfileProps> = (props) =>{
+const EditProfile: Component = () =>{
     const { closePanel, updateProfile } = useAccountsContext();
-    const { userState } = useUserContext();
+    const { sessionState } = useUserContext();
 
-    const [data, setData] = createSignal({ username: userState().user?.username!, email: userState().user?.email! });
+    const [data, setData] = createSignal({ username: sessionState().data?.user.username!, email: sessionState().data?.user.email! });
     const [formErrors, setFormErrors] = createSignal<{ username?: string, email?: string }>({});
 
     const updateEmail = (email: string) => setData(init => { 
@@ -27,21 +24,21 @@ const EditProfile: Component<EditProfileProps> = (props) =>{
 
         //validate form
         const errors: { username?: string, email?: string } = {};
-        if(!data().username || data().username.trim().length < 3){
+        if(!isUsernameValid(data().username)){
             errors.username = "username is required and should be at least 3 characters";
         }
 
-        if(!data().email || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(data().email)){
+        if(!isEmailValid(data().email)){
             errors.email = "a valid email is required";
         }
 
-        setFormErrors(errors);
         if(Object.keys(errors).length > 0){
+            setFormErrors(errors);
             return;
         }
 
-        updateProfile(data()).then(()=>{
-            closePanel();
+        updateProfile(data()).then((result)=>{
+            
         });
     }
     

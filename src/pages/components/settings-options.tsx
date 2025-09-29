@@ -1,9 +1,8 @@
 import { Show, type ParentComponent } from "solid-js";
 import { useUserContext } from "../providers/user";
-import { useAppContext } from "../providers/app";
 
 const SettingsOptions: ParentComponent = (props) => {
-    const { userState, logout } = useUserContext();
+    const { sessionState, logout } = useUserContext();
 
     const toAccounts = () => window.location.href = "/accounts";
 

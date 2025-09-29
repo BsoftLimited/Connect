@@ -14,7 +14,7 @@ const SystmeProvider: ParentComponent = (props) => {
         try {
             const response = await fetch("/config");
             if (response.ok) {
-                const config = await response.json() as SiteConfig;
+                const config = (await response.json()).config as SiteConfig;
                 setConfigState({ data: config, loading: false });
             }
         } catch (error) {
@@ -37,7 +37,7 @@ const SystmeProvider: ParentComponent = (props) => {
 // 4. Create custom hook for consuming context
 const useSystem = () => {
   const context = useContext(SystemContext);
-  if (!context) throw new Error("useTheme must be used within a ThemeProvider");
+  if (!context) throw new Error("useSystem must be used within SystemProvider");
   return context;
 };
 

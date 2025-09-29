@@ -1,18 +1,18 @@
 import {DataType, define, funcConstructor, open} from "ffi-rs";
 import {homedir} from "os";
 
-interface FolderInfo {
+export interface FolderInfo {
     name: string,
     total_size: number,
     file_count: number,
     folder_count: number,
 }
 
-interface StorageInfo{
+export interface StorageInfo{
     name: string, total: number, available: number
 }
 
-interface CopyProgressEvent {
+export interface CopyProgressEvent {
     name: string,
     total_files: number,
     files_copied: number,
@@ -21,8 +21,15 @@ interface CopyProgressEvent {
     percentage: number;
 }
 
+export interface DeletePregressEvent{
+    filePath: string,
+    total: number,
+    deleted: number,
+    completed: boolean
+}
+
 const library_name = "file-handle";
-const { get_folder_info, storage_info, copy_with_progress } = define({
+const { get_folder_info, storage_info, copy_with_progress, delete_with_progress } = define({
     get_folder_info: {
         library: library_name,
         paramsType: [
@@ -56,6 +63,19 @@ const { get_folder_info, storage_info, copy_with_progress } = define({
             DataType.String,
             funcConstructor({
                 paramsType: [ DataType.String, DataType.I32, DataType.I32, DataType.U64, DataType.U64, DataType.Double ],
+                retType: DataType.Void
+            }),
+            funcConstructor({ paramsType: [ DataType.String], retType: DataType.Void })
+        ],
+        retType: DataType.Void,
+        runInNewThread: true
+    },
+    delete_with_progress: {
+        library: library_name,
+        paramsType: [
+            DataType.String,
+            funcConstructor({
+                paramsType: [ DataType.String, DataType.I32, DataType.I32, DataType.I32 ],
                 retType: DataType.Void
             }),
             funcConstructor({ paramsType: [ DataType.String], retType: DataType.Void })
@@ -115,4 +135,21 @@ const storageInfo = (): Promise<StorageInfo> => {
     });
 }
 
-export { type CopyProgressEvent, type FolderInfo, folderInfo, copy, storageInfo };
+const deleteFile = (filePath: string, onProcess?: (event: DeletePregressEvent)=> void): Promise<void> =>{
+    return new Promise((resolve, reject)=>{
+        const callback = (filePath: string, total: number, deleted: number, completed: number) => {
+            if(onProcess){
+                onProcess({ filePath, total, deleted, completed: completed === 1 });
+            }
+
+            if(completed === 1){
+                resolve();
+            }
+        }
+        const error_callback = (error: string) => reject(new Error(error));
+
+        delete_with_progress([filePath, callback, error_callback])
+    });
+}
+
+export { folderInfo, copy, storageInfo, deleteFile };

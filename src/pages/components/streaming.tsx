@@ -1,10 +1,10 @@
 import { createSignal, Match, onCleanup, onMount, Show, Switch, type Component, type JSX } from "solid-js";
 import { useAppContext } from "../providers/app";
-import type { DirectoryFile } from "../../utils/files_repository";
 import { isAudio, isVideo, isVideoOrAudio } from "../../utils/util";
 import PlayButton from "./play-button";
 import MuteButton from "./mute-button";
 import { Motion } from "@motionone/solid";
+import type { DirectoryFile } from "../../repositories/files_repository";
 
 const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -35,7 +35,7 @@ const FileInfoView: Component<FileInfoViewProps> = ({ file }) =>{
             </span>
             <div>
                 <p style={{ "font-size": "12px", "max-lines": "2" }}>{file.name}</p>
-                <p style={{ "font-size": "12px", "font-weight": 300 }}>Size: {(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                <p style={{ "font-size": "12px", "font-weight": 300 }}>Size: {(file.size! / (1024 * 1024)).toFixed(2)} MB</p>
             </div>
         </div>
     );

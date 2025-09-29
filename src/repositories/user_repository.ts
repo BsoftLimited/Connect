@@ -1,11 +1,12 @@
-import type { AccessLevel, Role, Session, ThemePreference, UserConfig } from "../common";
-import type { User, CreateUser } from "../common";
+import type { AccessLevel, ChangePasswordForm, EditUserFailed, Role, Session, ThemePreference, UserConfig } from "../common";
+import type { User, CreateUserData, SignUpData } from "../common";
 import { DBManager } from "../config";
-import { Dual } from "../utils/util";
+import {Dual, Trial} from "../utils/util";
 
 interface UserCreateError{
     email?: string
     username?: string
+    password?: string
 }
 
 class UserRepository{
@@ -57,34 +58,42 @@ class UserRepository{
         return this.createSession(user, sessionID);
     }
 
-    login = async (email: string, password: string): Promise<Session> => {
-        const credentials = await this.database.credentials.findUnique({ where: { email, password } });
-        if (credentials) {
-            const user =  await this.findUserById(credentials.id);
-            return this.createSession(user);
+    login = async (email: string, password?: string): Promise<Dual<Session, UserCreateError>> => {
+        const user = await this.database.user.findUnique({ where: { email } });
+        if(!user){
+            return Dual.second({ email: "Email provided doesn't belong to any account" });
         }
-        throw new Error('Invalid email or password');
+
+        if(user.initialized){
+            if(!password){
+                return Dual.second({ password: "password is required to login" });
+            }
+            const credentials = await this.database.credentials.findUnique({ where: { email, password } });
+            if (credentials) {
+                return Dual.first(await this.createSession({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel }));
+            }else{
+                return Dual.second({ password: "Wrong password, please try again" });
+            }
+        }else{
+            return Dual.first(await this.createSession({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel }));
+        }
     }
 
-    create = async (input: CreateUser): Promise<Dual<User, UserCreateError>> =>{
+    create = async (input: CreateUserData): Promise<Dual<User, UserCreateError>> =>{
         const emailResults = await this.database.credentials.findMany({ where: { email: input.email } });
         const usernameResults = await this.database.user.findMany({ where: { username: input.username } });
         if(emailResults.length > 0 || usernameResults.length > 0){
             return Dual.second({
-                email: emailResults.length > 0 ? `email: ${input.email} already exists` : undefined,
-                username: usernameResults.length > 0 ? `username: ${input.username} already exists` : undefined
+                email: emailResults.length > 0 ? `Email: ${input.email} already exists` : undefined,
+                username: usernameResults.length > 0 ? `Username: ${input.username} already exists` : undefined
             });
         }
-        const credentials = await this.database.credentials.create({ data: { email: input.email, password: input.password } });
-        if(credentials){
-            const user =  await this.database.user.create({ data: { id: credentials.id,
-                    email: input.email, username: input.username, role: input.role, accessLevel: input.accessLevel
-             } });
-            if (user) {
-                return Dual.first({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel });
-            }else{
-                await this.database.credentials.delete({ where: { id: credentials.id } });
-            }
+
+        const user =  await this.database.user.create({ data: {
+            email: input.email, username: input.username, role: input.role, accessLevel: input.accessLevel
+        } });
+        if(user){
+            return Dual.first({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel });
         }
         throw Error(`User creation fialed. user with email: ${input.email} already exists`);
     }
@@ -95,26 +104,32 @@ class UserRepository{
         const usernameResults = await this.database.user.findMany({ where: { username: input.username } });
         if(emailResults.length > 0 || usernameResults.length > 0){
             return Dual.second({
-                email: emailResults.length > 0 ? `email: ${input.email} already exists` : undefined,
-                username: usernameResults.length > 0 ? `username: ${input.username} already exists` : undefined
+                email: emailResults.length > 0 ? `Email: ${input.email} already exists` : undefined,
+                username: usernameResults.length > 0 ? `Username: ${input.username} already exists` : undefined
             });
         }
-
-        const credentials = await this.database.credentials.create({ data: { email: input.email, password: input.password } });
-        if(credentials){
-            const user =  await this.database.user.create({ data: { id: credentials.id,
-                    email: input.email, username: input.username
-             } });
-            if (user) {
+        const user =  await this.database.user.create({ data: {
+            email: input.email, username: input.username, initialized: true
+        } });
+        if(user){
+            const credentials = await this.database.credentials.create({ data: { id: user.id, email: input.email, password: input.password } });
+            if (credentials) {
                 return Dual.first(await this.createSession({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel }));
             }else{
-                await this.database.credentials.delete({ where: { id: credentials.id } });
+                await this.database.user.delete({ where: { id: user.id } });
             }
         }
         throw Error(`User registration fialed. user with email: ${input.email} already exists`);
     }
 
-    update = async (input: { id: string, email?: string, username?: string, accessLevel?: "read-only" | "read-write" }): Promise<User> =>{
+    update = async (input: { id: string, email?: string, username?: string, accessLevel?: AccessLevel, role?: Role }): Promise<Dual<User, EditUserFailed>> =>{
+        if(input.accessLevel === "read-write" && input.role === "guest"){
+            return Dual.second({ 
+                message: "Invalid user update request",
+                error: { accessLevel: "Access level for guest must be Read-Only" }
+            });  
+        }
+
         if(input.email){
             await this.database.credentials.update({ 
                 where: { id: input.id },
@@ -127,7 +142,7 @@ class UserRepository{
             data: {...input}
         });
 
-        return { ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel };
+        return Dual.first({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel });
     }
 
     updateConfig = async (input: { id: string} & Partial<UserConfig>): Promise<UserConfig> =>{
@@ -154,20 +169,41 @@ class UserRepository{
         return session.count > 0;
     }
 
-    changePassword = async (input: { id: string, newPassword: string, oldPassword: string }): Promise<User> =>{
+    changePassword = async (input: { id: string, newPassword: string, oldPassword: string }): Promise<Dual<User, Partial<ChangePasswordForm>>> =>{
         const credentials = await this.database.credentials.findUnique({ where: { id: input.id } });
 
         if(credentials?.password === input.oldPassword){
             const init = await this.database.credentials.update({ 
                 where: { id: input.id }, data: { password: input.newPassword }, include: { user: true }
             });
-
-            if(!init.user){
-                throw new Error("User not found");
-            }
-            return { ...init.user, role: init.user.role as Role, accessLevel: init.user.accessLevel as AccessLevel };
+            return Dual.first({ ...init.user, role: init.user.role as Role, accessLevel: init.user.accessLevel as AccessLevel });
         }
-        throw new Error("password mismatch");
+        return Dual.second({ oldPassword: "Incorrect password, check and try again" });
+    }
+
+    createPassword = async (input: { id: string, password: string }): Promise<Session> =>{
+        const user = await this.database.user.findUnique({ where: { id: input.id } });
+        if(!user){
+            throw new Error(`user with id: ${input.id} not found`);
+        }
+
+        if(user.initialized){
+            throw new Error("account password alread set");
+        }
+
+        const init = await this.database.credentials.create({
+            data: { id: input.id,  password: input.password, email: user.email }
+        });
+
+        await this.database.user.update({
+            where: { id: init.id },
+            data: { initialized: true }
+        });
+
+        if(!init){
+            throw new Error("password creation failed, please try again");
+        }
+        return await this.createSession({ ...user, role: user.role as Role, accessLevel: user.accessLevel as AccessLevel });
     }
 
     users = async (): Promise<User[]> =>{

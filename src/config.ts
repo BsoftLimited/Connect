@@ -1,6 +1,6 @@
 import { PrismaClient } from "./generated/prisma/client";
 import path from 'path';
-import {open, close} from "ffi-rs";
+import { open } from "ffi-rs";
 import {platform} from "os";
 
 const connect = (): PrismaClient => {
@@ -63,20 +63,18 @@ export async function seed() {
         const database = DBManager.instance();
 
         if(process.env.ADMIN_PASSWORD){
-            console.info("initializing seeding: checking database for credentials");
-            const credentials = await database.credentials.upsert({ where: { email }, 
-                create: {
-                    email, password: process.env.ADMIN_PASSWORD
-                }, update: {
-                    email, password: process.env.ADMIN_PASSWORD
-                }
-            });
-        
             console.info("initializing seeding: checking database for admin details");
             const user = await database.user.upsert({
-                where: { id: credentials.id },
-                create: { id: credentials.id, email, username, role: "admin", accessLevel: "read-write" },
+                where: { email },
+                create: { email, username, role: "admin", accessLevel: "read-write", initialized: true },
                 update: { email, username: process.env.ADMIN_USERNAME }
+            });
+
+            console.info("initializing seeding: checking database for credentials");
+            await database.credentials.upsert({ 
+                where: { id: user.id }, 
+                create: { id: user.id, email, password: process.env.ADMIN_PASSWORD },
+                update: { email, password: process.env.ADMIN_PASSWORD }
             });
 
             const config = await database.siteConfig.upsert({ 

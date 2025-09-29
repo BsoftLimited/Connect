@@ -3,6 +3,7 @@ import { isVideoOrAudio } from "../../utils/util";
 import { useAppContext } from "../providers/app";
 import { useUserContext } from "../providers/user";
 import type { DirectoryFile } from "../../repositories/files_repository";
+import { useSystem } from "../providers/system";
 
 interface FileContextMenuProps{
     x?: string, y?: string,
@@ -10,7 +11,8 @@ interface FileContextMenuProps{
 }
 
 const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
-    const { userState } = useUserContext();
+    const { sessionState } = useUserContext();
+    const { systemState } = useSystem();
     const { goto, stream, deleteFile, appState, saveClipboard, paste } = useAppContext();
     
     const download = () =>{
@@ -37,10 +39,10 @@ const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
                 <Show when={props.file?.isDir || isVideoOrAudio(props.file?.name ?? "")}>
                     <li class="menu-item" id="menu-open" onClick={open}>Open</li>
                 </Show>
-                <Show when={!props.file?.isDir}>
+                <Show when={!props.file?.isDir && (sessionState().data?.user.role !== "guest" || systemState().data?.allowGuestDownload)}>
                     <li class="menu-item" id="menu-download" onClick={download}>Download</li>
                 </Show>
-                <Show when={userState().user?.accessLevel === "read-write"}>
+                <Show when={sessionState().data?.user.accessLevel === "read-write"}>
                     <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
                     <li class="menu-item" id="menu-copy" onClick={copy}>Copy</li>
                     <li class="menu-item" id="menu-cut" onClick={move}>Move</li>
@@ -48,7 +50,7 @@ const FileContextMenu: Component<FileContextMenuProps> = (props) =>{
                 <Show when={appState().clipboard && props.file?.isDir}>
                     <li class="menu-item" id="menu-paste" onClick={pasteInto}>Paste</li>
                 </Show>
-                <Show when={userState().user?.accessLevel === "read-write"}>
+                <Show when={sessionState().data?.user.accessLevel === "read-write"}>
                     <li class="menu-separator" style={{ "border-top": "1px solid #eee", height: "1px" }}></li>
                     <li class="menu-item" id="menu-delete" onClick={deleteSelf}>Delete</li>
                 </Show>

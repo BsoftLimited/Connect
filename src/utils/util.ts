@@ -1,4 +1,47 @@
-import type { User } from "../common";
+import type { SignUpData, User} from "../common";
+
+export class Dual<T,S>{
+    private readonly __first?: T;
+    get first(){ return this.__first!; }
+
+    private readonly __second?: S;
+    get second(){ return this.__second!; }
+
+    private constructor(first?: T, second?: S){
+        this.__first = first;
+        this.__second = second;
+    }
+
+    get isFirst(){ return  this.__first !== undefined; }
+
+    static first = <T, S>(value: T): Dual<T, S> => new Dual<T, S>(value, undefined);
+    static second = <T, S>(value: S): Dual<T, S> => new Dual<T, S>(undefined, value);
+}
+
+export class Trial<R, S, T>{
+    private readonly __first?: R;
+    get first(){ return this.__first!; }
+
+    private readonly __second?: S;
+    get second(){ return this.__second!; }
+
+    private readonly __third?: T;
+    get third(){ return this.__third!; }
+
+    private constructor(first?: R, second?: S, third?: T){
+        this.__first = first;
+        this.__second = second;
+        this.__third = third;
+    }
+
+    get isFirst(){ return  this.__first !== undefined; }
+    get isSecond(){ return this.__second !== undefined; }
+    get isThird(){ return this.__third !== undefined; }
+
+    static first = <R, S, T>(value: R): Trial<R, S, T> => new Trial<R, S, T>(value, undefined, undefined);
+    static second = <R, S, T>(value: S): Trial<R, S, T> => new Trial<R, S, T>(undefined, value, undefined);
+    static third = <R, S, T>(value: T): Trial<R, S, T> => new Trial<R, S, T>(undefined, undefined, value);
+}
 
 export const isVideoOrAudio = (fileName: string): boolean => {
     const ext = fileName.split('.').pop()?.toLowerCase() ?? "unknown";
@@ -52,37 +95,45 @@ export interface RequestSuccess{ status: number, data: any }
 export interface RequestFailed{ status: number, error: any }
 
 export const request = <T>(data: { url:string, input?: T, method?: string }) =>{
-    return new Promise<RequestSuccess>(async(reslove, reject) =>{
+    return new Promise<RequestSuccess>((reslove, reject) =>{
         const request = new Request(data.url, {
             method: data.method || "GET",
             headers: { 'Content-type': 'application/json'},
             body: JSON.stringify(data.input)
         });
 
-        const response = await fetch(request);
-        if (!response.ok) {
-            reject({ status: response.status, error: await response.text() });
-        }else{
-            reslove({ status: response.status, data: await response.json() });
-        }
+        fetch(request).then(async (response)=>{
+            if (!response.ok) {
+                reject({ status: response.status, error: await response.json() });
+            }else{
+                reslove({ status: response.status, data: await response.json() });
+            }
+        });
     });
 }
 
-export class Dual<T,S>{
-    private __first?: T;
-    get first(){ return this.__first!; }
+export const isUsernameValid = (username: string) => username.trim().length > 3;
+export const isEmailValid = (email: string) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email);
+export const isPassowrdValid = (password: string) => password.length > 6;
 
-    private __second?: S;
-    get second(){ return this.__second!; }
+export const isFormValid = (data: Partial<SignUpData> & { confirmPassword?: string }, includePassword: boolean = true) =>{
+    const errors: Partial<SignUpData> & { confirmPassword?: string } = {};
 
-    private constructor(first?: T, second?: S){
-        this.__first = first;
-        this.__second = second;
+    if(!data.username || !isUsernameValid(data.username)){
+        errors.username = "username is required and should be at least 3 characters";
     }
 
-    get isFirst(){ return  this.__first !== undefined; }
-    get isSecond(){ return this.__second !== undefined; }
+    if(!data.email || !isEmailValid(data.email)){
+        errors.email = "a valid email is required";
+    }
 
-    static first = <T, S>(value: T): Dual<T, S> => new Dual<T, S>(value, undefined);
-    static second = <T, S>(value: S): Dual<T, S> => new Dual<T, S>(undefined, value);
+    if(includePassword){
+        if(!data.password || !isPassowrdValid(data.password)){
+            errors.password = "password is required and should be at least 6 characters";
+        }
+        if(data.password !== data.confirmPassword){
+            errors.confirmPassword = "passwords do not match";
+        }
+    }
+    return errors;
 }

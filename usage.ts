@@ -1,4 +1,4 @@
-import { copy } from "./src/utils/file-handle_bridge";
+import { copy, deleteFile } from "./src/utils/file-handle_bridge";
 import {open, close} from "ffi-rs";
 import {platform} from "os";
 import path from "path";
@@ -28,19 +28,14 @@ console.log(10);*/
     console.log(progress);
 });
 
-storageInfo().then((value)=>{
+/*storageInfo().then((value)=>{
     console.log(value);
 }).catch(error => console.error(error)).finally(()=>{
     console.log("done getting storage info")
 });*/
 
-
-const test = (): Promise<void> =>{
-    return new Promise((resolve, reject)=>{
-        resolve();
-    });
-}
-
-test().then(()=>{
-    console.log("I just finished");
+deleteFile("C:/Users/okele/Desktop/Pictures", (event)=>{
+    console.log(event);
+}).catch((error)=>{
+    console.error(error);
 });

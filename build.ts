@@ -2,7 +2,7 @@ import * as esbuild from "esbuild";
 import { solidPlugin } from 'esbuild-plugin-solid';
 
 esbuild.context({
-    entryPoints: [ "./src/pages/index.tsx", "./src/pages/login.tsx" ],
+    entryPoints: [ "./src/pages/index.tsx", "./src/pages/signin.tsx" ],
     bundle: true,
     outdir: "./public/js",
     sourcemap: true,

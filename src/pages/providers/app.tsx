@@ -38,7 +38,7 @@ const AppContextProvider: ParentComponent = (props) =>{
     const [ws, setWS] = createSignal<WebSocket>();
 
     const connect = () =>{
-        if(ws() === undefined || ws()?.CLOSED){
+        if(ws() === undefined || !ws()?.OPEN){
             // Connect to WebSocket
             const init = new WebSocket('/api/process')
 
@@ -95,34 +95,19 @@ const AppContextProvider: ParentComponent = (props) =>{
         const currentPath = state().directory?.path;
         setState(init => { return { ...init, loading: true, error: undefined } });
 
-        try{
-            const request = new Request(`/api`, {
-                method: "DELETE",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify({ file, directory: currentPath })
-            });
-
-            const response = await fetch(request);
-            if (!response.ok) {
-                throw new Error("Failed to delete file");
-            }
-            
-            fetchDirectory();
-        }catch(error){
-            setState(init => { return { ...init, loading: false, error } });
-            console.error(`Error deleting file ${file}:`, error);
-            alert(`File: ${file} deletion fialed`);
-        }
+        connect()?.send(JSON.stringify({ operation: "delete",
+            data: { path: currentPath, file }
+        }));
     }
 
-    const parseFile = async (destFile?: DirectoryFile) => {
+    const paste = async (destFile?: DirectoryFile) => {
         const dest = destFile?.path ?? state().directory!.path;
         const file = state().clipboard!.file;
 
         if(state().clipboard?.command === "copy"){
-            connect()?.send(JSON.stringify({ operation: "copy", filePath: file.path, destination: dest }));
+            connect()?.send(JSON.stringify({ operation: "copy", 
+                data: { filePath: file.path, destination: dest }
+            }));
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
@@ -172,15 +157,11 @@ const AppContextProvider: ParentComponent = (props) =>{
             });
         },
         reload: () => fetchDirectory(),
-        deleteFile: (file) => {
-            deleteFile(file);
-        },
+        deleteFile,
         stream: (file)=> setState(init => { return { ...init, file, target: "stream" } }),
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
-        paste: (file) => {
-            parseFile(file);
-        }
+        paste
     };
 
     return (

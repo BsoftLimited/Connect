@@ -14,6 +14,8 @@ export interface User {
     username: string
     role: Role
     accessLevel: AccessLevel
+    initialized: boolean
+
     createdAt: Date
     updatedAt: Date
 }
@@ -34,11 +36,14 @@ export interface Session {
     config: UserConfig
 }
 
-export interface CreateUser{
+export interface CreateUserData{
     email: string
     username: string
     role: "guest" | "user"
     accessLevel: AccessLevel
+}
+
+export interface SignUpData extends CreateUserData{
     password: string;
 }
 
@@ -65,4 +70,34 @@ export interface State<T>{
     loading: boolean;
     data?: T;
     error?: any;
+}
+
+export interface SignInStatus{
+    message: string;
+    status: "warning" | "error";
+}
+
+export interface ChangePasswordForm{
+    oldPassword: string,
+    newPassword: string,
+    confirmPassword: string
+}
+
+export interface UpdateProfileData{
+    username?: string, email?: string
+}
+
+export interface UpdateProfileFailed{
+    message?: string, error?: UpdateProfileData
+}
+
+export interface EditUserFormData{
+    id: string,
+    role: Role
+    accessLevel: AccessLevel
+}
+
+export interface EditUserFailed{
+    message?: string,
+    error?: { accessLevel?: string }
 }

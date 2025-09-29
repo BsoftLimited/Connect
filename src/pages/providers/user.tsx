@@ -73,7 +73,7 @@ const UserContextProvider: ParentComponent = (props) => {
         logout: async () => {
             setState(init => ({ ...init, loading: true, error: undefined }));
             try {
-                const response = await fetch('/auth/logout', { method: 'POST' });
+                const response = await fetch('/auth/logout', { method: 'GET' });
                 if (!response.ok) {
                     throw new Error("Failed to log out");
                 }

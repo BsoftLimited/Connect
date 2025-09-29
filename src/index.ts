@@ -88,9 +88,9 @@ const pageHeaders: HeadersInit = {
 };
 
 app.use(sitePlugin).get("/*", async ({ session, config }) => {
-    let html = session ?
+    let html = (session && session.user.initialized) ?
         htmlBuilder({ title: `${config?.siteName} | App`, jsFile: "index.js", cssFiles: ["app.css", "streaming.css", "account.css"] }) :
-        htmlBuilder({ title: `${config?.siteName} | Login`, jsFile: "login.js", cssFiles: ["app.css", "login.css"]});
+        htmlBuilder({ title: `${config?.siteName} | SIgnin`, jsFile: "signin.js", cssFiles: ["app.css", "login.css"]});
 
     return new Response(html, { headers: pageHeaders });
 });

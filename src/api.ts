@@ -1,8 +1,8 @@
 import Elysia, { t } from "elysia";
 import { authPlugin } from "./auth";
 import FilesRepository from "./repositories/files_repository";
-import type {CopyProgressEvent} from "./utils/file-handle_bridge.ts";
-import type { ThemePreference } from "./common.ts";
+import type {CopyProgressEvent, DeletePregressEvent} from "./utils/file-handle_bridge.ts";
+import type {AccessLevel, Role, ThemePreference} from "./common.ts";
 
 const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(authPlugin);
 
@@ -40,7 +40,7 @@ api.post("/user", async({ userRepository, session, body, status })=>{
     if(session?.user.role === "admin"){
         try{
             const result = await userRepository.create({ ...body, 
-                accessLevel: body.accessLevel as ("read-write" | "read-write") | "read-only",
+                accessLevel: body.accessLevel as AccessLevel | "read-only",
                 role: body.role as ("user" | "guest") || "guest"
             });
 
@@ -49,14 +49,14 @@ api.post("/user", async({ userRepository, session, body, status })=>{
             }else{
                 const error = result.second;
 
-                return status(400, { message: "form validation failed", ...error });
+                return status(401, { message: "Form validation failed", error });
             }
         }catch(error){
-            return status(400, { message: "user resgistration failed", error });
+            return status(400, { message: "User resgistration failed", error });
         }
     }
     return status(401, JSON.stringify({ message: "you are not allowed to create user" }));
-}, { body: t.Object({ email: t.String(), username: t.String(), accessLevel: t.String(), password: t.String(), role: t.String() }) });
+}, { body: t.Object({ email: t.String(), username: t.String(), accessLevel: t.String(), role: t.String() }) });
 
 api.delete("/user", async({ session, body, userRepository, status })=>{
     if(session?.user.role === "admin"){
@@ -77,31 +77,48 @@ api.patch("/user", async({ userRepository, body, session, status })=>{
 
         return status(200, user);
     }catch(error){
-        return status(400, { message: "user update failed", error });
+        return status(503, { message: "user update failed", error });
     }
 }, { body: t.Object({ email: t.Optional(t.String()), username: t.Optional(t.String()) }) });
 
 api.patch("/user/access", async({ session, userRepository, body, status })=>{
     if(session?.user.role === "admin"){
         try{
-            const user = await userRepository.update({ ...body, accessLevel: body.accessLevel === "read-write" ? "read-write" : "read-only" });
+            const result = await userRepository.update({ ...body, 
+                role: body.role as Role ?? "guest", 
+                accessLevel: body.accessLevel as AccessLevel ?? "read-only" });
 
-            return status(200, user);
+            if(result.isFirst){
+                return status(200, result.first);
+            }
+            return status(400, result.second);
         }catch(error){
-            return status(400, { message: "user update failed", error });
+            return status(503, { message: "user update failed", error });
         }
     }else{
         return status(401, { message: "you are not allowed to update user" });
     }
-}, { body: t.Object({ id: t.String(), accessLevel: t.Optional(t.String()) }) });
+}, { body: t.Object({ id: t.String(), accessLevel: t.Optional(t.String()), role: t.Optional(t.String()) }) });
 
-api.patch("/user/password", async({userRepository, body, status, session})=>{
+api.post("/user/password", async({userRepository, body, status, session})=>{
     try{
-        const user = await userRepository.changePassword({ ...body, id: session!.user.id });
+        const user = await userRepository.createPassword({ ...body, id: session!.user.id });
 
         return status(200, user);
     }catch(error){
-        return status(400, { message: "user update failed", error });
+        return status(503, { message: "password creation failed", error });
+    }
+}, { body: t.Object({ password: t.String() }) });
+
+api.patch("/user/password", async({userRepository, body, status, session})=>{
+    try{
+        const result = await userRepository.changePassword({ ...body, id: session!.user.id });
+        if(result.isFirst){
+            return status(200, result.first);
+        }
+        return status(400, result.second);
+    }catch(error){
+        return status(503, { message: "user update failed", error });
     }
 }, { body: t.Object({ oldPassword:t.String(), newPassword: t.String() }) });
 
@@ -110,7 +127,7 @@ api.patch("/user/theme", async({ userRepository, session, body, status })=>{
         const config = await userRepository.updateConfig({ id: session!.config.id, theme: body.theme as ThemePreference || "light" });
         return status(200, config);
     }catch(error){
-        return status(400, JSON.stringify({ message: "user config update failed", error }));
+        return status(503, JSON.stringify({ message: "user config update failed", error }));
     }
 }, { body: t.Object({ theme: t.String() }) });
 
@@ -230,12 +247,14 @@ api.post('/upload', async ({ request, repository, session, status }) => {
 });
 
 api.ws("/process", {
-    body: t.Object({ operation: t.String(), filePath: t.String(), destination: t.String() }),
+    body: t.Object({ operation: t.String(), data: t.Object({
+        path: t.Optional(t.String()), file: t.Optional(t.String()),
+        filePath: t.Optional(t.String()), destination: t.Optional(t.String())
+    }) }),
     open({ id, data }) {
         console.log(`user: ${id} has connected to websocket`);
         console.log(`user `, data.session?.user);
     },
-    
     close(ws, code, reason) {
         console.log(`user: ${ws.id} has left with code: ${code} and reason: ${reason}`);
     },
@@ -243,26 +262,40 @@ api.ws("/process", {
         if(ws.data.session?.user){
             if(message.operation === "copy"){
                 if(ws.data.session.user.role === "guest" || ws.data.session.user.accessLevel === "read-only") {
-                    ws.send({ message: "you are not allowed to copy files", status: 401 });
+                    ws.send({ message: `you are not allowed to ${message.operation} files`, status: 401, operation: message.operation });
                 }else{
                     const onProcess = (progress: CopyProgressEvent) =>{
                         console.log(progress);
-                        ws.send({ message: "copying", progress, status: 200 });
+                        ws.send({ message: "copying", operation: "copy", progress, status: 200 });
                     }
 
                     console.log(message);
-                    const result = await api.decorator.repository.copy(message.filePath, message.destination, onProcess).then(()=>{
-                        return {  message: `${message.filePath.split("/").pop()} was copied to ${message.destination} successfully`, completed: true, status: 200 };
+                    const result = await api.decorator.repository.copy(message.data.filePath!, message.data.destination!, onProcess).then(()=>{
+                        return {  message: `${message.data.filePath!.split("/").pop()} was copied to ${message.data.destination} successfully`,  operation: "copy", completed: true, status: 200 };
                     }).catch((error)=>{
                         console.error(error);
-
-                        return { message: "server error", status: 503 };
+                        return { message: "server error", operation: "copy", error, status: 503 };
                     }); 
                     ws.send(result);
                 }
+            }else if(message.operation === "delete"){
+                console.log(message);
+
+                const onProcess = (progress: DeletePregressEvent) =>{
+                    console.log(progress);
+                    ws.send({ message: "deleting", operation: "delete", progress, status: 200 });
+                }
+
+                const result = await api.decorator.repository.delete(message.data.path!, message.data.file!, onProcess).then(()=>{
+                    return {  message: `${message.data.file} was deleted from ${message.data.path!.split("/").pop()} successfully`, operation: "delete", completed: true, status: 200 };
+                }).catch((error)=>{
+                    console.error(error);
+                    return { message: "server error", operation: "delete", error, status: 503 };
+                });
+                ws.send(result);
             }
         }else{
-            ws.send({ message: "access denied, try signing in", status: 401 });
+            ws.send({ message: "access denied, try signing in", operation: message.operation, status: 401 });
         }
     },
 });

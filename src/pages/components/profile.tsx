@@ -1,43 +1,8 @@
 import {useUserContext} from "../providers/user.tsx";
-import {type ParentComponent} from "solid-js";
 import {Show} from "solid-js/web";
 import { useAccountsContext } from "../providers/accounts.tsx";
 import { formatAccessLevel } from "../../utils/util.ts";
-
-interface ProfileDetailProps{
-    label: string,
-    value?: string,
-    edith?: CallableFunction
-}
-
-const ProfileDetail: ParentComponent<ProfileDetailProps> = (props) =>{
-    const { sessionState } = useUserContext();
-
-    const edith = () =>{
-        if(props.edith){
-            props.edith();
-        }
-    }
-
-    return (
-        <div style={{ width: "30rem", display: "flex", "flex-direction": "row", gap: "8px", "align-items": props.value ? "start" : "center", "padding": "0.7rem 1rem" }}>
-            {props.children}
-            <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", "flex-direction": "row", "justify-content": "space-between", width: "100%" }}>
-                    <div style={{ display: "flex", "flex-direction": "row", gap: "4px", "align-items": "center", "font-weight": "300", "font-size": "16px" }}>
-                        { props.label }
-                    </div>
-                    <Show when={props.edith && sessionState().data?.user.role !== "admin"}>
-                        <span class={"clicakble"} onClick={edith}>Edit</span>
-                    </Show>
-                </div>
-                <Show when={props.value}>
-                    <div style={{ "margin-top": "4px", "font-weight": "600" }}>{ props.value }</div>
-                </Show>
-            </div>
-        </div>
-    );
-}
+import ProfileDetail from "./profile-detail.tsx";
 
 
 const Profile = () =>{
@@ -48,10 +13,10 @@ const Profile = () =>{
     const edithPassword = () => openPanel("Change Password");
 
     return (
-        <div style={{ width: "100%" }}>
+        <div style={{ width: "100%", height: "100%", display: "flex", "flex-direction": "column" }}>
             <h1 style={{ "padding": "1rem 2rem", "font-weight": "300" }}>Profile</h1>
             <div class={"profile-container"}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="8.5rem" height="8.5rem" viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10rem" height="10rem" viewBox="0 0 24 24">
                     <path fill="currentColor" fill-opacity="0.16" d="M3 12a9 9 0 1 1 18 0a9 9 0 0 1-18 0"/>
                     <circle cx="12" cy="10" r="4" fill="#f8a365ff" />
                     <path fill="currentColor" fill-rule="evenodd" fill-opacity="0.62" d="M18.22 18.246c.06.097.041.22-.04.297A8.97 8.97 0 0 1 12 21a8.97 8.97 0 0 1-6.18-2.457a.24.24 0 0 1-.04-.297C6.942 16.318 9.291 15 12 15s5.057 1.318 6.22 3.246" clip-rule="evenodd"/>

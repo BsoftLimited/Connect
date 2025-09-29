@@ -1,10 +1,10 @@
 import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
-import type { CreateUser, User } from "../../common";
-import { UserProvider, useUserContext } from "./user";
+import type { CreateUserData, EditUserFailed, EditUserFormData, UpdateProfileData, UpdateProfileFailed, User } from "../../common";
+import { useUserContext } from "./user";
 import { request, type RequestFailed } from "../../utils/util";
 
 export type AccountsPages = "profile" | "users" | "settings"
-export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "Edit User" | "Delete User";
+export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User";
 
 export type AccountsPanelsState = {
     show: boolean,
@@ -22,16 +22,17 @@ type AccountsState = {
     error?: any;
 }
 
+export type CreateUserFailedResult = {message?: string, error?: Partial<CreateUserData>};
 type AccountsStateType = {
     state: () => AccountsState,
     pageState: () => AccountsPageState,
     closePanel: () => void,
     openPanel: (panel: AccountsPanels) => void,
     choosePage: (page: AccountsPages) => void,
-    createUser: (data: CreateUser) => Promise<void>,
+    createUser: (data: CreateUserData) => Promise<CreateUserFailedResult>,
     deleteUser: (id: string) => Promise<void>,
-    updateProfile: (data: { username?: string, email?: string }) => Promise<void>,
-    changePassword: (data: { oldPassword: string, newPassword: string }) => Promise<void>,
+    updateProfile: (data: UpdateProfileData) => Promise<UpdateProfileFailed>,
+    updateUser: (data: EditUserFormData) => Promise<EditUserFailed>
 }
 
 const AccountsStateContext = createContext<AccountsStateType>();
@@ -47,23 +48,29 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         });
     }
 
-    const createUser = async (data: CreateUser) =>{
+    const createUser = async (data: CreateUserData): Promise<CreateUserFailedResult> =>{
+        let init: CreateUserFailedResult = {};
         try{
             const response = await request({ url: `/api/user`, input: data, method: "POST" });
             if(response.status === 201){
                 const newUser = response.data as User;
-                setState(init => ({ ...init, users: [...init.users, newUser], loading: false }));
+                setState(init => ({ ...init, users: [...init.users, newUser] }));
                 alert("User created successfully");
                 closePanel();
-            }else{
-                console.error(response);
             }
         }catch(error){
             const failedResponse = error as RequestFailed;
-            setState(init => { return { ...init, loading: false, error: failedResponse.error } });
             console.error(`User creation failied`, failedResponse.error);
             alert(`User creation failied: ${failedResponse}`);
+
+            if(failedResponse.status === 401){
+                init = ({ message: failedResponse.error.message, error: failedResponse.error.error });
+            }else{
+                console.error(failedResponse);
+                init = { message: "An error occurred. Please try again." };
+            }
         }
+        return init;
     }
 
     const deleteUser = async (id: string) =>{
@@ -87,49 +94,6 @@ const AccountsStateProvider: ParentComponent = (props) =>{
             console.error("Failed to delete user", error);
             alert(`Failed to delete user: ${error}`);
             setState(init => ({ ...init, loading: false, error }));
-        }
-    }
-
-    const updateProfile = async (data: { username?: string, email?: string }) =>{
-        try{
-            const request = new Request(`/api/user`, {
-                method: "POST",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            const response = await fetch(request);
-            if (!response.ok) {
-                throw new Error("Failed to update profile");
-            }
-            fetchUsers();
-        }catch(error){
-            setState(init => { return { ...init, loading: false, error } });
-            console.error(`User update failied`, error);
-            alert(`Profile update failied: ${error}`);
-        }
-    }
-
-    const changePassword = async (data: { oldPassword: string, newPassword: string }) =>{
-        try{
-
-            const request = new Request(`/api/user/password`, {
-                method: "PATCH",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            const response = await fetch(request);
-            if (!response.ok) {
-                throw new Error("Failed to change password");
-            }
-            setState(init => ({ ...init, loading: false }));
-            alert("Password change successful. Please login again.");
-        }catch(error){
-            console.error(`Password change failied`, error);
-            alert(`Password change failied: ${error}`);
         }
     }
 
@@ -164,8 +128,42 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         pageState,
         createUser,
         deleteUser,
-        changePassword,
-        updateProfile
+        updateProfile: async (data: UpdateProfileData) =>{
+            let init: UpdateProfileFailed = {};
+
+            try{
+                const response = await request({ url: `/api/user`, method: "PATCH", input: data });
+                if (response.status === 200) {
+                    fetchUsers().finally(()=>{
+                        closePanel()
+                    });
+                }
+            }catch(error){
+                console.log(error);
+                const response = error as RequestFailed;
+                init = response.error;
+            }
+            return init;
+        },
+        updateUser: async (data: EditUserFormData): Promise<EditUserFailed> =>{
+            let init: EditUserFailed = {};
+
+            request({ url: `/api/user/access`, input: data, method: "PATCH" }).then((response)=>{
+                if(response.status === 200){
+                    alert("User update successfully");
+                    fetchUsers().finally(()=>{
+                        closePanel();
+                    });
+                }
+            }).catch((error)=>{
+                const failedResponse = error as RequestFailed;
+                console.error(`User update failied`, failedResponse.error);
+                
+                init = failedResponse.error;
+            });
+            
+            return init;
+        }
     };
 
     onMount(() => {
