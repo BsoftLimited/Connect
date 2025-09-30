@@ -12,7 +12,11 @@ const DeleteUser: Component<DeleteUserProps> = (props) =>{
     return (
         <PopUp>
             <div style={{ display: "flex", "flex-direction": "column" }}>
-                <div></div>
+                <div>Are you sure you want to delete user: {props.user.username}</div>
+                <div style={{ display: "flex", "flex-direction": "row", gap: "2rem" }}>
+                    <button>Cancel</button>
+                    <button>Proceed</button>
+                </div>
             </div>
         </PopUp>
     );
