@@ -11,6 +11,14 @@ import { useContextMenuContext } from "../providers/context-menu";
 import { useUserContext } from "../providers/user";
 import type { DirectoryFile } from "../../repositories/files_repository";
 
+const NoFiles = () =>{
+    return (
+        <div style={{ width: "100%", height: "100%", display: "flex", "align-items": "center", "justify-content": "center", "flex-direction": "column" }}>
+
+        </div>
+    );
+}
+
 interface FilesProps{
     filter: ()=> string,
     context: (event: PointerEvent, file: DirectoryFile) => void
@@ -21,9 +29,11 @@ const Files: Component<FilesProps> = ({ filter, context }) =>{
 
     return (
         <div id="files-container" class="files-container">
-            <For each={appState().directory!.files.filter((file)=> file.name.includes(filter()))} fallback={<div>No items</div>}>
-                {(item) => <FileView  file={item} onContext={(event)=>context(event, item) } />}
-            </For>
+            <Show when={appState().directory!.files.length > 0} fallback={<NoFiles />}>
+                <For each={appState().directory!.files.filter((file)=> file.name.includes(filter()))} fallback={<div>No items</div>}>
+                    {(item) => <FileView  file={item} onContext={(event)=>context(event, item) } />}
+                </For>
+            </Show>
         </div>
     );
 }
