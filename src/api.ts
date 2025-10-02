@@ -12,12 +12,12 @@ api.onBeforeHandle(async ({ session, status }) => {
     }
 });
 
-api.get("/*", async({ path, repository, status }) => {
+api.get("/*", async({ path, repository, status, session }) => {
     if (path.includes('%20')) {
         path = decodeURIComponent(path);
     }
     const filePath = path.replace("/api", "");
-    const directory = await repository.get(filePath);
+    const directory = await repository.get(session!.user, filePath);
 
     return status(200, directory);
 });
@@ -104,7 +104,7 @@ api.post("/user/password", async({userRepository, body, status, session})=>{
     try{
         const user = await userRepository.createPassword({ ...body, id: session!.user.id });
 
-        return status(200, user);
+        return status(201, user);
     }catch(error){
         return status(503, { message: "password creation failed", error });
     }

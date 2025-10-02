@@ -3,6 +3,7 @@ import { join } from "path";
 import { statSync } from "fs";
 import { stat, rm, rename as fsRename, mkdir } from 'fs/promises';
 import { copy, deleteFile, type CopyProgressEvent, type DeletePregressEvent } from "../utils/file-handle_bridge";
+import type { User } from "../common";
 
 export interface DirectoryFile{ 
     name: string, path: string, size?: number, fileCount?: number, folderCount?: number, isDir: boolean 
@@ -33,14 +34,19 @@ class FilesRepository{
         this.homePath = homedir();
     }
 
-    get = async (path: string): Promise<DirectoryDetails> => {
+    get = async (user: User, path: string): Promise<DirectoryDetails> => {
         //console.log(`Fetching directory details for path: ${join(this.homePath, path)}`);
 
-        const result = await Bun.$`ls ${join(this.homePath, path)}`.text();
+        let result: string[];
+        if(user.role === "guest" && (path === "/" || path === "\\")){
+            result = FilesRepository.Libraries;
+        }else{
+            result = (await Bun.$`ls ${join(this.homePath, path)}`.text()).split('\n').filter(file => file);
+        }
 
         let folders: DirectoryFile[] = [];
         let files: DirectoryFile[] = [];
-        for(const name of result.split('\n').filter(file => file)){
+        for(const name of result){
             try {
                 const absolutePath = join(path, name);
                 //console.log(`Processing file: ${absolutePath}`);
@@ -76,10 +82,6 @@ class FilesRepository{
         files = files.sort((a, b)=> a.name.localeCompare(b.name));
 
         return { name, path, files: [...folders, ...files] };
-    }
-
-    home = async (): Promise<DirectoryDetails> => {
-        return this.get("/");
     }
 
     serve = (path: string) => {
@@ -224,7 +226,7 @@ class FilesRepository{
         }
     }
 
-    static Libraries = [ "Home", "Desktop", "Documents", "Downloads", "Music", "Pictures", "Videos"]
+    static Libraries = [  "Desktop", "Documents", "Downloads", "Music", "Pictures", "Videos"]
 }
 
 export default FilesRepository;
