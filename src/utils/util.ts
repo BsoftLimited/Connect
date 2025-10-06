@@ -137,3 +137,5 @@ export const isFormValid = (data: Partial<SignUpData> & { confirmPassword?: stri
     }
     return errors;
 }
+
+export const fileName = (path: string) => path.split( path.includes("\\") ? "\\" : "/").pop()!;

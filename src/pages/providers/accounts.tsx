@@ -1,7 +1,9 @@
-import { createContext, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
+import { createContext, createSignal, onMount, Show, useContext, type ParentComponent } from "solid-js";
 import type { CreateUserData, EditUserFailed, EditUserFormData, UpdateProfileData, UpdateProfileFailed, User } from "../../common";
 import { useUserContext } from "./user";
 import { request, type RequestFailed } from "../../utils/util";
+import DeleteUser from "../popups/delete-user";
+import type { DirectoryFile } from "../../repositories/files_repository";
 
 export type AccountsPages = "profile" | "users" | "settings"
 export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User";
@@ -22,6 +24,11 @@ type AccountsState = {
     error?: any;
 }
 
+type PopUpState = {
+    action: "None" | "Delete_User",
+    user?: User
+}
+
 export type CreateUserFailedResult = {message?: string, error?: Partial<CreateUserData>};
 type AccountsStateType = {
     state: () => AccountsState,
@@ -30,7 +37,7 @@ type AccountsStateType = {
     openPanel: (panel: AccountsPanels) => void,
     choosePage: (page: AccountsPages) => void,
     createUser: (data: CreateUserData) => Promise<CreateUserFailedResult>,
-    deleteUser: (id: string) => Promise<void>,
+    deleteUser: (user: User) => Promise<void>,
     updateProfile: (data: UpdateProfileData) => Promise<UpdateProfileFailed>,
     updateUser: (data: EditUserFormData) => Promise<EditUserFailed>
 }
@@ -41,6 +48,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
     const [pageState, setPageState] = createSignal<AccountsPageState>({ currentPage: "profile", panelState: { show: false } });
     const [state, setState] = createSignal<AccountsState>({ loading: false, users: [] });
     const {sessionState} = useUserContext();
+    const [popUpState, setPopUpState] = createSignal<PopUpState>({ action: "None" });
 
     const closePanel = () =>{
         setPageState((init)=>{
@@ -48,53 +56,8 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         });
     }
 
-    const createUser = async (data: CreateUserData): Promise<CreateUserFailedResult> =>{
-        let init: CreateUserFailedResult = {};
-        try{
-            const response = await request({ url: `/api/user`, input: data, method: "POST" });
-            if(response.status === 201){
-                const newUser = response.data as User;
-                setState(init => ({ ...init, users: [...init.users, newUser] }));
-                alert("User created successfully");
-                closePanel();
-            }
-        }catch(error){
-            const failedResponse = error as RequestFailed;
-            console.error(`User creation failied`, failedResponse.error);
-            alert(`User creation failied: ${failedResponse}`);
-
-            if(failedResponse.status === 401){
-                init = ({ message: failedResponse.error.message, error: failedResponse.error.error });
-            }else{
-                console.error(failedResponse);
-                init = { message: "An error occurred. Please try again." };
-            }
-        }
-        return init;
-    }
-
-    const deleteUser = async (id: string) =>{
-        try{
-            const response = await fetch(`/api/users/`, {
-                method: "DELETE",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id })
-            });
-            if(!response.ok){
-                throw new Error("Failed to delete user");
-            }
-
-            const updatedUsers = state().users.filter(u => u.id !== id);
-            setState(init => ({ ...init, users: updatedUsers, loading: false }));
-            alert("User deleted successfully");
-            closePanel();
-        }catch(error){
-            console.error("Failed to delete user", error);
-            alert(`Failed to delete user: ${error}`);
-            setState(init => ({ ...init, loading: false, error }));
-        }
+    const closePopup = () =>{
+        setPopUpState({ action: "None" });
     }
 
     const fetchUsers = async () => {
@@ -114,6 +77,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
 
     const accountsStateType: AccountsStateType = {
         state,
+        pageState,
         closePanel,
         openPanel: (panel: AccountsPanels) => {
             setPageState((init)=>{
@@ -125,9 +89,33 @@ const AccountsStateProvider: ParentComponent = (props) =>{
                 return {...init, currentPage: page }
             });
         },
-        pageState,
-        createUser,
-        deleteUser,
+        createUser: async (data: CreateUserData): Promise<CreateUserFailedResult> =>{
+            let init: CreateUserFailedResult = {};
+            try{
+                const response = await request({ url: `/api/user`, input: data, method: "POST" });
+                if(response.status === 201){
+                    const newUser = response.data as User;
+                    setState(init => ({ ...init, users: [...init.users, newUser] }));
+                    alert("User created successfully");
+                    closePanel();
+                }
+            }catch(error){
+                const failedResponse = error as RequestFailed;
+                console.error(`User creation failied`, failedResponse.error);
+                alert(`User creation failied: ${failedResponse}`);
+
+                if(failedResponse.status === 401){
+                    init = ({ message: failedResponse.error.message, error: failedResponse.error.error });
+                }else{
+                    console.error(failedResponse);
+                    init = { message: "An error occurred. Please try again." };
+                }
+            }
+            return init;
+        },
+        deleteUser: async (user: User) =>{
+            setPopUpState({ action: "Delete_User", user });
+        },
         updateProfile: async (data: UpdateProfileData) =>{
             let init: UpdateProfileFailed = {};
 
@@ -175,6 +163,11 @@ const AccountsStateProvider: ParentComponent = (props) =>{
     return (
         <AccountsStateContext.Provider value={accountsStateType}>
             {props.children}
+            <Show when={popUpState().action === "Delete_User"}>
+                <DeleteUser user={popUpState().user!} cancel={closePopup} done={()=>{
+                    fetchUsers().finally(closePopup);
+                }}/>
+            </Show>
         </AccountsStateContext.Provider>
     );
 }

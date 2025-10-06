@@ -1,7 +1,9 @@
-import { createContext, createEffect, createMemo, createSignal, onMount, useContext, type ParentComponent } from "solid-js";
+import { createContext, createEffect, createMemo, createSignal, onMount, Show, useContext, type ParentComponent } from "solid-js";
 import type { DirectoryDetails, DirectoryFile } from "../../repositories/files_repository";
-import type { CopyProgressEvent } from "../../utils/file-handle_bridge";
+import type { CopyProgressEvent, DeletePregressEvent } from "../../utils/file-handle_bridge";
 import { ContextMenuProvider } from "./context-menu";
+import DeleteFile from "../popups/delefie-file";
+import FileCopying from "../popups/file-copying";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -31,11 +33,35 @@ interface AppContextProviderType {
     paste : (file?: DirectoryFile) => void
 }
 
+type PopUpState = {
+    action: "None" | "Delete_File" | "File_Copying",
+    file?: string
+    destination?: string
+}
+
+export type SocketMessage = { message: string, operation: string, progress?: any, completed?: boolean, status: number }
+export interface ProgressReport<T>{
+    progress?: T,
+    errorMessage?: string
+}
+
 const AppContext = createContext<AppContextProviderType>();
 
 const AppContextProvider: ParentComponent = (props) =>{
     const [state, setState] = createSignal<Omit<AppContextType, "connected">>({ loading: false, target: "directory" });
     const [ws, setWS] = createSignal<WebSocket>();
+    const [popUpState, setPopUpState] = createSignal<PopUpState>({ action: "None" });
+    const [copyProgress, setCopyProgress] = createSignal<ProgressReport<CopyProgressEvent>>();
+    const [deleteProgress, setDeleteProgress] = createSignal<ProgressReport<DeletePregressEvent>>();
+
+    const closePopup = () =>{
+        setPopUpState({ action: "None" });
+    }
+
+    const clearReports = () =>{
+        setCopyProgress();
+        setDeleteProgress();
+    }
 
     const connect = () =>{
         if(ws() === undefined || !ws()?.OPEN){
@@ -50,13 +76,28 @@ const AppContextProvider: ParentComponent = (props) =>{
             init.onmessage = (event) => {
                 console.log('Received from server:', event.data);
 
-                const message = JSON.parse(event.data) as { message: string, progress?: CopyProgressEvent, completed?: boolean, status: number };
-                if(message.status === 200 && message.progress){
-                    
-                }
-
+                const message = JSON.parse(event.data) as SocketMessage;
                 if(message.completed){
-                    fetchDirectory();
+                    fetchDirectory().then(closePopup).finally(clearReports);
+                }else{
+                    switch(message.operation){
+                        case "delete":
+                            if(message.status === 200){
+                                const progress = message.progress as DeletePregressEvent;
+                                setDeleteProgress({ progress, errorMessage: undefined });
+                            }else{
+                                setDeleteProgress(init => { return { ...init, errorMessage: message.message } });
+                            }
+                            break
+                        case "copy":
+                            if(message.status === 200 && message.progress){
+                                const progress = message.progress as CopyProgressEvent;
+                                setCopyProgress({ progress, errorMessage: undefined });  
+                            }else{
+                                setCopyProgress(init => { return { ...init, errorMessage: message.message } });
+                            }
+                            break;
+                    }
                 }
             }
 
@@ -64,8 +105,7 @@ const AppContextProvider: ParentComponent = (props) =>{
                 console.log('Connection closed');
                 setWS();
             }
-
-            init.onerror = (event) =>{}
+            init.onerror = (event) => console.error(event);
             return init;
         }
         return ws();
@@ -108,6 +148,7 @@ const AppContextProvider: ParentComponent = (props) =>{
             connect()?.send(JSON.stringify({ operation: "copy", 
                 data: { filePath: file.path, destination: dest }
             }));
+            setPopUpState({ file: file.name, destination: dest, action: "File_Copying" });
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
@@ -157,7 +198,9 @@ const AppContextProvider: ParentComponent = (props) =>{
             });
         },
         reload: () => fetchDirectory(),
-        deleteFile,
+        deleteFile: async (file: string) =>{
+            setPopUpState({ action: "Delete_File", file });
+        },
         stream: (file)=> setState(init => { return { ...init, file, target: "stream" } }),
         closeStream: () => setState(init => { return { ...init, target: "directory" } }),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
@@ -167,6 +210,12 @@ const AppContextProvider: ParentComponent = (props) =>{
     return (
         <AppContext.Provider value={providerValue}>
             {props.children}
+            <Show when={popUpState().action === "Delete_File"}>
+                <DeleteFile file={popUpState().file!} cancel={closePopup} procced={deleteFile} progressReport={deleteProgress()} />
+            </Show>
+            <Show when={popUpState().action === "File_Copying"}>
+                <FileCopying file={popUpState().file!} progressReport={copyProgress()!} destination={popUpState().destination!}/>
+            </Show>
         </AppContext.Provider>
     );
 }

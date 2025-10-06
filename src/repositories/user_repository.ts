@@ -154,14 +154,11 @@ class UserRepository{
     }
 
     delete = async (id: string): Promise<User> =>{
-        const init = await this.database.credentials.delete({ 
-            where: { id }, include: { user: true }
-        }); 
-
-        if(!init.user){
+        const init = await this.database.user.delete({ where: { id } });
+        if(!init){
             throw new Error("User not found");
         }
-        return { ...init.user, role: init.user.role as Role, accessLevel: init.user.accessLevel as AccessLevel };
+        return { ...init, role: init.role as Role, accessLevel: init.accessLevel as AccessLevel };
     }
 
     deleteSesssion = async (sessionID: string): Promise<boolean> =>{
