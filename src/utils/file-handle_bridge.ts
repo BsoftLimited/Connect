@@ -109,7 +109,10 @@ const copy = ( sourcePath: string, destPath: string, onProgress?: (progress: Cop
             }
         }
 
-        const error_callback = (error: string) => reject(new Error(error));
+        const error_callback = (error: string) => {
+            console.log(error);
+            reject(new Error(error));
+        }
 
         try{
             await copy_with_progress([sourcePath, destPath, callback, error_callback]);

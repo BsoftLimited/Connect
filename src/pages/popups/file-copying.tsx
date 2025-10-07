@@ -3,6 +3,7 @@ import type { CopyProgressEvent } from "../../utils/file-handle_bridge";
 import { PopUp } from "../components/pop-up";
 import type { ProgressReport } from "../providers/app";
 import InputError from "../components/input-error";
+import { formatBytes } from "../../utils/util";
 
 interface FileCopyingProps{
     file: string,
@@ -13,13 +14,17 @@ interface FileCopyingProps{
 const FileCopying: Component<FileCopyingProps> = (props) =>{
     return (
         <PopUp>
-            <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "width": "40rem", color: "grey" }}>
+            <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "max-width": "40rem", color: "grey" }}>
                 <div style={{ "font-size": "16px", "font-weight": "lighter" }}>Copying file: {props.file} to {props.destination}</div>
                 <Show when={ props.progressReport && props.progressReport?.progress?.total_files !== 0}>
                     <div style={{ width: "100%", display: "flex", "flex-direction": "row", gap: "0.4rem", "align-items": "center", "font-size": "20px", "font-weight": "lighter" }}>
                         <div style={{ display: "flex", "align-items": "center", "justify-content": "center", "min-width": "80px", padding: "0.4rem", "aspect-ratio": 1, border: "solid 2px grey", "border-radius": "50%" }}>{props.progressReport?.progress?.files_copied}/{props.progressReport?.progress?.total_files}</div>
                         <div style={{ flex: 1, "font-size": "14px" }}>
-                            <progress style={{ width: "100%", height: "2px" }} max={props.progressReport?.progress?.total_bytes} value={props.progressReport?.progress?.bytes_copied}/>
+                            <div style={{ display: "flex", "flex-direction": "row", "align-items": "center", gap: "8px" }}>
+                                <span>{formatBytes(props.progressReport.progress?.bytes_copied!)}</span>
+                                <progress style={{ width: "100%", height: "2px", flex: 1 }} max={props.progressReport?.progress?.total_bytes} value={props.progressReport?.progress?.bytes_copied}/>
+                                <span>{formatBytes(props.progressReport.progress?.total_bytes!)}</span>
+                            </div>
                             <div style={{ width: "100%", "word-break": "break-word" }}>Copying: { props.progressReport?.progress?.name }</div>
                         </div>
                     </div>
