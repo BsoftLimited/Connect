@@ -8,6 +8,13 @@ export interface Credentials {
     password: string;
 }
 
+export type NotifcationType = "info" | "important" | "error";
+export interface Notification{
+    id: string,
+    ntype: NotifcationType,
+    message: string
+}
+
 export interface User {
     id: string
     email: string
