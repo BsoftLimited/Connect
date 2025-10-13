@@ -10,7 +10,7 @@ const app = new Elysia().use(auth).use(api);
 app.use(staticPlugin({ assets: "public", prefix: "/assets" }));
 
 app.use(sitePlugin).get('/files/*',  async ({ session, repository, path, config, status }) => {
-    if(session?.user){
+     if(session?.user){
         try{
             const { filePath, stats } = await repository.process(path, "/files");
 
