@@ -2,6 +2,7 @@ import { PrismaClient } from "./generated/prisma/client";
 import path from 'path';
 import { open } from "ffi-rs";
 import {platform} from "os";
+import { admin_email, admin_username } from "./utils/util";
 
 const connect = (): PrismaClient => {
     const client = new PrismaClient({ log: [{ level: 'query', emit: 'event' }], });
@@ -54,8 +55,7 @@ const libPath = path.join(process.cwd(), "./file-handle/target/release", platfor
 const library_name = "file-handle";
 
 export async function seed() {
-    let email = "admin@connect.com";
-    let username = "admin";
+    
 
     open({ library: library_name, path: libPath });
     try{
@@ -65,16 +65,16 @@ export async function seed() {
         if(process.env.ADMIN_PASSWORD){
             console.info("initializing seeding: checking database for admin details");
             const user = await database.user.upsert({
-                where: { email },
-                create: { email, username, role: "admin", accessLevel: "read-write", initialized: true },
-                update: { email, username: process.env.ADMIN_USERNAME }
+                where: { email: admin_email },
+                create: { email: admin_email, username: admin_username, role: "admin", accessLevel: "read-write", initialized: true },
+                update: { email: admin_email, username: process.env.ADMIN_USERNAME }
             });
 
             console.info("initializing seeding: checking database for credentials");
             await database.credentials.upsert({ 
                 where: { id: user.id }, 
-                create: { id: user.id, email, password: process.env.ADMIN_PASSWORD },
-                update: { email, password: process.env.ADMIN_PASSWORD }
+                create: { id: user.id, email: admin_email, password: process.env.ADMIN_PASSWORD },
+                update: { email: admin_email, password: process.env.ADMIN_PASSWORD }
             });
 
             const config = await database.siteConfig.upsert({ 

@@ -9,10 +9,15 @@ export interface Credentials {
 }
 
 export type NotifcationType = "info" | "important" | "error";
-export interface Notification{
-    id: string,
+
+export interface FileReport{
     ntype: NotifcationType,
     message: string
+}
+
+export interface Notification extends FileReport{
+    id: string,
+    seen: boolean
 }
 
 export interface User {

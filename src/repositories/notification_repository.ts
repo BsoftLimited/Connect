@@ -1,5 +1,6 @@
 import { DBManager } from "../config";
 import { type NotifcationType, type Notification } from "../common";
+import { Dual } from "../utils/util";
 
 class NotificationsRepository{
     database = DBManager.instance();
@@ -12,15 +13,15 @@ class NotificationsRepository{
         });
     }
 
-    get = async(userID: string, id: string): Promise<Notification> => {
+    get = async(userID: string, id: string): Promise<Dual<Notification, { message: string, status: number }>> => {
         const result= await this.database.notification.findUnique({ where: { id } });
         if(result){
             if(result.receiverID === userID){
-                return { ...result, ntype: (result.ntype as NotifcationType) ?? "info" };
+                return Dual.first({ ...result, ntype: (result.ntype as NotifcationType) ?? "info" });
             }
-            throw new Error(`user is not allowed to view this notification`);
+           return Dual.second({ message: `user is not allowed to view this notification`, status: 401 });
         }
-        throw new Error(`notification with id: ${id} not found`);
+        return Dual.second({ message: `notification with id: ${id} not found`, status: 404 });
     }
 
     add = async(userID: string, message: string, ntype: NotifcationType): Promise<Notification> => {
@@ -31,14 +32,25 @@ class NotificationsRepository{
         return { ...result, ntype: (result.ntype as NotifcationType) ?? "info" };
     }
 
-    delete = async(userID: string, id: string): Promise<Notification> => {
-        const result= await this.database.notification.delete({ where: { id } });
+    delete = async(userID: string, id: string): Promise<Dual<Notification, { message: string, status: number }>> => {
+        const result= await this.database.notification.delete({ where: { id, receiverID: userID } });
         if(result){
-            if(result.receiverID === userID){
-                return { ...result, ntype: (result.ntype as NotifcationType) ?? "info" };
-            }
-            throw new Error(`user is not allowed to view this notification`);
+            return Dual.first({ ...result, ntype: (result.ntype as NotifcationType) ?? "info" });
         }
-        throw new Error(`notification with id: ${id} not found`);
+        return Dual.second({ message: `notification with id: ${id} not found`, status: 404 });
+    }
+
+    seen = async(userID: string, id: string): Promise<Dual<Notification, { message: string, status: number }>> => {
+        const result= await this.database.notification.update({ 
+            where: { id, receiverID: userID },
+            data: { seen: true }
+        });
+        
+        if(result){
+            return Dual.first({ ...result, ntype: (result.ntype as NotifcationType) ?? "info" });
+        }
+        return Dual.second({ message: `notification with id: ${id} not found`, status: 404 });
     }
 }
+
+export { NotificationsRepository };

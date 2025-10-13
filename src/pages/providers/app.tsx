@@ -4,6 +4,7 @@ import type { CopyProgressEvent, DeletePregressEvent } from "../../utils/file-ha
 import { ContextMenuProvider } from "./context-menu";
 import DeleteFile from "../popups/delefie-file";
 import FileCopying from "../popups/file-copying";
+import useWS from "../../utils/ws-hook";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -14,7 +15,6 @@ type Clipboard = {
 
 type AppContextType = {
     loading: boolean;
-    connected: boolean;
     directory?: DirectoryDetails;
     file?: string; 
     error?: any;
@@ -38,8 +38,6 @@ type PopUpState = {
     file?: string
     destination?: string
 }
-
-export type SocketMessage = { message: string, operation: string, progress?: any, completed?: boolean, status: number }
 export interface ProgressReport<T>{
     progress?: T,
     errorMessage?: string
@@ -48,11 +46,11 @@ export interface ProgressReport<T>{
 const AppContext = createContext<AppContextProviderType>();
 
 const AppContextProvider: ParentComponent = (props) =>{
-    const [state, setState] = createSignal<Omit<AppContextType, "connected">>({ loading: false, target: "directory" });
-    const [ws, setWS] = createSignal<WebSocket>();
+    const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
     const [popUpState, setPopUpState] = createSignal<PopUpState>({ action: "None" });
     const [copyProgress, setCopyProgress] = createSignal<ProgressReport<CopyProgressEvent>>();
     const [deleteProgress, setDeleteProgress] = createSignal<ProgressReport<DeletePregressEvent>>();
+    const { setMessageListener, send } = useWS('/api/process');
 
     const closePopup = () =>{
         setPopUpState({ action: "None" });
@@ -61,54 +59,6 @@ const AppContextProvider: ParentComponent = (props) =>{
     const clearReports = () =>{
         setCopyProgress();
         setDeleteProgress();
-    }
-
-    const connect = () =>{
-        if(ws() === undefined || !ws()?.OPEN){
-            // Connect to WebSocket
-            const init = new WebSocket('/api/process')
-
-            init.onopen = () => {
-                console.log('Connected to server')
-                setWS(init);
-            }
-
-            init.onmessage = (event) => {
-                console.log('Received from server:', event.data);
-
-                const message = JSON.parse(event.data) as SocketMessage;
-                if(message.completed){
-                    fetchDirectory().then(closePopup).finally(clearReports);
-                }else{
-                    switch(message.operation){
-                        case "delete":
-                            if(message.status === 200){
-                                const progress = message.progress as DeletePregressEvent;
-                                setDeleteProgress({ progress, errorMessage: undefined });
-                            }else{
-                                setDeleteProgress(init => { return { ...init, errorMessage: message.message } });
-                            }
-                            break
-                        case "copy":
-                            if(message.status === 200 && message.progress){
-                                const progress = message.progress as CopyProgressEvent;
-                                setCopyProgress({ progress, errorMessage: undefined });  
-                            }else{
-                                setCopyProgress(init => { return { ...init, errorMessage: message.message } });
-                            }
-                            break;
-                    }
-                }
-            }
-
-            init.onclose = () => {
-                console.log('Connection closed');
-                setWS();
-            }
-            init.onerror = (event) => console.error(event);
-            return init;
-        }
-        return ws();
     }
 
     // fetching initial directory details from api based on the url path on load
@@ -135,9 +85,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         const currentPath = state().directory?.path;
         setState(init => { return { ...init, loading: true, error: undefined } });
 
-        connect()?.send(JSON.stringify({ operation: "delete",
-            data: { path: currentPath, file }
-        }));
+        send("delete", { path: currentPath, file });
     }
 
     const paste = async (destFile?: DirectoryFile) => {
@@ -145,9 +93,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         const file = state().clipboard!.file;
 
         if(state().clipboard?.command === "copy"){
-            connect()?.send(JSON.stringify({ operation: "copy", 
-                data: { filePath: file.path, destination: dest }
-            }));
+            send("copy", { filePath: file.path, destination: dest });
             setPopUpState({ file: file.name, destination: dest, action: "File_Copying" });
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
@@ -180,15 +126,38 @@ const AppContextProvider: ParentComponent = (props) =>{
     }
 
     onMount(()=> {
-        if(window.location.pathname !== "/login"){
-            fetchDirectory();
-        }
-        connect();
+        fetchDirectory();
+
+        setMessageListener((message)=>{
+            console.log('Received message from server:', message);
+            if(message.completed){
+                fetchDirectory().then(closePopup).finally(clearReports);
+            }else{
+                switch(message.operation){
+                    case "delete":
+                        if(message.status === 200){
+                            const progress = message.progress as DeletePregressEvent;
+                            setDeleteProgress({ progress });
+                        }else{
+                            setDeleteProgress(init => { return { ...init, errorMessage: message.message } });
+                        }
+                        break
+                    case "copy":
+                        if(message.status === 200 && message.progress){
+                            const progress = message.progress as CopyProgressEvent;
+                            setCopyProgress({ progress });  
+                        }else{
+                            setCopyProgress(init => { return { ...init, errorMessage: message.message } });
+                        }
+                        break;
+                }
+            }
+        });
     });
 
     const providerValue: AppContextProviderType = {
         appState: () => {
-            return {...state(), connected: ws() !== null}
+            return {...state() }
         },
         goto: (path) => {
             path = path.replaceAll("\\", "/");

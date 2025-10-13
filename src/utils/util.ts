@@ -1,5 +1,8 @@
 import type { SignUpData, User} from "../common";
 
+export const admin_email = "admin@connect.com";
+export const admin_username = "admin";
+
 export class Dual<T,S>{
     private readonly __first?: T;
     get first(){ return this.__first!; }

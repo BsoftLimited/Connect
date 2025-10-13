@@ -513,3 +513,265 @@ a{
         padding: 1rem;
     }
 }
+
+/// Switch
+/// 
+// The switch - the box around the slider 
+/*.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+//Hide default HTML checkbox
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+// The slider
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+//Rounded sliders
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}*/
+
+/// IOS Switch
+/// 
+
+/* iOS Switch Base Styles */
+.ios-switch {
+  position: relative;
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  touch-action: none;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* Sizes */
+.ios-switch--small {
+  width: 40px;
+  height: 24px;
+  padding: 0 3px;
+}
+
+.ios-switch--medium {
+  width: 48px;
+  height: 28px;
+  padding: 0 4px;
+}
+
+.ios-switch--large {
+  width: 56px;
+  height: 32px;
+  padding: 0 5px;
+}
+
+/* States */
+.ios-switch--on {
+  background-color: #34C759; /* iOS green */
+}
+
+.ios-switch--off {
+  background-color: #E9E9EA;
+}
+
+.ios-switch--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ios-switch--dragging {
+  transform: scale(0.98);
+}
+
+/* Thumb Styles */
+.ios-switch__thumb {
+  position: absolute;
+  border-radius: 50%;
+  background-color: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 3px;
+}
+
+/* Thumb Sizes */
+.ios-switch__thumb--small {
+  width: 20px;
+  height: 20px;
+}
+
+.ios-switch__thumb--medium {
+  width: 24px;
+  height: 24px;
+}
+
+.ios-switch__thumb--large {
+  width: 28px;
+  height: 28px;
+}
+
+/* Thumb Positions */
+.ios-switch--on .ios-switch__thumb {
+  left: calc(100% - 3px);
+  transform: translateY(-50%) translateX(-100%);
+}
+
+.ios-switch--off .ios-switch__thumb {
+  left: 3px;
+  transform: translateY(-50%) translateX(0);
+}
+
+.ios-switch__thumb--dragging {
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Icon Styles */
+.ios-switch__icon {
+  font-size: 0.7rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  z-index: 5;
+  line-height: 1;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ios-switch__icon--check {
+  color: white;
+  left: 6px;
+  opacity: 0;
+}
+
+.ios-switch__icon--x {
+  color: #9CA3AF;
+  right: 6px;
+  opacity: 0;
+}
+
+/* Icon Animations */
+.ios-switch--on .ios-switch__icon--check {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.ios-switch--on .ios-switch__icon--x {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.8);
+}
+
+.ios-switch--off .ios-switch__icon--check {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.8);
+}
+
+.ios-switch--off .ios-switch__icon--x {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Hover Effects */
+.ios-switch:not(.ios-switch--disabled):hover .ios-switch__thumb {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.ios-switch:not(.ios-switch--disabled):active {
+  transform: scale(0.98);
+}
+
+/* Focus Styles for Accessibility */
+.ios-switch:focus-visible {
+  outline: 2px solid #007AFF;
+  outline-offset: 2px;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .ios-switch--off {
+    background-color: #4B5563;
+  }
+  
+  .ios-switch__icon--x {
+    color: #D1D5DB;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .ios-switch,
+  .ios-switch__thumb,
+  .ios-switch__icon {
+    transition: none;
+  }
+}
+
+/* Background Gradient Effect */
+.ios-switch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ios-switch--on::before {
+  opacity: 1;
+}

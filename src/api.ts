@@ -1,10 +1,24 @@
-import Elysia, { t } from "elysia";
+import Elysia, { status, t } from "elysia";
 import { authPlugin } from "./auth";
 import FilesRepository from "./repositories/files_repository";
 import type {CopyProgressEvent, DeletePregressEvent} from "./utils/file-handle_bridge.ts";
-import type {AccessLevel, Role, ThemePreference} from "./common.ts";
+import type {AccessLevel, FileReport, Role, ThemePreference, User} from "./common.ts";
+import { NotificationsRepository } from "./repositories/notification_repository.ts";
+import type { ElysiaWS } from "elysia/dist/ws/index";
 
-const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).use(authPlugin);
+const api = new Elysia({ prefix: "/api" }).decorate("repository", new FilesRepository()).decorate("notRepository", new NotificationsRepository()).use(authPlugin).derive(async ({ userRepository })=>{
+    let admin: User = await userRepository.admin();
+
+    return { admin };
+}).state<"adminWS", ElysiaWS|undefined>("adminWS", undefined).derive(({ store }) => ({
+        setAdminWS(adminWS: ElysiaWS) {
+            store.adminWS = adminWS;
+        },
+        removeAdminWS(){
+            store.adminWS = undefined;
+        },
+        adminConnected: () => store.adminWS !== undefined
+}));
 
 api.onBeforeHandle(async ({ session, status }) => {
     if (!session) {
@@ -22,8 +36,14 @@ api.get("/*", async({ path, repository, status, session }) => {
     return status(200, directory);
 });
 
-api.get("/user", async({ status, session }) => {
-    return status(200, session);
+api.get("/user", async({ status, session, notRepository }) => {
+    try{
+        const notifications = await notRepository.all(session?.user.id!);
+
+        return status(200, { ...session, notifications });
+    }catch(error){
+        return status(503, { message: "internal server error", error });
+    }
 });
 
 api.get("/users", async({ session, userRepository, status }) => {
@@ -131,7 +151,7 @@ api.patch("/user/theme", async({ userRepository, session, body, status })=>{
     }
 }, { body: t.Object({ theme: t.String() }) });
 
-api.delete("/", async({ session, body, repository, status  }) => {
+api.delete("/", async({ session, body, repository, store, adminConnected, admin, notRepository, status  }) => {
     if(session?.user.role === "guest" || session?.user.accessLevel === "read-only") {
         return status( 403, { message: "you are not allowed to delete files" });
     }
@@ -139,7 +159,16 @@ api.delete("/", async({ session, body, repository, status  }) => {
     const file = body.file;
     const directory = body.directory;
 
-    const { message, code } = await repository.delete(directory, file).then(()=>{
+    const report = async (fileReport: FileReport) => {
+        if(session?.user.id !== admin.id){
+            const notification = await notRepository.add(admin.id, fileReport.message, fileReport.ntype);
+            if(adminConnected()){
+                store.adminWS?.send({ operation: "notification", status: 200, notification });
+            }
+        }
+    }
+
+    const { message, code } = await repository.delete({ user: session?.user!, fileName: file, path: directory, report }).then(()=>{
         return {  message: `${file} deletion was successful`, code: 200 };
     }).catch((error)=>{
         console.error(error);
@@ -169,12 +198,21 @@ api.post("/", async({ session, body, repository, status }) => {
     return status(code, {message});
 }, { body: t.Object({ name: t.String(), directory: t.String() }) });
 
-api.patch("/move", async({ session, body, repository, status })=>{
+api.patch("/move", async({ session, body, admin, store, adminConnected, repository, notRepository, status })=>{
     if(session?.user.role === "guest" || session?.user.accessLevel === "read-only") {
         return status(403, { message: "you are not allowed to move files" });
     }
 
-    const { message, code } = await repository.move(body.filePath, body.dest).then(()=>{
+    const report = (fileReport: FileReport) => {
+        if(session?.user.id !== admin.id){
+            const notification = notRepository.add(admin.id, fileReport.message, fileReport.ntype);
+            if(adminConnected()){
+                store.adminWS?.send({ operation: "notification", status: 200, notification });
+            }
+        }
+    }
+
+    const { message, code } = await repository.move({ user: session?.user!, filePath: body.filePath, dest: body.dest, report }).then(()=>{
         return {  message: `${body.filePath.split("/").pop()} was moved to ${body.dest} successfully`, code: 200 };
     }).catch((error)=>{
         console.error(error);
@@ -185,12 +223,21 @@ api.patch("/move", async({ session, body, repository, status })=>{
     return status(code, {message});
 },{ body: t.Object({ filePath: t.String(), dest: t.String() }) });
 
-api.patch("/copy", async({ session, status, body, repository })=>{
+api.patch("/copy", async({ session, status, body, adminConnected, store, admin, repository, notRepository })=>{
     if(session?.user.role === "guest" || session?.user.accessLevel === "read-only") {
         return status(403, { message: "you are not allowed to copy files" });
     }
 
-    const { message, code } = await repository.copy(body.filePath, body.dest, undefined).then(()=>{
+    const report = (fileReport: FileReport) => {
+        if(session?.user.id !== admin.id){
+            const notification = notRepository.add(admin.id, fileReport.message, fileReport.ntype);
+            if(adminConnected()){
+                store.adminWS?.send({ operation: "notification", status: 200, notification });
+            }
+        }
+    }
+
+    const { message, code } = await repository.copy({ user: session?.user!, filePath: body.filePath, dest: body.dest, report }).then(()=>{
         return {  message: `${body.filePath.split("/").pop()} was copied to ${body.dest} successfully`, code: 200 };
     }).catch((error)=>{
         console.error(error);
@@ -201,12 +248,21 @@ api.patch("/copy", async({ session, status, body, repository })=>{
     return status(code, {message});
 }, { body: t.Object({ filePath: t.String(), dest: t.String() }) });
 
-api.patch("/rename", async({ session, body, status, repository })=>{
+api.patch("/rename", async({ session, body, admin, adminConnected, store, status, repository, notRepository })=>{
     if(session?.user.role === "guest" || session?.user.accessLevel === "read-only") {
         return status(403, { message: "you are not allowed to rename files" });
     }
 
-    const { message, code } = await repository.rename(body.directory, body.fileName, body.newName).then(()=>{
+    const report = (fileReport: FileReport) => {
+        if(session?.user.id !== admin.id){
+            const notification = notRepository.add(admin.id, fileReport.message, fileReport.ntype);
+            if(adminConnected()){
+                store.adminWS?.send({ operation: "notification", status: 200, notification });
+            }
+        }
+    }
+
+    const { message, code } = await repository.rename({ user: session?.user!, directory: body.directory,  fileName: body.fileName, newName: body.newName, report }).then(()=>{
         return {  message: `${body.fileName} was remaned to ${body.newName} successfully`, code: 200 };
     }).catch((error)=>{
         console.error(error);
@@ -217,7 +273,7 @@ api.patch("/rename", async({ session, body, status, repository })=>{
     return status(code, {message});
 }, { body: t.Object({ directory: t.String(), fileName: t.String(), newName: t.String() }) });
 
-api.post('/upload', async ({ request, repository, session, status }) => {
+api.post('/upload', async ({ request, repository, admin, adminConnected, store, session, notRepository, status }) => {
     if(session?.user.role === "guest" || session?.user.accessLevel === "read-only") {
         return status(403, { message: "you are not allowed to upload files" });
     }
@@ -236,8 +292,17 @@ api.post('/upload', async ({ request, repository, session, status }) => {
         console.log(`saving file: ${file.name} to path: ${dest}`);
     }
 
+    const report = (fileReport: FileReport) => {
+        if(session?.user.id !== admin.id){
+            const notification = notRepository.add(admin.id, fileReport.message, fileReport.ntype);
+            if(adminConnected()){
+                store.adminWS?.send({ operation: "notification", status: 200, notification });
+            }
+        }
+    }
+
     try{
-        await repository.save(dest, file);
+        await repository.save({ user: session!.user, path: dest, file, report });
 
         return status(201, { message: 'File uploaded successfully', dest, filename: file.name, size: file.size });
     }catch(error){
@@ -246,20 +311,83 @@ api.post('/upload', async ({ request, repository, session, status }) => {
     }
 });
 
+api.get("/notification/:id?", async ({ session, params, notRepository })=>{
+    try{
+        if(params.id){
+            const init = await notRepository.get(session?.user.id!, params.id);
+            if(init.first){
+                return status(200, init.first);
+            }
+            
+             return status(init.second.status, { message: init.second.message });
+        }
+
+        const init = await notRepository.all(session?.user.id!); 
+        return status(200, init);
+    }catch(error){
+        console.error(error);
+        return status(500, { message: "internal server error" });
+    }
+});
+
+api.delete("/notification/:id?", async ({ body, params, session, notRepository })=>{
+    if(body.id || params.id){
+        const id = body.id ?? params.id;
+        try{
+            const init = await notRepository.delete(session?.user.id!, id!);
+            if(init.isFirst){
+                return status(200, init.first);
+            }
+
+            return status(init.second.status, { message: init.second.message });
+        }catch(error){
+            console.error(error);
+            return status(500, { message: "internal server error" });
+        }
+    }
+    return status(400, { message: "invalid server request" });
+}, { body: t.Object({ id: t.Optional(t.String()) }) });
+
+api.patch("/notification/:id?", async ({ body, params, session, notRepository })=>{
+    if(body.id || params.id){
+        const id = body.id ?? params.id;
+        try{
+            const init = await notRepository.seen(session?.user.id!, id!);
+            if(init.isFirst){
+                return status(200, init.first);
+            }
+
+            return status(init.second.status, { message: init.second.message });
+        }catch(error){
+            console.error(error);
+            return status(500, { message: "internal server error" });
+        }
+    }
+    return status(400, { message: "invalid server request" });
+}, { body: t.Object({ id: t.Optional(t.String()) }) });
+
 api.ws("/process", {
     body: t.Object({ operation: t.String(), data: t.Object({
         path: t.Optional(t.String()), file: t.Optional(t.String()),
         filePath: t.Optional(t.String()), destination: t.Optional(t.String())
     }) }),
-    open({ id, data }) {
-        console.log(`user: ${id} has connected to websocket`);
-        console.log(`user `, data.session?.user);
+    open(ws) {
+        console.log(`user: ${ws.id} has connected to websocket for processes`);
     },
     close(ws, code, reason) {
-        console.log(`user: ${ws.id} has left with code: ${code} and reason: ${reason}`);
+        console.log(`user: ${ws.id} has left for processes with code: ${code} and reason: ${reason}`);
     },
     message: async (ws, message) => {
         if(ws.data.session?.user){
+            const report = (fileReport: FileReport) => {
+                if(ws.data.session?.user.id !== ws.data.admin.id){
+                    const notification = ws.data.notRepository.add(ws.data.admin.id, fileReport.message, fileReport.ntype);
+                    if(ws.data.adminConnected()){
+                        ws.data.store.adminWS?.send({ operation: "notification", status: 200, notification });
+                    }
+                }
+            }
+
             if(message.operation === "copy"){
                 if(ws.data.session.user.role === "guest" || ws.data.session.user.accessLevel === "read-only") {
                     ws.send({ message: `you are not allowed to ${message.operation} files`, status: 401, operation: message.operation });
@@ -270,7 +398,7 @@ api.ws("/process", {
                     }
 
                     console.log(message);
-                    const result = await api.decorator.repository.copy(message.data.filePath!, message.data.destination!, onProcess).then(()=>{
+                    const result = await api.decorator.repository.copy({ user: ws.data.session.user, filePath: message.data.filePath!, dest: message.data.destination!, onProcess, report }).then(()=>{
                         return {  message: `${message.data.filePath!.split("/").pop()} was copied to ${message.data.destination} successfully`,  operation: "copy", completed: true, status: 200 };
                     }).catch((error)=>{
                         console.error(error);
@@ -286,7 +414,8 @@ api.ws("/process", {
                     ws.send({ message: "deleting", operation: "delete", progress, status: 200 });
                 }
 
-                const result = await api.decorator.repository.delete(message.data.path!, message.data.file!, onProcess).then(()=>{
+                //, 
+                const result = await api.decorator.repository.delete({ user: ws.data.session.user, path: message.data.path!, fileName: message.data.file!, onProcess, report }).then(()=>{
                     return {  message: `${message.data.file} was deleted from ${message.data.path!.split("/").pop()} successfully`, operation: "delete", completed: true, status: 200 };
                 }).catch((error)=>{
                     console.error(error);
@@ -298,6 +427,22 @@ api.ws("/process", {
             ws.send({ message: "access denied, try signing in", operation: message.operation, status: 401 });
         }
     },
+});
+
+api.ws("/notifications", {
+    open(ws) {
+        console.log(`user: ${ws.id} has connected to websocket for notifications`);
+        if(ws.data.session?.user.id === ws.data.admin.id){
+            ws.data.setAdminWS(ws);
+        }
+    },
+    close(ws, code, reason) {
+        console.log(`user: ${ws.id} has left for notifications with code: ${code} and reason: ${reason}`);
+        if(ws.data.session?.user.id === ws.data.admin.id){
+            ws.data.removeAdminWS();
+        }
+    },
+    message: async (ws, message) => {},
 });
 
 export default  api;

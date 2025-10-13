@@ -1,7 +1,7 @@
 import type { AccessLevel, ChangePasswordForm, EditUserFailed, Role, Session, ThemePreference, UserConfig } from "../common";
 import type { User, CreateUserData, SignUpData } from "../common";
 import { DBManager } from "../config";
-import {Dual, Trial} from "../utils/util";
+import {admin_email, Dual, Trial} from "../utils/util";
 
 interface UserCreateError{
     email?: string
@@ -26,6 +26,7 @@ class UserRepository{
             update: { },
             create: { userId: user.id }
         });
+
         return { id: sessionID, 
             user,
             config: { ...config, theme: config.theme as ThemePreference } };
@@ -39,6 +40,14 @@ class UserRepository{
             throw new Error(`User with id ${id} not found`);
         }
     }
+
+    admin = async(): Promise<User> =>{
+        const init = await this.database.user.findUnique({ where: { email: admin_email } });
+        if(init){
+            return { ...init, role: "admin", accessLevel: "read-write" };
+        }
+        throw Error("unable to go get admin details");
+    } 
     
     get = async(sessionID: string): Promise<Session> => {
         const session = await this.database.session.findUnique({ where: { id: sessionID } });

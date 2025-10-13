@@ -3,7 +3,9 @@ import { join } from "path";
 import { statSync } from "fs";
 import { stat, rm, rename as fsRename, mkdir } from 'fs/promises';
 import { copy, deleteFile, type CopyProgressEvent, type DeletePregressEvent } from "../utils/file-handle_bridge";
-import type { User } from "../common";
+import type { FileReport, User } from "../common";
+import { report } from "process";
+import { fileName } from "../utils/util";
 
 export interface DirectoryFile{ 
     name: string, path: string, size?: number, fileCount?: number, folderCount?: number, isDir: boolean 
@@ -105,23 +107,26 @@ class FilesRepository{
         return await file.exists() || (await file.stat()).isDirectory();
     }
 
-    save = async (path: string, file: File) =>{
-        const absolutePath = join(this.homePath, path);
+    save = async (input: { user: User, path: string, file: File, report?: (fileReport: FileReport) =>void }) =>{
+        const absolutePath = join(this.homePath, input.path);
 
-        let finalPath = join(absolutePath, file.name);
+        let finalPath = join(absolutePath, input.file.name);
         let prefix = 1;
         while(await this.fileExists(finalPath, false)){
-            const ext = file.name.split('.').pop()?.toLowerCase() ?? "unknown";
-            const name = file.name.replace(`.${ext}`, "");
+            const ext = input.file.name.split('.').pop()?.toLowerCase() ?? "unknown";
+            const name = input.file.name.replace(`.${ext}`, "");
             finalPath = join(absolutePath, `${name}-${prefix}.${ext}`);
             prefix += 1;
         }
         
         console.write(`final name is: ${finalPath}`);
-        await Bun.write(finalPath, file, { createPath: true }).catch((error)=>{
+        await Bun.write(finalPath, input.file, { createPath: true }).catch((error)=>{
             console.error(error);
         }).then(()=>{
-            console.log(`finished saving file: ${file.name} to path: ${absolutePath}`);
+            console.log(`finished saving file: ${input.file.name} to path: ${absolutePath}`);
+            if(input.report){
+                input.report({ message: `${input.user.username} uploaded file: ${input.file.name} to path: ${absolutePath}`, ntype: "info" });
+            }
         });
     }
 
@@ -152,27 +157,39 @@ class FilesRepository{
         }
     }
 
-    copy = async (filePath: string, dest: string, onProcess?: (progress: CopyProgressEvent)=>void) =>{
-        const absoluteFilePath = join(this.homePath, filePath);
-        const absoluteDest = join(this.homePath, dest);
+    copy = async (input: { user: User, filePath: string, dest: string, onProcess?: (progress: CopyProgressEvent)=>void, report?: (fileReport: FileReport) =>void }) =>{
+        const absoluteFilePath = join(this.homePath, input.filePath);
+        const absoluteDest = join(this.homePath, input.dest);
 
         console.log(`file to copied:${absoluteFilePath}`);
         console.log(`file destination:${absoluteDest}`);
 
-        await copy(absoluteFilePath, absoluteDest, onProcess);
-    }
-
-    move = async (filePath: string, dest: string) =>{
-        return await this.initMovement(filePath, dest, async(absoluteFilePath, absoluteDest) =>{
-            await fsRename(absoluteFilePath, absoluteDest);
+        await copy(absoluteFilePath, absoluteDest, input.onProcess).then(()=>{
+            if(input.report){
+                input.report({ message: `${input.user.username} copied file: ${fileName(input.filePath!)} to path: ${input.dest}`, ntype: "info" });
+            }
         });
     }
 
-    rename = async(directory: string, fileName: string, newName: string) =>{
-        const absoluteFilePath = join(this.homePath, directory, fileName);
-        const absoluteDest = join(this.homePath, directory, newName);
+    move = async (input: { user: User, filePath: string, dest: string, report?: (fileReport: FileReport) =>void }) =>{
+        await this.initMovement(input.filePath, input.dest, async(absoluteFilePath, absoluteDest) =>{
+            await fsRename(absoluteFilePath, absoluteDest);
+        }).then(()=>{
+            if(input.report){
+                input.report({ message: `${input.user.username} moved file: ${fileName(input.filePath!)} to path: ${input.dest}`, ntype: "important" });
+            }
+        });
+    }
 
-        return await fsRename(absoluteFilePath, absoluteDest);
+    rename = async(input: { user: User, directory: string, fileName: string, newName: string, report?: (fileReport: FileReport) =>void }) =>{
+        const absoluteFilePath = join(this.homePath, input.directory, input.fileName);
+        const absoluteDest = join(this.homePath, input.directory, input.newName);
+
+        return await fsRename(absoluteFilePath, absoluteDest).then(()=>{
+            if(input.report){
+                input.report({ message: `${input.user.username} remaned file: ${input.fileName} to ${input.newName}`, ntype: "important" });
+            }
+        });
     }
 
     createDir = async(directory: string, name: string) =>{
@@ -181,13 +198,17 @@ class FilesRepository{
         return await mkdir(join(absoluteDest, name));
     }
 
-    delete = async (path: string, fileName: string, onProcess?: (event: DeletePregressEvent) => void) =>{
-        const absolutePath = join(this.homePath, path);
+    delete = async (input: { user: User, path: string, fileName: string, onProcess?: (event: DeletePregressEvent) => void, report?: (fileReport: FileReport) =>void }) =>{
+        const absolutePath = join(this.homePath, input.path);
 
-        let finalPath = join(absolutePath, fileName);
+        let finalPath = join(absolutePath, input.fileName);
         console.log(`trying to delete: ${finalPath}`);
         if(await this.fileExists(finalPath, false)){
-            await deleteFile(finalPath, onProcess);
+            await deleteFile(finalPath, input.onProcess).then(()=>{
+                if(input.report){
+                    input.report({ message: `${input.user.username} deleted file: ${input.fileName}`, ntype: "important" });
+                }
+            });
         }
     }
 
