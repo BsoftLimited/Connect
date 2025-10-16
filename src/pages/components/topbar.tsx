@@ -7,6 +7,7 @@ import NotificationIcon from "./notifications-icon.tsx";
 
 interface TopBarProps {
     transparent?: boolean;
+    openNotifications?: ()=> void;
 }
 
 const TopBar: Component<TopBarProps> = (props) =>{
@@ -26,7 +27,7 @@ const TopBar: Component<TopBarProps> = (props) =>{
                         <span class="topbar-username">{`Hi ${sessionState().data?.user?.username}`}</span>
                     </div>
                 </Show>
-                <NotificationIcon />
+                <NotificationIcon open={props.openNotifications}/>
                 <span id="theme-toggle" class="clicakble" onClick={toggleTheme}>
                     <ThemeIcon size={"2.2rem"}/>
                 </span>

@@ -1,4 +1,4 @@
-import { createSignal, Match, onMount, Show, Switch, JSX, For, type Component } from "solid-js";
+import { createSignal, Match, Show, Switch, For, type Component } from "solid-js";
 import { useAppContext } from "../providers/app";
 import FileView from "./file";
 import PathBar from "./pathbar";
