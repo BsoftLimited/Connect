@@ -13,6 +13,7 @@ import { AccountsStateProvider, useAccountsContext, type AccountsPages, type Acc
 import EditUser from "./components/edit-user.tsx";
 import type { User } from "../common.ts";
 import NotificationIcon from "./components/notifications-icon.tsx";
+import PanelContent from "./components/panel-content.tsx";
 
 interface AccountOptionProps{
     label: string,
