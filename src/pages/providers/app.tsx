@@ -5,6 +5,7 @@ import { ContextMenuProvider } from "./context-menu";
 import DeleteFile from "../popups/delefie-file";
 import FileCopying from "../popups/file-copying";
 import useWS from "../../utils/ws-hook";
+import { request } from "../../utils/util";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -67,14 +68,17 @@ const AppContextProvider: ParentComponent = (props) =>{
         setState(init => { return { ...init, loading: true, error: undefined, target: "directory" } });
 
         try{
-            const response = await fetch(`/api${currentPath}`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch directory details");
+            const result = await request({ url: `/api${currentPath}` });
+            if(result.isFirst){
+                const response = result.first;
+                const directory = response.data as DirectoryDetails;
+                setState(init => {
+                    return { ...init, loading: false, directory, error: undefined } });
+            }else{
+                const response = result.second;
+                console.error("Error fetching initial directory:", response.error);
+                setState(init => { return { ...init, loading: false, directory: undefined, error: response.error.message } });
             }
-            
-            const directory = await response.json() as DirectoryDetails;
-            setState(init => {
-                return { ...init, loading: false, directory, error: undefined } });
         }catch(error){
             console.error("Error fetching initial directory:", error);
             setState(init => { return { ...init, loading: false, directory: undefined, error: "Failed to load directory details" } });
@@ -99,28 +103,22 @@ const AppContextProvider: ParentComponent = (props) =>{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
             try{
-                const request = new Request(`/api/${ state().clipboard?.command}`, {
-                    method: "PATCH",
-                    headers: {
-                        'Content-type': 'application/json'
-                    },
-                    body: JSON.stringify({ filePath: file.path, dest })
-                });
-
-                const response = await fetch(request);
-                if (!response.ok) {
-                    throw new Error(`Failed to ${ state().clipboard?.command } ${file.name}`);
+                const result = await request({ url: `/api/${ state().clipboard?.command}`, method: "PATCH", input: { filePath: file.path, dest } });
+                if(result.isFirst){
+                    fetchDirectory();
+                }else{
+                    const response = result.second;
+                    console.error(response.error);
+                    alert(response.error.message);
                 }
 
                 if(state().clipboard?.command === 'move'){
                     setState(init => { return { ...init, clipboard: undefined } });
                 }
-                
-                fetchDirectory();
             }catch(error){
                 setState(init => { return { ...init, loading: false, error } });
                 console.error(`Error pasting file ${file}:`, error);
-                alert(`File: ${file} paste fialed`);
+                alert(`Failed to ${ state().clipboard?.command } ${file.name}`);
             }
         }
     }

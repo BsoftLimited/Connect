@@ -24,9 +24,12 @@ const CreatePassword = () => {
         }
 
         try{
-            const response = await request({ url: "/api/user/password", input: { password: password() }, method: "POST" });
-            if(response.status === 201){
+            const result = await request({ url: "/api/user/password", input: { password: password() }, method: "POST" });
+            if(result.isFirst){
                 window.location.reload();
+            }else{
+                const response = result.second;
+                setStatus({ status: "error", message: response.error.message });
             }
         }catch(error){
             console.log(error);

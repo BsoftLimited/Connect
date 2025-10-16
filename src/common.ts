@@ -78,6 +78,14 @@ export interface SiteConfig{
     allowGuestDownload: boolean
 }
 
+export interface SiteConfigUpdate{
+    id: string
+
+    maintenanceMode: boolean
+    allowGuestSignup: boolean
+    allowGuestDownload: boolean
+}
+
 export interface State<T>{
     loading: boolean;
     data?: T;

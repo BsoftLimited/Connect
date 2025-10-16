@@ -3,6 +3,7 @@ import { useUserContext } from "../providers/user";
 import SettingsOptions from "./settings-options";
 import { useContextMenuContext } from "../providers/context-menu";
 import ThemeIcon from "./theme-icon.tsx";
+import NotificationIcon from "./notifications-icon.tsx";
 
 interface TopBarProps {
     transparent?: boolean;
@@ -25,6 +26,7 @@ const TopBar: Component<TopBarProps> = (props) =>{
                         <span class="topbar-username">{`Hi ${sessionState().data?.user?.username}`}</span>
                     </div>
                 </Show>
+                <NotificationIcon />
                 <span id="theme-toggle" class="clicakble" onClick={toggleTheme}>
                     <ThemeIcon size={"2.2rem"}/>
                 </span>

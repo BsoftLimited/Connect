@@ -151,6 +151,15 @@ api.patch("/user/theme", async({ userRepository, session, body, status })=>{
     }
 }, { body: t.Object({ theme: t.String() }) });
 
+api.patch("/user/config", async({ userRepository, session, body, status })=>{
+    try{
+        const config = await userRepository.updateConfig({ id: session!.config.id, ...body });
+        return status(200, config);
+    }catch(error){
+        return status(503, JSON.stringify({ message: "user config update failed", error }));
+    }
+}, { body: t.Object({ imagePreview: t.Optional(t.Boolean()), notifications: t.Optional(t.Boolean()) }) });
+
 api.delete("/", async({ session, body, repository, store, adminConnected, admin, notRepository, status  }) => {
     if(session?.user.role === "guest" || session?.user.accessLevel === "read-only") {
         return status( 403, { message: "you are not allowed to delete files" });

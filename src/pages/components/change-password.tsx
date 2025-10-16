@@ -2,7 +2,7 @@ import { createSignal, Show, type JSX } from "solid-js";
 import { useAccountsContext } from "../providers/accounts";
 import type { ChangePasswordForm } from "../../common";
 import FormInput from "./form-input";
-import { isPassowrdValid, request, type RequestFailed } from "../../utils/util";
+import { isPassowrdValid, request } from "../../utils/util";
 import InputError from "./input-error";
 
 const ChangePassword = () => {
@@ -11,18 +11,22 @@ const ChangePassword = () => {
 
     const submitRequest = async(data: ChangePasswordForm) =>{
         try{
-            await request({ url: "/user/password", input: data, method: "PATCH"});
-            alert("password changed successfully");
-            closePanel();
-        }catch(error){
-            console.log(error);
-            const response = error as RequestFailed;
-            if(response.status === 400){
-                setErrors(response.error);
+            const result = await request({ url: "/user/password", input: data, method: "PATCH"});
+            if(result.isFirst){
+                 alert("password changed successfully");
+                closePanel();
             }else{
-                console.error(response);
-                setErrors({ message: "An error occurred. Please try again." });
+                const response = result.second;
+                if(response.status === 400){
+                    setErrors(response.error);
+                }else{
+                    console.error(response);
+                    setErrors({ message: response.error.message });
+                }
             }
+        }catch(error){
+            console.error(error);
+            setErrors({ message: "An error occurred. Please try again." });
         }
     }
 

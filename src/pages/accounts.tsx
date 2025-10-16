@@ -12,6 +12,7 @@ import AddUser from "./components/add-user.tsx";
 import { AccountsStateProvider, useAccountsContext, type AccountsPages, type AccountsPanels } from "./providers/accounts.tsx";
 import EditUser from "./components/edit-user.tsx";
 import type { User } from "../common.ts";
+import NotificationIcon from "./components/notifications-icon.tsx";
 
 const PanelContent: ParentComponent<{ title?: AccountsPanels }> = (props) =>{
     const { closePanel } = useAccountsContext();
@@ -73,9 +74,12 @@ const Accounts = () => {
         <div class="account-container">
             <div style={{ display: "flex", width: "100%", "flex-direction": "row", "justify-content": "space-between", "align-items": "center", "padding": "2rem 2rem 0rem 2rem" }}>
                 <h1 style={{"font-weight": "300" }}>Account Manangement</h1>
-                <span id="theme-toggle" class="clicakble" onClick={toggleTheme} title="Toggle Theme">
-                    <ThemeIcon />
-                </span>
+                <div style={{ display: "flex", "flex-direction": "row", "align-items": "center", gap: "1.5rem" }}>
+                    <NotificationIcon />
+                    <span id="theme-toggle" class="clicakble" onClick={toggleTheme} title="Toggle Theme">
+                        <ThemeIcon />
+                    </span>
+                </div>
             </div>
             <div style={{ display: "flex", width: "100%", flex: 1, "flex-direction": "row", overflow: "hidden", padding: "2rem 3rem 3rem 3rem" }}>
                 <div style={{ display: "flex",  "flex-direction": "column"}} >

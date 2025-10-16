@@ -98,7 +98,7 @@ export interface RequestSuccess{ status: number, data: any }
 export interface RequestFailed{ status: number, error: any }
 
 export const request = <T>(data: { url:string, input?: T, method?: string }) =>{
-    return new Promise<RequestSuccess>((reslove, reject) =>{
+    return new Promise<Dual<RequestSuccess, RequestFailed>>((reslove, reject) =>{
         const request = new Request(data.url, {
             method: data.method || "GET",
             headers: { 'Content-type': 'application/json'},
@@ -106,12 +106,12 @@ export const request = <T>(data: { url:string, input?: T, method?: string }) =>{
         });
 
         fetch(request).then(async (response)=>{
-            if (!response.ok) {
-                reject({ status: response.status, error: await response.json() });
+            if (response.ok) {
+                reslove(Dual.first({ status: response.status, data: await response.json() }));
             }else{
-                reslove({ status: response.status, data: await response.json() });
+                reslove(Dual.second({ status: response.status, error: await response.json() }));
             }
-        });
+        }).catch((error)=> reject(error));
     });
 }
 

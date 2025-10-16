@@ -4,7 +4,7 @@ export interface SwitchProps{
     label: string,
     checked?: boolean,
     disabled?: boolean
-    size?: "smaill" | "medium" | "large"
+    size?: "small" | "medium" | "large"
     name?: string,
     onChange?: (checked: boolean) => void;
 }
@@ -23,8 +23,8 @@ const IOSSwitch: Component<SwitchProps> = (props) =>{
 
     const getSizeClasses = () =>{
         switch(props.size){
-            case "smaill":
-                return { track: "ios-switch--smaill", thumb: "ios-switch__thumb--small" };
+            case "small":
+                return { track: "ios-switch--small", thumb: "ios-switch__thumb--small" };
             case "large":
                 return { track: "ios-switch--large", thumb: "ios-switch__thumb--large" };
             default:

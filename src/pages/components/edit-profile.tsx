@@ -3,13 +3,15 @@ import { useAccountsContext } from "../providers/accounts";
 import { useUserContext } from "../providers/user";
 import FormInput from "./form-input";
 import { isEmailValid, isUsernameValid } from "../../utils/util";
+import type { UpdateProfileData } from "../../common";
+import InputError from "./input-error";
 
 const EditProfile: Component = () =>{
-    const { closePanel, updateProfile } = useAccountsContext();
+    const { updateProfile } = useAccountsContext();
     const { sessionState } = useUserContext();
 
     const [data, setData] = createSignal({ username: sessionState().data?.user.username!, email: sessionState().data?.user.email! });
-    const [formErrors, setFormErrors] = createSignal<{ username?: string, email?: string }>({});
+    const [formErrors, setFormErrors] = createSignal<UpdateProfileData & { message?: string }>({});
 
     const updateEmail = (email: string) => setData(init => { 
         return {...init, email};
@@ -37,8 +39,8 @@ const EditProfile: Component = () =>{
             return;
         }
 
-        updateProfile(data()).then((result)=>{
-            
+        updateProfile(data()).then(errors =>{
+            setFormErrors({...(errors.error ?? {}), message: errors.message});
         });
     }
     
@@ -48,6 +50,7 @@ const EditProfile: Component = () =>{
                 <h1 style={{ "padding-bottom": "2rem", "font-weight": "300" }}>Edit Profile</h1>
                 <FormInput label="Username" type="text" valueChange={updateUsername} name="username" error={formErrors().username}  placeholder="Enter new username" value={data().username} />
                 <FormInput label="Email" type="email" valueChange={updateEmail} name="email" error={formErrors().email} placeholder="Enter new email address" value={data().email} />
+                <InputError message={formErrors().message}/>
                 <div style={{ flex: 1, display: "flex", "flex-direction": "column-reverse" }}>
                     <button type="submit" style={{ "justify-items": "end", padding: "0.7rem", "border-radius": "4px", border: "none", background: "#4CAF50", color: "white", cursor: "pointer" }}>Save Changes</button>
                 </div>

@@ -1,9 +1,8 @@
 import { createContext, createSignal, onMount, Show, useContext, type ParentComponent } from "solid-js";
 import type { CreateUserData, EditUserFailed, EditUserFormData, UpdateProfileData, UpdateProfileFailed, User } from "../../common";
 import { useUserContext } from "./user";
-import { request, type RequestFailed } from "../../utils/util";
+import { request } from "../../utils/util";
 import DeleteUser from "../popups/delete-user";
-import type { DirectoryFile } from "../../repositories/files_repository";
 
 export type AccountsPages = "profile" | "users" | "settings"
 export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User";
@@ -63,12 +62,18 @@ const AccountsStateProvider: ParentComponent = (props) =>{
     const fetchUsers = async () => {
         setState(init => ({ ...init, loading: true, error: undefined }));
         try {
-            const response = await fetch('/api/users');
-            if (!response.ok) {
-                throw new Error("Failed fetching users");
+            const result = await request({ url: '/api/users' });
+            if (result.isFirst) {
+                const response = result.first;
+                if(response.status === 200){
+                    const users = await response.data as User[];
+                    setState(init => ({ ...init, loading: false, users }));
+                }
+            }else{
+                const response = result.second;
+                console.error("Error fetching user:", response.error);
+                setState(init => ({ ...init, loading: false, error: response.error.message }));
             }
-            const users = await response.json() as User[];
-            setState(init => ({ ...init, loading: false, users }));
         } catch (error) {
             console.error("Error fetching user:", error);
             setState(init => ({ ...init, loading: false, error: "Failed to load users" }));
@@ -92,24 +97,29 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         createUser: async (data: CreateUserData): Promise<CreateUserFailedResult> =>{
             let init: CreateUserFailedResult = {};
             try{
-                const response = await request({ url: `/api/user`, input: data, method: "POST" });
-                if(response.status === 201){
-                    const newUser = response.data as User;
-                    setState(init => ({ ...init, users: [...init.users, newUser] }));
-                    alert("User created successfully");
-                    closePanel();
+                const result = await request({ url: `/api/user`, input: data, method: "POST" });
+                if(result.isFirst){
+                    const response = result.first;
+                    if(response.status === 201){
+                        const newUser = response.data as User;
+                        setState(init => ({ ...init, users: [...init.users, newUser] }));
+                        alert("User created successfully");
+                        closePanel();
+                    }
+                }else{
+                    const response = result.second;
+                    console.error(response.error);
+                    
+                    if(response.status === 401){
+                        init = ({ ...response.error });
+                    }else{
+                        console.error(response.error);
+                        init = { message: response.error.message };
+                    }
                 }
             }catch(error){
-                const failedResponse = error as RequestFailed;
-                console.error(`User creation failied`, failedResponse.error);
-                alert(`User creation failied: ${failedResponse}`);
-
-                if(failedResponse.status === 401){
-                    init = ({ message: failedResponse.error.message, error: failedResponse.error.error });
-                }else{
-                    console.error(failedResponse);
-                    init = { message: "An error occurred. Please try again." };
-                }
+                console.error(error);
+                init = { message: "An error occured when trying to create user." };
             }
             return init;
         },
@@ -118,38 +128,46 @@ const AccountsStateProvider: ParentComponent = (props) =>{
         },
         updateProfile: async (data: UpdateProfileData) =>{
             let init: UpdateProfileFailed = {};
-
             try{
-                const response = await request({ url: `/api/user`, method: "PATCH", input: data });
-                if (response.status === 200) {
-                    fetchUsers().finally(()=>{
-                        closePanel()
-                    });
+                const result = await request({ url: `/api/user`, method: "PATCH", input: data });
+                if(result.isFirst){
+                    const response = result.first;
+                        if (response.status === 200) {
+                        fetchUsers().finally(()=>{
+                            closePanel()
+                        });
+                    }
+                }else{
+                    const response = result.second;
+                    init = response.error;
                 }
             }catch(error){
-                console.log(error);
-                const response = error as RequestFailed;
-                init = response.error;
+                console.error(error);
+                init = { message: "Unable to perform profile update opertion" };
             }
             return init;
         },
         updateUser: async (data: EditUserFormData): Promise<EditUserFailed> =>{
-            let init: EditUserFailed = {};
-
-            request({ url: `/api/user/access`, input: data, method: "PATCH" }).then((response)=>{
-                if(response.status === 200){
-                    alert("User update successfully");
-                    fetchUsers().finally(()=>{
-                        closePanel();
-                    });
+            let init: EditUserFailed = {}
+            try{
+                const result = await request({ url: `/api/user/access`, input: data, method: "PATCH" });
+                if(result.isFirst){
+                    const response = result.first;
+                    if(response.status === 200){
+                        alert("User update successfully");
+                        fetchUsers().finally(()=>{
+                            closePanel();
+                        });
+                    }
+                }else{
+                    const response = result.second;
+                    console.error(`User update failied`, response.error);
+                    init = response.error;
                 }
-            }).catch((error)=>{
-                const failedResponse = error as RequestFailed;
-                console.error(`User update failied`, failedResponse.error);
-                
-                init = failedResponse.error;
-            });
-            
+            }catch(error){
+                console.error(`User update failied`, error);
+                init = { message: "user update request failed, check connection" }
+            }            
             return init;
         }
     };

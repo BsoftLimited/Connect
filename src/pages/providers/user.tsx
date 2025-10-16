@@ -1,5 +1,5 @@
 import { createContext, createEffect, createSignal, on, onMount, useContext, type ParentComponent } from "solid-js";
-import type { Notification, Session, State, ThemePreference } from "../../common";
+import type { Notification, Session, State, ThemePreference, UpdateProfileData, UserConfig } from "../../common";
 import { SystmeProvider, useSystem } from "./system";
 import { request } from "../../utils/util";
 import useWS from "../../utils/ws-hook";
@@ -21,6 +21,7 @@ interface UserContextType{
     logout: () => void;
     toggleTheme: () => void;
     isDark: () => boolean;
+    updateConfig: (config: Partial<UserConfig>) => Promise<void>
 }
 
 const UserContext = createContext<UserContextType>();
@@ -39,8 +40,9 @@ const UserContextProvider: ParentComponent = (props) => {
     const updateTheme = async (newTheme: ThemePreference) => {
         try{
             const response = await request({ url: "/api/user/theme", method: "PATCH", input: { theme: newTheme } });
-            if (response.status !== 200) {
-                throw new Error("Failed to update theme");
+            if (!response.isFirst) {
+                console.error(response.second.error);
+                alert(response.second.error.message);
             }
         }catch(error){
             console.error("Failed to update theme:", error);
@@ -51,13 +53,18 @@ const UserContextProvider: ParentComponent = (props) => {
     createEffect(on(systemState, async(value) => {
         if(value.data && !state().data){
             try {
-                const response = await request({ url: '/api/user' });
-                if (response.status !== 200) {
-                    throw new Error("Failed to fetch user details");
+                const result = await request({ url: '/api/user' });
+                if(result.isFirst){
+                    const response = result.first;
+                    if(response.status === 200){
+                        const session = response.data as Session & { notifications: Notification[] };
+                        initializeTheme(session.config.theme || "light");
+                        setState(init => ({ ...init, loading: false, data: session, error: undefined }));
+                    }
+                }else{
+                    const response = result.second;
+                    setState(init => ({ ...init, loading: false, error: response.error.message }));
                 }
-                const session = response.data as Session & { notifications: Notification[] };
-                initializeTheme(session.config.theme || "light");
-                setState(init => ({ ...init, loading: false, data: session, error: undefined }));
             } catch (error) {
                 console.error("Error fetching user:", error);
                 setState(init => ({ ...init, loading: false, error: "Failed to load user details" }));
@@ -80,15 +87,17 @@ const UserContextProvider: ParentComponent = (props) => {
         logout: async () => {
             setState(init => ({ ...init, loading: true, error: undefined }));
             try {
-                const response = await request({ url: '/auth/logout',  method: 'GET' });
-                if (response.status !== 200) {
-                    throw new Error("Failed to log out");
+                const result = await request({ url: '/auth/logout',  method: 'GET' });
+                if(result.isFirst){
+                    window.location.reload();
+                }else{
+                    const response = result.second;
+                    setState(init => ({ ...init, loading: false, error: response.error.message }));
                 }
-                window.location.reload();
             } catch (error) {
                 console.error("Error logging out:", error);
                 setState(init => ({ ...init, loading: false, error: "Failed to log out" }));
-                alert("Failed to log out. Please try again.");
+                alert("Failed to log out");
             }
         },
         toggleTheme: () => {
@@ -108,6 +117,28 @@ const UserContextProvider: ParentComponent = (props) => {
 
             return htmlElement!.classList.contains("dark");
         },
+        updateConfig:  async (config: Partial<UserConfig>) => {
+            try{
+                const result = await request({ url: "/api/user/config", method: "PATCH", input: config });
+                if(result.isFirst){
+                    const init = result.first;
+                    if(init.status === 200){
+                        const config = init.data as UserConfig;
+                        const session = { ...state().data!, config }
+
+                        setState(init =>{
+                            return { ...init, data: session }
+                        });
+                    }
+                }else{
+                    const response = result.second;
+                    alert(response.error.message);
+                }
+            }catch(error){
+                console.error(error);
+                alert("unable to update site configurations");
+            }
+        }
     };
 
     return (

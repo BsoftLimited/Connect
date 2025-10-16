@@ -25,24 +25,27 @@ const Login: Component<LoginProps> = (props) =>{
         }
 
         try{
-            const response = await request({ url: "/auth/login", input: { email: email(), password: password() }, method: "POST"});
-
-            const user = response.data.user as User;
-            if(user.initialized){
-                window.location.reload(); // Reload the page to reflect the login state
+            const result = await request({ url: "/auth/login", input: { email: email(), password: password() }, method: "POST"});
+            if(result.isFirst){
+                const response = result.first;
+                const user = response.data.user as User;
+                if(user.initialized){
+                    window.location.reload(); // Reload the page to reflect the login state
+                }else{
+                    props.setUser(user);
+                }
             }else{
-                props.setUser(user);
+                const response = result.second;
+                if(response.status === 401){
+                    setErrors(response.error.error);
+                }else{
+                    console.error(response.error);
+                }
+                setStatus({ status: "error", message: response.error.message });
             }
         }catch(error){
-            console.log(error);
-            const response = error as RequestFailed;
-            if(response.status === 401){
-                setErrors(response.error.error);
-                setStatus({ status: "error", message: response.error.message });
-            }else{
-                console.error(response);
-                setStatus({ status: "error", message: "An error occurred. Please try again." });
-            }
+            console.error(error);;
+            setStatus({ status: "error", message: "An error occurred. Please try again." });
         }
     };
 

@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, status, t } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import api from "./api";
 import { htmlBuilder } from "./utils/util";
@@ -111,11 +111,22 @@ app.get('/favicon.ico', async ({ status }) => {
 
 app.use(sitePlugin).get("/config", async({ config, status }) =>{
     if(config){
-        return status(200, { config });
+        return status(200, config);
     }else{
-        return status(500, { message: "Configuration not found" });
+        return status(503, { message: "Configuration not found" });
     }
-});
+}).patch("/config", async ({ status, body, config, session,configRepository  })=>{
+    if(session?.user.role === "admin"){
+        try{
+            const result = await configRepository.update(config?.id!, body);
+            return status(200, result);
+        }catch(error){
+            console.error("updating site config exception: ", error);
+            return status(503, { message: "internal server error" });
+        }
+    }
+    return status(401, { message: "only admins is allowed to update site settings" });
+}, { body: t.Object({ maintenanceMode: t.Optional(t.Boolean()), allowGuestSignup: t.Optional(t.Boolean()), allowGuestDownload: t.Optional(t.Boolean()) }) });
 
 seed().then(()=>{
     app.listen(3000, (details)=>{
