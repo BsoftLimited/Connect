@@ -82,7 +82,6 @@ const Directory = () => {
                     </div>
                     <div style={{ width: "100%", flex: 1, overflow: "auto", padding: "0.5rem" }} onContextMenu={showDirectoryContext}>
                         <Files filter={filter} context={showFileContext} />
-                        <Upload open={showUpload()} onClocse={()=> setShowUpload(false)}/> 
                     </div>
                     <Show when={status().show === "file"}>
                         <FileContextMenu x={status().x} y={status().y} file={status().file}/>
