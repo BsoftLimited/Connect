@@ -3,6 +3,7 @@ import type { CreateUserData, EditUserFailed, EditUserFormData, UpdateProfileDat
 import { useUserContext } from "./user";
 import { request } from "../../utils/util";
 import DeleteUser from "../popups/delete-user";
+import usePageHook from "../../utils/page-hook";
 
 export type AccountsPages = "profile" | "users" | "settings"
 export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User";
@@ -44,16 +45,11 @@ type AccountsStateType = {
 const AccountsStateContext = createContext<AccountsStateType>();
 
 const AccountsStateProvider: ParentComponent = (props) =>{
-    const [pageState, setPageState] = createSignal<AccountsPageState>({ currentPage: "profile", panelState: { show: false } });
     const [state, setState] = createSignal<AccountsState>({ loading: false, users: [] });
     const {sessionState} = useUserContext();
     const [popUpState, setPopUpState] = createSignal<PopUpState>({ action: "None" });
 
-    const closePanel = () =>{
-        setPageState((init)=>{
-            return {...init, panelState: { show: false }}
-        });
-    }
+    const pageHook = usePageHook<AccountsPages, AccountsPanels>("profile");
 
     const closePopup = () =>{
         setPopUpState({ action: "None" });
@@ -82,18 +78,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
 
     const accountsStateType: AccountsStateType = {
         state,
-        pageState,
-        closePanel,
-        openPanel: (panel: AccountsPanels) => {
-            setPageState((init)=>{
-                return {...init, panelState: { show: true, panel } }
-            });
-        },
-        choosePage: (page) => {
-            setPageState((init)=>{
-                return {...init, currentPage: page }
-            });
-        },
+        ...pageHook,
         createUser: async (data: CreateUserData): Promise<CreateUserFailedResult> =>{
             let init: CreateUserFailedResult = {};
             try{
@@ -104,7 +89,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
                         const newUser = response.data as User;
                         setState(init => ({ ...init, users: [...init.users, newUser] }));
                         alert("User created successfully");
-                        closePanel();
+                        pageHook.closePanel();
                     }
                 }else{
                     const response = result.second;
@@ -134,7 +119,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
                     const response = result.first;
                         if (response.status === 200) {
                         fetchUsers().finally(()=>{
-                            closePanel()
+                            pageHook.closePanel()
                         });
                     }
                 }else{
@@ -156,7 +141,7 @@ const AccountsStateProvider: ParentComponent = (props) =>{
                     if(response.status === 200){
                         alert("User update successfully");
                         fetchUsers().finally(()=>{
-                            closePanel();
+                            pageHook.closePanel();
                         });
                     }
                 }else{

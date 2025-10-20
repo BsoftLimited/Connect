@@ -1,4 +1,4 @@
-import { createContext, createEffect, createMemo, createSignal, onMount, Show, useContext, type ParentComponent } from "solid-js";
+import { createContext, createSignal, onMount, Show, useContext, type ParentComponent } from "solid-js";
 import type { DirectoryDetails, DirectoryFile } from "../../repositories/files_repository";
 import type { CopyProgressEvent, DeletePregressEvent } from "../../utils/file-handle_bridge";
 import { ContextMenuProvider } from "./context-menu";
@@ -6,6 +6,7 @@ import DeleteFile from "../popups/delefie-file";
 import FileCopying from "../popups/file-copying";
 import useWS from "../../utils/ws-hook";
 import { request } from "../../utils/util";
+import usePageHook from "../../utils/page-hook";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -14,12 +15,22 @@ type Clipboard = {
     command: ClipbordCommand
 }
 
+export type AppPanels = "Notifications" | "Upload File" | "Playlist";
+export type AppPanelsState = {
+    show: boolean,
+    panel?: AppPanels
+}
+
+export type AppPages = "Directory" | "Streaming";
+type AppPageState = {
+    currentPage: AppPages,
+    panelState: AppPanelsState,
+}
+
 type AppContextType = {
     loading: boolean;
     directory?: DirectoryDetails;
-    file?: string; 
     error?: any;
-    target: "directory" | "stream";
     clipboard?: Clipboard;
 }
 
@@ -31,7 +42,11 @@ interface AppContextProviderType {
     appState: ()=> AppContextType;
     closeStream: () => void;
     saveClipboard: (clipboard: Clipboard) => void;
-    paste : (file?: DirectoryFile) => void
+    paste : (file?: DirectoryFile) => void;
+
+    closePanel: () => void,
+    openPanel: (panel: AppPanels) => void,
+    pageState: () => AppPageState,
 }
 
 type PopUpState = {
@@ -47,11 +62,13 @@ export interface ProgressReport<T>{
 const AppContext = createContext<AppContextProviderType>();
 
 const AppContextProvider: ParentComponent = (props) =>{
-    const [state, setState] = createSignal<AppContextType>({ loading: false, target: "directory" });
+    const [state, setState] = createSignal<AppContextType>({ loading: false });
     const [popUpState, setPopUpState] = createSignal<PopUpState>({ action: "None" });
     const [copyProgress, setCopyProgress] = createSignal<ProgressReport<CopyProgressEvent>>();
     const [deleteProgress, setDeleteProgress] = createSignal<ProgressReport<DeletePregressEvent>>();
     const { setMessageListener, send } = useWS('/api/process');
+
+    const page = usePageHook<AppPages, AppPanels>("Directory");
 
     const closePopup = () =>{
         setPopUpState({ action: "None" });
@@ -154,6 +171,7 @@ const AppContextProvider: ParentComponent = (props) =>{
     });
 
     const providerValue: AppContextProviderType = {
+        ...page,
         appState: () => {
             return {...state() }
         },
@@ -168,8 +186,8 @@ const AppContextProvider: ParentComponent = (props) =>{
         deleteFile: async (file: string) =>{
             setPopUpState({ action: "Delete_File", file });
         },
-        stream: (file)=> setState(init => { return { ...init, file, target: "stream" } }),
-        closeStream: () => setState(init => { return { ...init, target: "directory" } }),
+        stream: (file)=> page.choosePage("Streaming", file),
+        closeStream: () => page.choosePage("Directory"),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
         paste
     };

@@ -13,7 +13,8 @@ import { AccountsStateProvider, useAccountsContext, type AccountsPages, type Acc
 import EditUser from "./components/edit-user.tsx";
 import type { User } from "../common.ts";
 import NotificationIcon from "./components/notifications-icon.tsx";
-import PanelContent from "./components/panel-content.tsx";
+import PanelContent from "./components/panel.tsx";
+import Panel from "./components/panel.tsx";
 
 interface AccountOptionProps{
     label: string,
@@ -43,7 +44,7 @@ const AccountOption: ParentComponent<AccountOptionProps> = (props) =>{
 const Accounts = () => {
     const { toggleTheme } = useUserContext();
     const { sessionState, logout } = useUserContext();
-    const { pageState, openPanel } = useAccountsContext();
+    const { pageState, openPanel, closePanel } = useAccountsContext();
     
     const [editingUser, setEditingUser] = createSignal<User>();
     const editUser = (user: User) =>{
@@ -99,24 +100,22 @@ const Accounts = () => {
                     </Match>
                 </Switch>
             </div>
-            <Motion.div initial={{ x: "100%" }} animate={{ x: pageState().panelState.show ? 0 : "100%" }} transition={{ duration: 0.3, easing: "ease-out" }} class="panel">
-                <PanelContent title={pageState().panelState.panel}>
-                    <Switch>
-                        <Match when={pageState().panelState.panel === "Edit Profile"}>
-                            <EditProfile />
-                        </Match>
-                        <Match when={pageState().panelState.panel === "Change Password"}>
-                            <ChangePassword />
-                        </Match>
-                        <Match when={pageState().panelState.panel === "Create User"}>
-                            <AddUser />
-                        </Match>
-                        <Match when={pageState().panelState.panel === "User Details"}>
-                            <EditUser user={editingUser()!}/>
-                        </Match>
-                    </Switch>
-                </PanelContent>
-            </Motion.div>
+            <Panel title={pageState().panelState.panel} show={pageState().panelState.show} close={closePanel}>
+                <Switch>
+                    <Match when={pageState().panelState.panel === "Edit Profile"}>
+                        <EditProfile />
+                    </Match>
+                    <Match when={pageState().panelState.panel === "Change Password"}>
+                        <ChangePassword />
+                    </Match>
+                    <Match when={pageState().panelState.panel === "Create User"}>
+                        <AddUser />
+                    </Match>
+                    <Match when={pageState().panelState.panel === "User Details"}>
+                        <EditUser user={editingUser()!}/>
+                    </Match>
+                </Switch>
+            </Panel>
         </div>
     );
 }

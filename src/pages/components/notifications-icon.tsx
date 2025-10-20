@@ -22,7 +22,7 @@ const NotificationIcon: Component<NotificationIconProps> = (props) =>{
                     </g>
                 </svg>
                 <Show when={unseen() > 0}>
-                    <span style={{ position: "absolute", "border-radius": "50%", "aspect-ratio": 1, width: "1.5rem", background: "red", color: "white", "text-align": "center", "z-index": 500, margin: "-0.5rem -1rem" }}>{ unseen() }</span>
+                    <span style={{ position: "absolute", "border-radius": "50%", "aspect-ratio": 1, width: "1.5rem", background: "red", color: "white", "text-align": "center", margin: "-0.5rem -1rem" }}>{ unseen() }</span>
                 </Show>
             </span>
         </Show>
