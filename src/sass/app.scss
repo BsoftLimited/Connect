@@ -283,6 +283,14 @@ $context-menu-border-color: var(--md-sys-color-on-surface-variant);
     }
 }
 
+.create-btn{
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    width: 200px;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
 @media (max-width: 1500px) {
     .files-container {
         grid-template-columns: repeat(5, auto);

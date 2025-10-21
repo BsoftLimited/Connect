@@ -7,6 +7,7 @@ import FileCopying from "../popups/file-copying";
 import useWS from "../../utils/ws-hook";
 import { request } from "../../utils/util";
 import usePageHook, { type PageState } from "../../utils/page-hook";
+import CreateFolder from "../popups/create-folder";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -35,6 +36,7 @@ interface AppContextProviderType {
     closeStream: () => void;
     saveClipboard: (clipboard: Clipboard) => void;
     paste : (file?: DirectoryFile) => void;
+    create: () => void;
 
     closePanel: () => void,
     openPanel: (panel: AppPanels) => void,
@@ -42,7 +44,7 @@ interface AppContextProviderType {
 }
 
 type PopUpState = {
-    action: "None" | "Delete_File" | "File_Copying",
+    action: "None" | "Delete File" | "File Copying" | "Create Folder",
     file?: string
     destination?: string
 }
@@ -107,7 +109,7 @@ const AppContextProvider: ParentComponent = (props) =>{
 
         if(state().clipboard?.command === "copy"){
             send("copy", { filePath: file.path, destination: dest });
-            setPopUpState({ file: file.name, destination: dest, action: "File_Copying" });
+            setPopUpState({ file: file.name, destination: dest, action: "File Copying" });
         }else{
             setState(init => { return { ...init, loading: true, error: undefined } });
 
@@ -176,22 +178,28 @@ const AppContextProvider: ParentComponent = (props) =>{
         },
         reload: () => fetchDirectory(),
         deleteFile: async (file: string) =>{
-            setPopUpState({ action: "Delete_File", file });
+            setPopUpState({ action: "Delete File", file });
         },
         stream: (file)=> page.choosePage("Streaming", file),
         closeStream: () => page.choosePage("Directory"),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
+        create: () => {
+            setPopUpState({  action: "Create Folder"});
+        },
         paste
     };
 
     return (
         <AppContext.Provider value={providerValue}>
             {props.children}
-            <Show when={popUpState().action === "Delete_File"}>
+            <Show when={popUpState().action === "Delete File"}>
                 <DeleteFile file={popUpState().file!} cancel={closePopup} procced={deleteFile} progressReport={deleteProgress()} />
             </Show>
-            <Show when={popUpState().action === "File_Copying"}>
+            <Show when={popUpState().action === "File Copying"}>
                 <FileCopying file={popUpState().file!} progressReport={copyProgress()!} destination={popUpState().destination!}/>
+            </Show>
+            <Show when={popUpState().action === "Create Folder"}>
+                <CreateFolder done={() => { closePopup(); fetchDirectory(); }} cancel={closePopup}/>
             </Show>
         </AppContext.Provider>
     );
