@@ -6,7 +6,7 @@ import DeleteFile from "../popups/delefie-file";
 import FileCopying from "../popups/file-copying";
 import useWS from "../../utils/ws-hook";
 import { request } from "../../utils/util";
-import usePageHook from "../../utils/page-hook";
+import usePageHook, { type PageState } from "../../utils/page-hook";
 
 type ClipbordCommand = "copy" | "move";
 
@@ -16,16 +16,8 @@ type Clipboard = {
 }
 
 export type AppPanels = "Notifications" | "Upload File" | "Playlist";
-export type AppPanelsState = {
-    show: boolean,
-    panel?: AppPanels
-}
-
 export type AppPages = "Directory" | "Streaming";
-type AppPageState = {
-    currentPage: AppPages,
-    panelState: AppPanelsState,
-}
+
 
 type AppContextType = {
     loading: boolean;
@@ -46,7 +38,7 @@ interface AppContextProviderType {
 
     closePanel: () => void,
     openPanel: (panel: AppPanels) => void,
-    pageState: () => AppPageState,
+    pageState: () => PageState<AppPages, AppPanels>,
 }
 
 type PopUpState = {

@@ -42,14 +42,14 @@ const Directory = () => {
     const { sessionState } = useUserContext();
     const { appState } = useAppContext();
     const { showDirectoryContext, showFileContext, status, clear } = useContextMenuContext();
-    const [showUpload, setShowUpload] = createSignal(false);
+    const { openPanel } = useAppContext();
 
     const [filter, setFilter] = createSignal("");
 
     const openUpload = (event: MouseEvent) => {
         event.stopImmediatePropagation();
 
-        setShowUpload(true);
+        openPanel("Upload File");
         clear();
     }
     

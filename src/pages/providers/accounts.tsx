@@ -3,20 +3,10 @@ import type { CreateUserData, EditUserFailed, EditUserFormData, UpdateProfileDat
 import { useUserContext } from "./user";
 import { request } from "../../utils/util";
 import DeleteUser from "../popups/delete-user";
-import usePageHook from "../../utils/page-hook";
+import usePageHook, { type PageState } from "../../utils/page-hook";
 
 export type AccountsPages = "profile" | "users" | "settings"
 export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User";
-
-export type AccountsPanelsState = {
-    show: boolean,
-    panel?: AccountsPanels
-}
-
-type AccountsPageState = {
-    currentPage: AccountsPages,
-    panelState: AccountsPanelsState,
-}
 
 type AccountsState = {
     loading: boolean;
@@ -32,7 +22,7 @@ type PopUpState = {
 export type CreateUserFailedResult = {message?: string, error?: Partial<CreateUserData>};
 type AccountsStateType = {
     state: () => AccountsState,
-    pageState: () => AccountsPageState,
+    pageState: () => PageState<AccountsPages, AccountsPanels>,
     closePanel: () => void,
     openPanel: (panel: AccountsPanels) => void,
     choosePage: (page: AccountsPages) => void,

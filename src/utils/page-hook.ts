@@ -6,7 +6,7 @@ type PanelsState<T> = {
     params?: any
 }
 
-type PageState<T, R> = {
+export type PageState<T, R> = {
     currentPage: T,
     panelState: PanelsState<R>,
     params?: any
