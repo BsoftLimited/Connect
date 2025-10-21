@@ -88,11 +88,9 @@ const Streaming = () =>{
     
     // Clean up
     onCleanup(() => {
-        if(isVideo(pageState().params!)){
-            clearTimeout(timeoutId);
-            window.removeEventListener("mousemove", handleUserActivity);
-            window.removeEventListener("keydown", handleUserActivity);
-        }
+        clearTimeout(timeoutId);
+        window.removeEventListener("mousemove", handleUserActivity);
+        window.removeEventListener("keydown", handleUserActivity);
     });
 
     const onVideoChange: JSX.EventHandler<HTMLVideoElement, Event> = (event) =>{
