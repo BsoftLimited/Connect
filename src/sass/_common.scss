@@ -507,7 +507,7 @@ a{
     align-items: center;
     justify-content: center;
 
-    div{
+    & > div{
         background-color: var(--md-sys-color-surface-container-lowest);
         border-radius: 10px;
         padding: 1rem;

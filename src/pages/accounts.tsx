@@ -15,6 +15,7 @@ import type { User } from "../common.ts";
 import NotificationIcon from "./components/notifications-icon.tsx";
 import PanelContent from "./components/panel.tsx";
 import Panel from "./components/panel.tsx";
+import Notifiactions from "./components/notifications.tsx";
 
 interface AccountOptionProps{
     label: string,
@@ -57,7 +58,7 @@ const Accounts = () => {
             <div style={{ display: "flex", width: "100%", "flex-direction": "row", "justify-content": "space-between", "align-items": "center", "padding": "2rem 2rem 0rem 2rem" }}>
                 <h1 style={{"font-weight": "300" }}>Account Manangement</h1>
                 <div style={{ display: "flex", "flex-direction": "row", "align-items": "center", gap: "1.5rem" }}>
-                    <NotificationIcon />
+                    <NotificationIcon open={()=> openPanel("Notifications")}/>
                     <span id="theme-toggle" class="clicakble" onClick={toggleTheme} title="Toggle Theme">
                         <ThemeIcon />
                     </span>
@@ -113,6 +114,9 @@ const Accounts = () => {
                     </Match>
                     <Match when={pageState().panelState.panel === "User Details"}>
                         <EditUser user={editingUser()!}/>
+                    </Match>
+                    <Match when={pageState().panelState.panel === "Notifications"}>
+                        <Notifiactions />
                     </Match>
                 </Switch>
             </Panel>

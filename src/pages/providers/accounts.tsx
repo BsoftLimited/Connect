@@ -6,7 +6,7 @@ import DeleteUser from "../popups/delete-user";
 import usePageHook, { type PageState } from "../../utils/page-hook";
 
 export type AccountsPages = "profile" | "users" | "settings"
-export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User";
+export type AccountsPanels = "Edit Profile" | "Change Password" | "Create User" | "User Details" | "Delete User" | "Notifications";
 
 type AccountsState = {
     loading: boolean;

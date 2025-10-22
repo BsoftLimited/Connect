@@ -16,17 +16,15 @@ interface DeleteFileProps{
 const DeleteFile: Component<DeleteFileProps> = (props) =>{
     const proceed = () => props.procced(props.file);
 
-    
-
     return (
         <PopUp>
-            <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", "max-width": "40rem", color: "grey" }}>
+            <div style={{ display: "flex", "flex-direction": "column", "align-items": "center", gap: "0.6rem", color: "grey", "max-width": props.progressReport === undefined ? "24rem" : "40rem" }}>
                 <Show when={props.progressReport === undefined}>
-                    <div style={{ "font-size": "16px", "font-weight": "lighter" }}>Are you sure you want to delete file <strong>{props.file}</strong>? This action cannot be undone.</div>
+                    <div style={{ "font-size": "14px", "font-weight": "lighter" }}>Are you sure you want to delete file <strong>{props.file}</strong>?<br/>This action cannot be undone.</div>
                     <PopUpConfirm cancel={props.cancel} proceed={proceed} />
                 </Show>
                 <Show when={props.progressReport?.progress}>
-                    <div style={{ "font-size": "16px", "font-weight": "lighter" }}>Deleting file: {props.file}</div>
+                    <div style={{ "font-size": "16px", "font-weight": "lighter" }}>Deleting file: <strong>{props.file}</strong></div>
                     <Show when={ props.progressReport && props.progressReport?.progress?.total !== 0}>
                         <div style={{ width: "100%", display: "flex", "flex-direction": "row", gap: "0.4rem", "align-items": "center", "font-size": "20px", "font-weight": "lighter" }}>
                             <div style={{ display: "flex", "align-items": "center", "justify-content": "center", "min-width": "80px", padding: "0.4rem", "aspect-ratio": 1, border: "solid 2px grey", "border-radius": "50%" }}>{props.progressReport?.progress?.deleted}/{props.progressReport?.progress?.total}</div>
