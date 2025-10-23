@@ -438,6 +438,7 @@ api.ws("/process", {
 });
 
 api.ws("/notifications", {
+    body: t.Object({ operation: t.String(), id: t.Optional(t.String()), ids: t.Optional(t.ArrayString()) }),
     open(ws) {
         console.log(`user: ${ws.id} has connected to websocket for notifications`);
         if(ws.data.session?.user.id === ws.data.admin.id){
@@ -450,7 +451,17 @@ api.ws("/notifications", {
             ws.data.removeAdminWS();
         }
     },
-    message: async (ws, message) => {},
+    message: async (ws, message) => {
+        if(message.id || message.ids){
+            if(message.operation === "seen"){
+
+            }else if(message.operation === "delete"){
+                
+            }
+        }else{
+            ws.send({ message: "bad socket message", operation: message.operation, status: 400 });
+        }
+    },
 });
 
 export default  api;
