@@ -18,6 +18,7 @@ export interface FileReport{
 export interface Notification extends FileReport{
     id: string,
     seen: boolean
+    createdAt: Date
 }
 
 export interface User {

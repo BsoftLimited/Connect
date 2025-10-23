@@ -87,6 +87,7 @@ model Notification{
     message String
     ntype   String  @default("info")
     seen    Boolean @default(false)
+    createdAt DateTime @default(now())
 
     receiverID  String
     reciever    User    @relation(fields: [receiverID], references: [id], onDelete: Cascade)

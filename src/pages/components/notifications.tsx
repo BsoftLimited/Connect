@@ -1,5 +1,7 @@
-import { For, type Component } from "solid-js";
+import { For, on, type Component } from "solid-js";
 import { useUserContext } from "../providers/user";
+import type { Notification } from "../../common";
+import { request } from "../../utils/util";
 
 const NoNotifiactions = () =>{
     return (
@@ -17,6 +19,43 @@ const NoNotifiactions = () =>{
     );
 }
 
+const NoNotifiaction = (props: { notification: Notification }) =>{
+    const { sessionState } = useUserContext();
+    
+    // on mount, send a request to mark the notification as read
+    on(() => props.notification, async () => {
+        try{
+            const result = await request({ url: `/api/notifications/${props.notification.id}`, method: "PATCH", input: { seen: true } });
+            if(result.first){
+                
+            }else{
+                const response = result.second;
+                console.error(`Failed to mark notification as seen: ${response.error.message}`);
+            }
+        }catch(err){
+            console.error(`Failed to mark notification as seen: ${err}`);
+        }
+    });
+
+    return (
+        <div style={{ padding: "1rem", "border-bottom": "solid 1px var(--md-sys-color-outline-variant)" }}>
+            <div style={{ display: "flex", "flex-direction": "row", gap: "0.5rem", "align-items": "center" }}>
+                {props.notification.ntype === "info" && (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                )}
+                {props.notification.ntype === "important" && (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                )}
+                {props.notification.ntype === "error" && (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                )}
+                <div style={{ "font-weight": "500", "font-size": "16px" }}>{props.notification.message}</div>
+            </div>
+            <div style={{ "font-size": "12px", color: "gray", "margin-top": "0.5rem" }}>{new Date(props.notification.createdAt).toLocaleString()}</div>
+        </div>
+    );
+}
+
 
 const Notifiactions = () =>{
     const { sessionState } = useUserContext();
@@ -25,7 +64,7 @@ const Notifiactions = () =>{
         <div style={{ display: 'flex', "flex-direction": "column", height: "100%", width: "100%" }}>
             <For each={sessionState().data?.notifications} fallback={<NoNotifiactions />}>
                 {(item, index) => (
-                    <div>{ item.message }</div>
+                    <NoNotifiaction notification={item} />
                 )}
             </For>
         </div>

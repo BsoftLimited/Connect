@@ -100,11 +100,16 @@ class FilesRepository{
     }
 
     fileExists = async (path: string, relative: boolean = true): Promise<boolean> => {
-        console.log(`Checking if file exists at: ${path}`);
-        const absolutePath = relative ? join(this.homePath, path) : path;
+        try{
+            console.log(`Checking if file exists at: ${path}`);
+            const absolutePath = relative ? join(this.homePath, path) : path;
 
-        const file = Bun.file(absolutePath);
-        return await file.exists() || (await file.stat()).isDirectory();
+            const file = Bun.file(absolutePath);
+            return await file.exists() || (await file.stat()).isDirectory();
+        }catch(error){
+            console.error(`Error checking if file exists at ${path}:`, error);
+            return false;
+        }
     }
 
     save = async (input: { user: User, path: string, file: File, report?: (fileReport: FileReport) =>void }) =>{
@@ -193,9 +198,11 @@ class FilesRepository{
     }
 
     createDir = async(directory: string, name: string) =>{
-        const absoluteDest = join(this.homePath, directory);
-
-        return await mkdir(join(absoluteDest, name));
+        const absoluteDest = join(this.homePath, directory, name);
+        if(await this.fileExists(absoluteDest, false)){
+            throw new Error(`folder ${name} already exists in the ${directory.replaceAll("\\", "/").split("/").pop()} directory`);
+        }
+        return await mkdir(absoluteDest);
     }
 
     delete = async (input: { user: User, path: string, fileName: string, onProcess?: (event: DeletePregressEvent) => void, report?: (fileReport: FileReport) =>void }) =>{

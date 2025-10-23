@@ -365,7 +365,6 @@ api.patch("/notification/:id?", async ({ body, params, session, notRepository })
             if(init.isFirst){
                 return status(200, init.first);
             }
-
             return status(init.second.status, { message: init.second.message });
         }catch(error){
             console.error(error);
