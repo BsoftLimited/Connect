@@ -22,13 +22,15 @@ interface UserContextType{
     toggleTheme: () => void;
     isDark: () => boolean;
     updateConfig: (config: Partial<UserConfig>) => Promise<void>
+    markNotificationsAsSeen: (ids: string[]) => void;
+    deleteNotification: (notificationId: string) => void;
 }
 
 const UserContext = createContext<UserContextType>();
 const UserContextProvider: ParentComponent = (props) => {
     const [state, setState] = createSignal<State<Session & { notifications: Notification[] }>>({ loading: true });
     const { systemState } = useSystem();
-    const { setMessageListener } = useWS('/api/notifications');
+    const { setMessageListener, send } = useWS('/api/notifications');
 
     const initializeTheme = (theme: ThemePreference) => {
         const htmlElement = document.getElementsByTagName("body")[0];
@@ -71,13 +73,40 @@ const UserContextProvider: ParentComponent = (props) => {
             }
 
             setMessageListener((message)=>{
-                setState((init)=>{
-                    const data = { 
-                        ...init.data!, 
-                        notifications: [ message.notification!, ...init.data!.notifications ]
-                    };
-                    return {...init, data}
-                })
+                if(message.operation === "delete"){
+                    if(message.status === 200){
+                        setState((init)=>{
+                            const notifications = init.data?.notifications ?? [];
+                            const index = notifications.findIndex((notification)=> notification.id === message.notification?.id);
+                            notifications.splice(index, 1);
+
+                            const data = { ...init.data!, notifications};
+                            return {...init, data}
+                        });
+                    }else{
+                        console.error("Failed to delete notification:", message);
+                        alert(`Failed to delete notification: ${message.message}`);
+                    }
+                }else if(message.operation === "seen"){
+                    if(message.status === 200){
+                        setState((init)=>{
+                            const notifications = init.data?.notifications ?? [];
+                            const index = notifications.findIndex((notification)=> notification.id === message.notification?.id);
+                            notifications[index] = message.notification!;
+
+                            const data = { ...init.data!, notifications};
+                            return {...init, data}
+                        });
+                    }else{
+                        console.error("Failed to delete notification:", message);
+                        alert(`Failed to delete notification: ${message.message}`);
+                    }
+                }else if(message.operation === "notification"){
+                    setState((init)=>{
+                        const data = { ...init.data!, notifications: [ message.notification!, ...init.data!.notifications ] };
+                        return {...init, data}
+                    });
+                }
             });
         }
     }, { defer: true }));
@@ -138,6 +167,12 @@ const UserContextProvider: ParentComponent = (props) => {
                 console.error(error);
                 alert("unable to update site configurations");
             }
+        },
+        markNotificationsAsSeen: (ids: string[]) => {
+            send("seen", { ids });
+        },
+        deleteNotification: (notificationId: string) => {
+            send("delete", { id: notificationId });
         }
     };
 

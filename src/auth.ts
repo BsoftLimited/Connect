@@ -4,10 +4,9 @@ import type { Session } from "./common";
 import UserRepository from "./repositories/user_repository";
 import ConfigRepository from "./repositories/config_repository";
 
-export const authPlugin = new Elysia().use( jwt({ name: 'jwt', secret: 'test'})).decorate({ "userRepository": new UserRepository() }).derive({ as: "global" }, async ({ request, jwt, userRepository, cookie: { auth } })=>{
+export const authPlugin = new Elysia().use( jwt({ name: 'jwt', secret: 'test'})).decorate({ "userRepository": new UserRepository() }).derive({ as: "global" }, async ({ jwt, userRepository, cookie: { auth } })=>{
     let session: Session | undefined = undefined;
 
-    //console.log(`checking for auth cookie for: ${request.url}`);
     try {
         const payload: any = await jwt.verify(auth?.value);
         if (payload){

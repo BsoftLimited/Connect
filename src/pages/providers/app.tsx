@@ -31,6 +31,7 @@ interface AppContextProviderType {
     goto: (path: string)=> void;
     stream: (file: string) => void;
     deleteFile: (file: string) => void;
+    deleteSelf: () => void;
     reload: ()=> void;
     appState: ()=> AppContextType;
     closeStream: () => void;
@@ -96,11 +97,19 @@ const AppContextProvider: ParentComponent = (props) =>{
         }
     }
 
-    const deleteFile = async (file: string) => {
-        const currentPath = state().directory?.path;
-        setState(init => { return { ...init, loading: true, error: undefined } });
-
-        send("delete", { path: currentPath, file });
+    const deleteFile = async (file?: string) => {
+        if(file){
+            const currentPath = state().directory?.path;
+            send("delete", { path: currentPath, file });
+        }else{
+            const currentPath = state().directory?.path;
+            if(currentPath && currentPath !== "/"){
+                const pathSegments = currentPath.split("/").filter(segment => segment.length > 0);
+                const fileName = pathSegments.pop()!;
+                const parentPath = "/" + pathSegments.join("/");
+                send("delete", { path: parentPath, file: fileName });
+            }
+        }
     }
 
     const paste = async (destFile?: DirectoryFile) => {
@@ -140,7 +149,17 @@ const AppContextProvider: ParentComponent = (props) =>{
         setMessageListener((message)=>{
             console.log('Received message from server:', message);
             if(message.completed){
-                fetchDirectory().then(closePopup).finally(clearReports);
+                if(message.operation === "delete" && popUpState().action === "Delete File" && !popUpState().file){
+                    const currentPath = state().directory?.path;
+                    const pathSegments = currentPath?.split("/").filter(segment => segment.length > 0)!;
+                    pathSegments.pop();
+                    const parentPath = "/" + pathSegments.join("/");
+                    fetchDirectory(parentPath).finally(()=>{
+                        localStorage.setItem('path', parentPath);
+                    }).then(closePopup).finally(clearReports);
+                }else{
+                    fetchDirectory().then(closePopup).finally(clearReports);
+                }
             }else{
                 switch(message.operation){
                     case "delete":
@@ -180,6 +199,9 @@ const AppContextProvider: ParentComponent = (props) =>{
         deleteFile: async (file: string) =>{
             setPopUpState({ action: "Delete File", file });
         },
+        deleteSelf: async () =>{
+            setPopUpState({ action: "Delete File" });
+        },
         stream: (file)=> page.choosePage("Streaming", file),
         closeStream: () => page.choosePage("Directory"),
         saveClipboard: (clipboard) => setState(init => { return { ...init, clipboard } }),
@@ -193,7 +215,7 @@ const AppContextProvider: ParentComponent = (props) =>{
         <AppContext.Provider value={providerValue}>
             {props.children}
             <Show when={popUpState().action === "Delete File"}>
-                <DeleteFile file={popUpState().file!} cancel={closePopup} procced={deleteFile} progressReport={deleteProgress()} />
+                <DeleteFile file={popUpState().file} cancel={closePopup} procced={deleteFile} progressReport={deleteProgress()} />
             </Show>
             <Show when={popUpState().action === "File Copying"}>
                 <FileCopying file={popUpState().file!} progressReport={copyProgress()!} destination={popUpState().destination!}/>
