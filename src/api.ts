@@ -416,20 +416,23 @@ api.ws("/process", {
                 }
             }else if(message.operation === "delete"){
                 console.log(message);
+                 if(ws.data.session.user.role === "guest" || ws.data.session.user.accessLevel === "read-only") {
+                    ws.send({ message: `you are not allowed to ${message.operation} files`, status: 401, operation: message.operation });
+                }else{
+                    const onProcess = (progress: DeletePregressEvent) =>{
+                        console.log(progress);
+                        ws.send({ message: "deleting", operation: "delete", progress, status: 200 });
+                    }
 
-                const onProcess = (progress: DeletePregressEvent) =>{
-                    console.log(progress);
-                    ws.send({ message: "deleting", operation: "delete", progress, status: 200 });
+                    //, 
+                    const result = await api.decorator.repository.delete({ user: ws.data.session.user, path: message.data.path!, fileName: message.data.file!, onProcess, report }).then(()=>{
+                        return {  message: `${message.data.file} was deleted from ${message.data.path!.split("/").pop()} successfully`, operation: "delete", completed: true, status: 200 };
+                    }).catch((error)=>{
+                        console.error(error);
+                        return { message: "server error", operation: "delete", error, status: 503 };
+                    });
+                    ws.send(result);
                 }
-
-                //, 
-                const result = await api.decorator.repository.delete({ user: ws.data.session.user, path: message.data.path!, fileName: message.data.file!, onProcess, report }).then(()=>{
-                    return {  message: `${message.data.file} was deleted from ${message.data.path!.split("/").pop()} successfully`, operation: "delete", completed: true, status: 200 };
-                }).catch((error)=>{
-                    console.error(error);
-                    return { message: "server error", operation: "delete", error, status: 503 };
-                });
-                ws.send(result);
             }
         }else{
             ws.send({ message: "access denied, try signing in", operation: message.operation, status: 401 });
@@ -438,7 +441,7 @@ api.ws("/process", {
 });
 
 api.ws("/notifications", {
-    body: t.Object({ operation: t.String(), id: t.Optional(t.String()), ids: t.Optional(t.ArrayString()) }),
+    body: t.Object({ operation: t.String(), data: t.Object({ id: t.Optional(t.String()), ids: t.Optional(t.ArrayString()) }) }),
     open(ws) {
         console.log(`user: ${ws.id} has connected to websocket for notifications`);
         if(ws.data.session?.user.id === ws.data.admin.id){
@@ -452,11 +455,38 @@ api.ws("/notifications", {
         }
     },
     message: async (ws, message) => {
-        if(message.id || message.ids){
-            if(message.operation === "seen"){
-
-            }else if(message.operation === "delete"){
-                
+        if(message.data.id || message.data.ids){
+            const notification_repository = ws.data.notRepository;
+            const ids = message.data.id ? [message.data.id] : message.data.ids ?? [];
+            try{
+                if(message.operation === "seen"){
+                    for(let i = 0; i < ids.length; i++){
+                        const result = await notification_repository.seen(ws.data.session?.user.id!, ids[i]!);
+                        if(result.isFirst){
+                            const response = result.first;
+                            ws.send({ message: "notification saved as seen", operation: message.operation, notification: response, status: 200});
+                        }else{
+                            const response = result.second;
+                            ws.send({ message: response.message, operation: message.operation, status: response.status});
+                            return;
+                        }
+                    }
+                }else if(message.operation === "delete"){
+                    for(let i = 0; i < ids.length; i++){
+                        const result = await notification_repository.delete(ws.data.session?.user.id!, ids[i]!);
+                        if(result.isFirst){
+                            const response = result.first;
+                            ws.send({ message: "notification has been deleted", operation: message.operation, notification: response, status: 200});
+                        }else{
+                            const response = result.second;
+                            ws.send({ message: response.message, operation: message.operation, status: response.status});
+                            return;
+                        }
+                    }
+                }
+            }catch(error){
+                console.error(error);
+                ws.send({ message: "server error", error, operation: message.operation, status: 503 });
             }
         }else{
             ws.send({ message: "bad socket message", operation: message.operation, status: 400 });

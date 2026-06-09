@@ -43,8 +43,8 @@ const useWS = (path:string) =>{
 
     return {
         connected: ws() !== undefined,
-        setMessageListener: (listener: MessageCallback) => setMessageListener((init)=> listener),
-        send(operation: string, data: any) {
+        setMessageListener: (listener: MessageCallback) => setMessageListener((_)=> listener),
+        send: (operation: string, data: any) =>{
             connect()?.send(JSON.stringify({ operation,  data }));
         },
     };
